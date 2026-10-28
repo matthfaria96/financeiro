@@ -15,8 +15,9 @@ Substitui o app nativo Swift (arquivado em `../Financeiro`). SvelteKit 2 + Svelt
 - **Todo controle tem `use:hint={['Título', 'o que faz']}`** (balão no mouse, descrição acessível no toque).
 - **Visual**: computador primeiro (menu lateral `ui/Sidebar.svelte` com tudo; `.page` até 1180 px; `.grid-2/.grid-3/.grid-main`). Vidro de verdade (`.glass`, backdrop-filter) só em barra lateral, folhas e balões; cartões usam degradê + brilho (`--card`, `--highlight`).
 - **Gráficos** em `ui/charts/` (SVG puro, com balão no mouse e tabela escondida para leitor de tela): `BarChart` (agrupado/empilhado por `stack`), `LineChart`, `HBars`, `Ring`, `Sparkline`, e `ui/Donut`. Séries fixas usam `seriesColor` (azul/laranja/água, validadas para daltonismo); entidades (categoria, banco) usam a própria cor. Nunca dois eixos.
-- **Fotos** (carro, projeto, item) passam por `PhotoPicker` → `compressImage(file, 720, 120_000)`; sem foto, item com link mostra o logo da loja.
+- **Logos**: `Avatar` usa o logo do site do estabelecimento (`autoLogo`) quando não há imagem; abaixo de 48 px fica o emoji. Itens da lista do mercado têm figurinha por nome (`itemEmoji`).
+- **Fotos** (carro, projeto, item, pessoa) passam por `PhotoPicker` → `compressImage(file, 720, 120_000)`; sem foto, item com link mostra o logo da loja.
 - **Leve**: sem bibliotecas de UI/gráficos; ícones novos entram em `scripts/icons.mjs` (rodar `node scripts/icons.mjs`); imagens enviadas passam por `compressImage` (≤160 px WebP).
 
 ## Conferir
-`npm run build && npx vite preview --port 4317`, depois Chrome headless com `?demo` (`&abrir=importar|lancamento|conta` abre as folhas) (perfil novo a cada captura: o service worker guarda versões antigas; Chrome headless não fica abaixo de ~485 px de largura).
+`npm run build && npx vite preview --port 4317`, depois Chrome headless com `?demo` (`&abrir=importar|lancamento|conta` abre as folhas). Teste de cliques em todas as telas: `scripts/smoke.mjs` (Chrome com depuração remota). Entrar/sair da demonstração sempre por `data/demoMode.ts` (precisa recarregar a página) (perfil novo a cada captura: o service worker guarda versões antigas; Chrome headless não fica abaixo de ~485 px de largura).
