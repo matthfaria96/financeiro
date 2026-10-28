@@ -46,7 +46,7 @@
   .card-b { animation-delay: -2.3s; }
   .card-c { animation-delay: -4.6s; }
   @keyframes float { 50% { translate: 0 -8px; } }
-  .panel { right: 0; top: 70px; z-index: 4; width: 250px; padding: 16px; border-radius: 20px; display: flex; flex-direction: column; gap: 6px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 24px 60px rgba(0, 0, 0, 0.5); }
+  .panel { right: 0; top: 118px; z-index: 4; width: 250px; background: rgba(17, 25, 22, 0.88); padding: 16px; border-radius: 20px; display: flex; flex-direction: column; gap: 6px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 24px 60px rgba(0, 0, 0, 0.5); }
   .big { font: 600 28px var(--font-display); letter-spacing: -0.02em; }
   .split { display: flex; gap: 12px; align-items: center; margin-top: 6px; padding-top: 10px; border-top: 1px solid var(--stroke); }
   .lines { display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: var(--text-2); }
