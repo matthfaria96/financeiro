@@ -44,9 +44,17 @@ export async function seedDemo() {
     }
     if (past(m, 20)) interCard.push(`"${day(m, 20).split('-').reverse().join('/')}","PAGAMENTO ON LINE","OUTROS","Pagamento","-R$ 980,00"`);
   });
+  const c6Card = ['Data de Compra;Nome no Cartão;Final do Cartão;Categoria;Descrição;Parcela;Valor (em US$);Cotação (em R$);Valor (em R$)'];
+  months.forEach((m, i) => {
+    for (const [d, t, c, v] of [[6, 'POSTO IPIRANGA', 'Posto de combustível', 180 + i * 4], [15, 'MERCADOLIVRE*LOJA', 'Departamento', 74.9], [27, 'SEM PARAR', 'Serviços', 38.5]] as [number, string, string, number][]) {
+      if (past(m, d)) c6Card.push(`${day(m, d).split('-').reverse().join('/')};FULANO;4321;${c};${t};Única;0;0;${br(v)}`);
+    }
+    if (past(m, 12)) c6Card.push(`${day(m, 12).split('-').reverse().join('/')};FULANO;4321;-;Inclusao de Pagamento;Única;0;0;-${br(260 + i * 4)}`);
+  });
   const files: [string, string[], string, string, string][] = [
     ['nubank-conta.csv', nubankConta, 'Nubank conta', 'p-eu', 'w-meu'], ['nubank-fatura.csv', nubankCard, 'Nubank cartão', 'p-eu', 'w-meu'],
-    ['inter-conta.csv', interConta, 'Inter conta', 'p-esposa', 'w-esposa'], ['inter-fatura.csv', interCard, 'Inter cartão', 'p-esposa', 'w-esposa']
+    ['inter-conta.csv', interConta, 'Inter conta', 'p-esposa', 'w-esposa'], ['inter-fatura.csv', interCard, 'Inter cartão', 'p-esposa', 'w-esposa'],
+    ['c6-fatura.csv', c6Card, 'C6 cartão', 'p-eu', 'w-meu']
   ];
   for (const [name, lines, accountName, person, workspace] of files) {
     const draft = createDraft(name, parseStatementText(lines.join('\n'), name), null);

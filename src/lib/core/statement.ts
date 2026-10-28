@@ -1,10 +1,9 @@
 import type { Day } from './dates';
+import { bankName, type Bank } from './banks';
 
-export type Bank = 'nubank' | 'inter' | 'other';
+export { bankName, type Bank };
 export type StatementKind = 'checking' | 'creditCard';
 export type StatementFormat = 'ofx' | 'csv' | 'pdf';
-
-export const bankName: Record<Bank, string> = { nubank: 'Nubank', inter: 'Inter', other: 'Outro banco' };
 
 export interface Installment {
   current: number;

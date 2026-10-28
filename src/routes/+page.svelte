@@ -43,7 +43,6 @@
   const pendingBills = $derived(bills.map((b) => ({ bill: b, status: billStatus(b, month, entries) })).filter((x) => x.status.type !== 'paid').slice(0, 4));
   const history = $derived(Array.from({ length: 9 }, (_, i) => addMonths(month, i - 8)).map((m) => ({ month: m, cents: accounts.reduce((s, a) => s + balanceOf(a, lastDay(m) < today() ? lastDay(m) : today()), 0) })));
 
-  let creating = $state(false);
 </script>
 
 <div class="page">
@@ -59,7 +58,7 @@
       <p class="muted">O Financeiro lê os extratos do banco, separa por categoria e monta os relatórios sozinho.</p>
       <div class="step"><span class="n" class:done={store.accounts.length > 0}>{#if store.accounts.length}<Icon name="check" size={15} stroke={3} />{:else}1{/if}</span>
         <div class="grow"><b>Cadastre suas contas</b><p class="muted small">Cada conta e cartão (seus, da esposa, da casa), com o banco e de quem é.</p>
-          {#if !store.accounts.length}<button class="btn primary" onclick={() => (creating = true)}>Cadastrar conta</button>{/if}</div></div>
+          {#if !store.accounts.length}<button class="btn primary" onclick={() => (ui.newAccountOpen = true)}>Cadastrar conta</button>{/if}</div></div>
       <div class="step"><span class="n">2</span>
         <div class="grow"><b>Importe o extrato de cada uma</b><p class="muted small">No app do banco, exporte o extrato ou a fatura e escolha a conta aqui.</p>
           <button class="btn" disabled={!store.accounts.length} onclick={() => ui.startImport()}>Importar extrato</button></div></div>
@@ -71,7 +70,7 @@
 
   {#if store.accounts.length}
     <SectionTitle title="Contas e cartões">
-      <button class="btn ghost" onclick={() => (creating = true)} use:hint={['Cadastrar conta', 'Nubank, Inter ou outro banco: conta, cartão, investimento ou dinheiro.']}><Icon name="plus" size={16} />Cadastrar</button>
+      <button class="btn ghost" onclick={() => (ui.newAccountOpen = true)} use:hint={['Cadastrar conta', 'Qualquer banco: conta, cartão, investimento ou dinheiro.']}><Icon name="plus" size={16} />Cadastrar</button>
     </SectionTitle>
     {#each groups as group (group.title)}
       {@const total = group.card ? group.items.reduce((s, a) => s + Math.max(0, -balanceOf(a)), 0) : group.items.reduce((s, a) => s + balanceOf(a), 0)}
@@ -110,7 +109,7 @@
   {/if}
 </div>
 
-<AccountEditor bind:open={creating} />
+<AccountEditor bind:open={ui.newAccountOpen} />
 
 <style>
   .top h1 { margin: 6px 4px; font: 700 30px var(--font-display); letter-spacing: -0.02em; }

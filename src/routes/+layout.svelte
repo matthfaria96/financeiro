@@ -36,9 +36,10 @@
     await store.start();
     if (store.demo) {
       await seedDemo();
-      // Só na demonstração: ?abrir=importar | lancamento, para conferir as folhas.
+      // Só na demonstração: ?abrir=importar | lancamento | conta, para conferir as folhas.
       const open = new URLSearchParams(location.search).get('abrir');
       if (open === 'importar') ui.startImport();
+      if (open === 'conta') ui.newAccountOpen = true;
       if (open === 'lancamento') ui.editEntry(store.entries.find((e) => e.merchant_id && e.bill_due_date)?.id ?? '');
     }
   });

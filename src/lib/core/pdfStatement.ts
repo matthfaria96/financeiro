@@ -1,6 +1,7 @@
 import { parseCents } from './money';
 import { parseDay, parseShortDay, makeDay, today, type Day } from './dates';
 import { fold } from './text';
+import { bankFromText } from './banks';
 import { errors, ImportError, transaction, type Bank, type ImportedStatement, type ImportedTransaction } from './statement';
 
 const skipWords = ['total', 'saldo', 'pagamento minimo', 'limite', 'vencimento', 'encargos', 'juros rotativo', 'valor minimo', 'fatura anterior', 'subtotal', 'resumo'];
@@ -36,8 +37,7 @@ function referenceDate(text: string): Day | null {
 /** Leitura aproximada a partir do texto do PDF (linhas "data … descrição … valor"). */
 export function parsePDFText(text: string): ImportedStatement {
   const folded = fold(text);
-  const bank: Bank = folded.includes('nu pagamentos') || folded.includes('nubank') ? 'nubank'
-    : folded.includes('banco inter') || folded.includes('inter&co') || folded.includes('bancointer') ? 'inter' : 'other';
+  const bank: Bank = bankFromText(text);
   const isCard = folded.includes('fatura') && (folded.includes('cartao') || folded.includes('vencimento'));
   const reference = referenceDate(text) ?? today();
   const transactions: ImportedTransaction[] = [];

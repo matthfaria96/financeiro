@@ -1,8 +1,7 @@
 <script lang="ts">
   import { store } from '$lib/data/store.svelte';
   import type { Account, AccountKind } from '$lib/data/types';
-  import type { Bank } from '$lib/core/statement';
-  import { bankName } from '$lib/core/statement';
+  import { bankList, bankName, type Bank } from '$lib/core/banks';
   import { centsToInput, parseCents } from '$lib/core/money';
   import { today } from '$lib/core/dates';
   import Sheet from '$lib/ui/Sheet.svelte';
@@ -43,7 +42,7 @@
       const b = balanceOf(account);
       balanceText = centsToInput(account.kind === 'creditCard' ? -b : b);
     } else {
-      nameEdited = false; bank = 'nubank'; kind = 'checking'; digits = ''; workspace = store.scopeId; closing = 2; due = 10; source = ''; archived = false; balanceText = '';
+      allBanks = false; nameEdited = false; bank = 'nubank'; kind = 'checking'; digits = ''; workspace = store.scopeId; closing = 2; due = 10; source = ''; archived = false; balanceText = '';
       person = store.people.find((p) => p.role === 'me')?.id ?? '';
       autoName();
     }
@@ -91,7 +90,9 @@
   }
 
   const preview = $derived({ bank, kind, color: '', name: name || 'Nova conta', last_digits: digits.replace(/\D/g, '').slice(-4) });
-  const banks: [Bank, string][] = [['nubank', '#9B1FE8'], ['inter', '#FF8A1F'], ['other', '#5A6B75']];
+  const popular: Bank[] = ['nubank', 'inter', 'itau', 'bradesco', 'santander', 'bb', 'caixa', 'c6'];
+  let allBanks = $state(false);
+  const shownBanks = $derived(allBanks || !popular.includes(bank) ? bankList : bankList.filter((b) => popular.includes(b.id) || b.id === 'other'));
 </script>
 
 <Sheet bind:open title={account ? 'Editar conta' : 'Cadastrar conta'}>
@@ -100,10 +101,17 @@
 
   <div class="form-title">Banco</div>
   <div class="banks">
-    {#each banks as [value, color] (value)}
-      <button class="bank" class:on={bank === value} style:--c={color} onclick={() => { bank = value; autoName(); }} use:hint={[bankName[value], 'Banco da conta. Ajuda a reconhecer os arquivos importados.']}>{bankName[value]}</button>
+    {#each shownBanks as b (b.id)}
+      <button class="bank" class:on={bank === b.id} aria-pressed={bank === b.id} onclick={() => { bank = b.id; autoName(); }}
+        use:hint={[b.name, 'Banco da conta: dá as cores do cartão e ajuda a reconhecer os arquivos importados.']}>
+        <span class="swatch" style:background="linear-gradient(135deg, {b.colors[0]}, {b.colors[1]})"></span><span class="ellipsis">{b.name}</span>
+      </button>
     {/each}
   </div>
+  {#if popular.includes(bank)}
+    <button class="btn ghost more" onclick={() => (allBanks = !allBanks)} use:hint={[allBanks ? 'Menos bancos' : 'Mais bancos', 'Mostra todos os bancos e cartões conhecidos.']}>
+      {allBanks ? 'Mostrar menos' : `Mais bancos (${bankList.length - popular.length - 1})`}</button>
+  {/if}
   <div style="margin-top: 10px"><Segmented label="Tipo" bind:value={kind} options={(['checking', 'creditCard', 'savings', 'cash'] as AccountKind[]).map((k) => ({ value: k, label: kindShort[k] }))} /></div>
   <div class="form-group" style="margin-top: 10px">
     <label class="form-row"><span class="field-label">Nome</span><input class="field" bind:value={name} oninput={() => (nameEdited = true)} /></label>
@@ -157,8 +165,12 @@
 
 <style>
   .preview { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 14px 0 4px; }
-  .banks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .bank { height: 46px; border-radius: 12px; border: 0; font-weight: 600; color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); transition: background 0.2s; }
-  .bank.on { background: var(--c); color: #fff; }
+  .banks { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 8px; }
+  .bank { display: flex; align-items: center; gap: 9px; height: 44px; padding: 0 10px; border-radius: 12px; border: 1px solid var(--stroke);
+    background: var(--card-2); font-weight: 600; font-size: 14px; text-align: left; transition: background 0.2s, border-color 0.2s; }
+  .bank:hover { background: rgba(255, 255, 255, 0.07); }
+  .bank.on { border-color: var(--accent); background: var(--accent-soft); }
+  .swatch { flex: none; width: 26px; height: 17px; border-radius: 4px; box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.25); }
+  .more { margin-top: 6px; }
   .btn-row { background: none; border: 0; width: 100%; text-align: left; }
 </style>

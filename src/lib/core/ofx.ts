@@ -1,20 +1,15 @@
 import { parseCents, type MoneyStyle } from './money';
 import { parseDay } from './dates';
-import { fold } from './text';
+import { bankFromCode, bankFromText } from './banks';
 import { errors, ImportError, transaction, type Bank, type ImportedStatement, type ImportedTransaction } from './statement';
 
-/** OFX 1.x (SGML) e 2.x (XML), como exportam Nubank e Inter. */
+/** OFX 1.x (SGML) e 2.x (XML), o formato "Money" que a maioria dos bancos exporta. */
 export function looksLikeOFX(text: string): boolean {
   const head = text.slice(0, 4096).toUpperCase();
   return head.includes('OFXHEADER') || head.includes('<OFX>');
 }
 
-export function bankFromId(id: string): Bank {
-  const number = Number(id.replace(/\D/g, ''));
-  if (number === 260) return 'nubank';
-  if (number === 77) return 'inter';
-  return 'other';
-}
+export const bankFromId = bankFromCode;
 
 export function ofxStyle(text: string): MoneyStyle {
   if (text.includes(',') && text.includes('.')) return 'automatic';
@@ -53,12 +48,8 @@ export function blocks(tag: string, text: string): string[] {
 export function parseOFX(text: string): ImportedStatement {
   const upper = text.toUpperCase();
   const isCard = upper.includes('<CREDITCARDMSGSRSV1>') || upper.includes('<CCSTMTRS>');
-  let bank = bankFromId(firstValue('BANKID', text) ?? firstValue('FID', text) ?? '');
-  if (bank === 'other') {
-    const org = fold(firstValue('ORG', text) ?? '');
-    if (org.includes('nu pagamentos') || org.includes('nubank')) bank = 'nubank';
-    else if (org.includes('inter')) bank = 'inter';
-  }
+  let bank: Bank = bankFromCode(firstValue('BANKID', text) ?? firstValue('FID', text) ?? '');
+  if (bank === 'other') bank = bankFromText(firstValue('ORG', text) ?? '');
   const seen = new Map<string, number>();
   const transactions: ImportedTransaction[] = [];
   for (const block of blocks('STMTTRN', text)) {

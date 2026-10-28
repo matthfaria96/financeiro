@@ -5,6 +5,7 @@ class UI {
   importFiles = $state<File[]>([]);
   editingEntryId = $state<string | null>(null);
   newEntryOpen = $state(false);
+  newAccountOpen = $state(false);
 
   startImport(accountId: string | null = null, files: File[] = []) {
     this.importAccountId = accountId;

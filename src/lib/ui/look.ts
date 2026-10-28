@@ -1,12 +1,18 @@
 import type { Account } from '$lib/data/types';
+import { bankInfo } from '$lib/core/banks';
 
 /** Cores de cada banco (desenho próprio, sem logotipos). */
 export function bankGradient(account: Pick<Account, 'bank' | 'kind' | 'color'>): [string, string] {
   if (account.kind === 'cash') return ['#3FA66B', '#1F6B43'];
   if (account.color) return [account.color, account.color + 'B3'];
-  if (account.bank === 'nubank') return ['#9B1FE8', '#5A0A9E'];
-  if (account.bank === 'inter') return ['#FF8A1F', '#E85D04'];
-  return ['#3A4A55', '#1E272E'];
+  return bankInfo(account.bank).colors;
+}
+
+/** Cor do texto e do brilho do cartão: bancos de fundo claro (BB, Will) pedem texto escuro. */
+export function bankInk(account: Pick<Account, 'bank' | 'kind' | 'color'>): { ink: string; accent: string } {
+  if (account.kind === 'cash' || account.color) return { ink: '#FFFFFF', accent: 'rgba(255,255,255,0.1)' };
+  const { ink, accent } = bankInfo(account.bank);
+  return { ink, accent };
 }
 
 export const bankColor = (account: Pick<Account, 'bank' | 'kind' | 'color'>) => bankGradient(account)[0];

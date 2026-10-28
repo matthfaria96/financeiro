@@ -957,7 +957,14 @@ export const categorySeeds: CategorySeed[] = [
       "pagamento fatura",
       "pagto fatura",
       "pagamento on line",
-      "pagamento da fatura"
+      "pagamento da fatura",
+      "inclusao de pagamento",
+      "pgto fatura",
+      "pag fatura",
+      "pagamento cartao de credito",
+      "pagamento de cartao",
+      "pagto cartao credito",
+      "deb aut fatura"
     ]
   },
   {
@@ -1448,7 +1455,17 @@ export const bankCategoryMap: Record<string, string> = {
   "moradia": "casa-moradia",
   "pets": "pets",
   "beleza": "cuidados-beleza",
-  "outros": "outros"
+  "outros": "outros",
+  "supermercados": "alim-mercado",
+  "restaurantes": "alim-restaurante",
+  "restaurante / lanchonete / bar": "alim-restaurante",
+  "posto de combustivel": "carro-combustivel",
+  "departamento": "compras",
+  "farmacias": "saude-farmacia",
+  "hotelaria": "lazer-viagens",
+  "hoteis": "lazer-viagens",
+  "cia aereas": "lazer-viagens",
+  "companhias aereas": "lazer-viagens"
 };
 
 export const kindName: Record<CategoryKind, string> = { expense: 'Despesa', income: 'Receita', transfer: 'Transferência entre contas' };

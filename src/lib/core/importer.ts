@@ -3,6 +3,7 @@ import { looksLikeOFX, parseOFX } from './ofx';
 import { parsePDFText, pdfToText } from './pdfStatement';
 import { errors, ImportError, type ImportedStatement } from './statement';
 import { decode } from './text';
+import { bankFromText } from './banks';
 
 export function looksLikePDF(bytes: Uint8Array): boolean {
   return bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46;
@@ -26,8 +27,12 @@ export async function parseStatement(bytes: Uint8Array, fileName = ''): Promise<
   return parseStatementText(decode(bytes), fileName);
 }
 
+/** O nome do arquivo também ajuda: "NU_…" é Nubank, "extrato-itau.ofx" é Itaú. */
 function withFileNameHints(statement: ImportedStatement, fileName: string): ImportedStatement {
   const number = statement.accountId ? undefined : accountNumberInFileName(fileName);
-  if (!number) return statement;
-  return { ...statement, accountId: number, bank: statement.bank === 'other' ? 'nubank' : statement.bank };
+  const named = number ? 'nubank' : bankFromText(fileName.replace(/\.[a-z0-9]+$/i, '').replace(/[-.]+/g, ' '));
+  const bank = statement.bank === 'other' ? named : statement.bank;
+  if (!number && bank === statement.bank) return statement;
+  const warnings = bank === statement.bank ? statement.warnings : statement.warnings.filter((w) => !w.startsWith('Banco não identificado'));
+  return { ...statement, accountId: statement.accountId ?? number, bank, warnings };
 }
