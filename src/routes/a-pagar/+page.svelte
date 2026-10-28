@@ -9,6 +9,9 @@
   import WorkspaceBar from '$lib/ui/WorkspaceBar.svelte';
   import SectionTitle from '$lib/ui/SectionTitle.svelte';
   import BillRow from '$lib/screens/bills/BillRow.svelte';
+  import BarChart from '$lib/ui/charts/BarChart.svelte';
+  import { bankColor } from '$lib/ui/look';
+  import { shortMonth } from '$lib/core/dates';
   import { payableGroups, type PayableGroup } from '$lib/features/payables';
   import { isBillPaid } from '$lib/features/month';
   import { billStatus } from '$lib/features/bills';
@@ -21,6 +24,16 @@
   const upcoming = $derived(groups.filter((g) => g.due > lastDay(month)));
   const cash = $derived(store.entries.filter((e) => inScope(e) && ['checking', 'cash'].includes(accountOf(e)?.kind ?? '')));
   const bills = $derived(store.bills.filter((b) => b.active && inScopeBill(b)).toSorted((a, b) => a.day_of_month - b.day_of_month));
+  // Faturas por mês de vencimento, empilhadas por cartão (cada cartão na cor do banco).
+  const chart = $derived.by(() => {
+    const months = [...new Set(groups.map((g) => monthOf(g.due)))].sort().filter((m) => m >= month).slice(0, 8);
+    const cards = [...new Map(groups.map((g) => [g.account.id, g.account])).values()];
+    return {
+      labels: months.map((m) => shortMonth(m).slice(0, 3)),
+      series: cards.map((card) => ({ id: card.id, name: card.name, color: bankColor(card), stack: 'faturas',
+        values: months.map((m) => groups.filter((g) => g.account.id === card.id && monthOf(g.due) === m).reduce((s, g) => s + g.imported + g.projected, 0)) }))
+    };
+  });
   let open = $state<Set<string>>(new Set());
   const key = (g: PayableGroup) => `${g.account.id}-${g.due}`;
   function toggle(id: string) {
@@ -59,8 +72,14 @@
 {/snippet}
 
 <div class="page">
-  <header class="row top"><a class="icon-btn" href="#/" aria-label="Voltar"><Icon name="chevron-left" /></a><h1>A pagar</h1></header>
+  <header class="row top"><a class="icon-btn back" href="#/" aria-label="Voltar"><Icon name="chevron-left" /></a><h1>A pagar</h1></header>
   <WorkspaceBar />
+  {#if chart.labels.length}
+    <section class="card">
+      <div class="card-head"><h3>Faturas dos próximos meses</h3><span class="sub">compras já feitas + parcelas previstas</span></div>
+      <BarChart labels={chart.labels} series={chart.series} current={0} height={200} title="Faturas por mês de vencimento" />
+    </section>
+  {/if}
   <SectionTitle title="Faturas deste mês" />
   {#each thisMonth as g (key(g))}{@render group(g)}{:else}<div class="card small muted">Nenhuma fatura vence neste mês.</div>{/each}
   <SectionTitle title="Próximas faturas" />
@@ -73,6 +92,7 @@
 
 <style>
   .top { gap: 10px; }
+  @media (min-width: 960px) { .back { display: none; } }
   .top h1 { margin: 6px 0; font: 700 30px var(--font-display); letter-spacing: -0.02em; }
   .head, .line { background: none; border: 0; padding: 0; text-align: left; width: 100%; }
   .line { padding-top: 6px; }

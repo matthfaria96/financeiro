@@ -13,6 +13,9 @@ Substitui o app nativo Swift (arquivado em `../Financeiro`). SvelteKit 2 + Svelt
 - **Mês do usuário**: Entrou / Saiu (conta + dinheiro, inclui fatura paga) / Crédito (informativo, vai para "a pagar" no mês da fatura) — `features/month.ts`.
 - **Áreas de trabalho** separam tudo: filtrar com `inScope*` de `features/model.ts`; itens novos nascem em `store.scopeId`.
 - **Todo controle tem `use:hint={['Título', 'o que faz']}`** (balão no mouse, descrição acessível no toque).
+- **Visual**: computador primeiro (menu lateral `ui/Sidebar.svelte` com tudo; `.page` até 1180 px; `.grid-2/.grid-3/.grid-main`). Vidro de verdade (`.glass`, backdrop-filter) só em barra lateral, folhas e balões; cartões usam degradê + brilho (`--card`, `--highlight`).
+- **Gráficos** em `ui/charts/` (SVG puro, com balão no mouse e tabela escondida para leitor de tela): `BarChart` (agrupado/empilhado por `stack`), `LineChart`, `HBars`, `Ring`, `Sparkline`, e `ui/Donut`. Séries fixas usam `seriesColor` (azul/laranja/água, validadas para daltonismo); entidades (categoria, banco) usam a própria cor. Nunca dois eixos.
+- **Fotos** (carro, projeto, item) passam por `PhotoPicker` → `compressImage(file, 720, 120_000)`; sem foto, item com link mostra o logo da loja.
 - **Leve**: sem bibliotecas de UI/gráficos; ícones novos entram em `scripts/icons.mjs` (rodar `node scripts/icons.mjs`); imagens enviadas passam por `compressImage` (≤160 px WebP).
 
 ## Conferir

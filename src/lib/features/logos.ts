@@ -64,8 +64,9 @@ export async function bestLogo(domain: string): Promise<LogoOption | null> {
   return (await findLogos(domain)).find((o) => o.pixels >= 64 && o.source !== 'icon.horse') ?? null;
 }
 
-/** Foto enviada pelo usuário → no máximo 160 px, WebP (JPEG se o navegador não gravar WebP). Uns 3–10 KB. */
-export async function compressImage(file: Blob, maxPixel = 160): Promise<string> {
+/** Foto enviada pelo usuário → no máximo `maxPixel` px, WebP (JPEG se o navegador não gravar WebP).
+ *  Avatar (160 px): uns 3–10 KB. Foto de capa (720 px): até ~90 KB; se passar de `maxChars`, encolhe de novo. */
+export async function compressImage(file: Blob, maxPixel = 160, maxChars = 40_000): Promise<string> {
   const bitmap = await createImageBitmap(file);
   const scale = Math.min(1, maxPixel / Math.max(bitmap.width, bitmap.height));
   const canvas = document.createElement('canvas');
@@ -75,9 +76,10 @@ export async function compressImage(file: Blob, maxPixel = 160): Promise<string>
   context.imageSmoothingQuality = 'high';
   context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
   bitmap.close();
-  let data = canvas.toDataURL('image/webp', 0.8);
-  if (!data.startsWith('data:image/webp')) data = canvas.toDataURL('image/jpeg', 0.8);
-  if (data.length > 40_000 && maxPixel > 96) return compressImage(file, 96);
+  const quality = maxPixel > 300 ? 0.72 : 0.8;
+  let data = canvas.toDataURL('image/webp', quality);
+  if (!data.startsWith('data:image/webp')) data = canvas.toDataURL('image/jpeg', quality);
+  if (data.length > maxChars && maxPixel > 96) return compressImage(file, Math.round(maxPixel * 0.7), maxChars);
   return data;
 }
 

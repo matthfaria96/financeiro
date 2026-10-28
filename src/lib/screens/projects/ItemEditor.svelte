@@ -8,6 +8,7 @@
   import Toggle from '$lib/ui/Toggle.svelte';
   import { hint } from '$lib/ui/hint';
   import DeleteRow from '$lib/screens/organizer/DeleteRow.svelte';
+  import PhotoPicker from '$lib/screens/organizer/PhotoPicker.svelte';
   import { itemsOf, priorityColor } from '$lib/features/projects';
 
   /** Item de projeto: produto ou serviço, cômodo, valor, prioridade e, quando feito, data e quem fez. */
@@ -22,11 +23,12 @@
   let vendor = $state('');
   let link = $state('');
   let notes = $state('');
+  let photo = $state('');
 
   $effect(() => {
     if (!open) return;
     description = item?.description ?? ''; kind = item?.kind ?? 'product'; area = item?.area ?? ''; amount = item?.amount_cents != null ? centsToInput(item.amount_cents) : '';
-    priority = item?.priority ?? 3; done = item?.done ?? false; date = item?.date ?? ''; vendor = item?.vendor ?? ''; link = item?.link ?? ''; notes = item?.notes ?? '';
+    priority = item?.priority ?? 3; done = item?.done ?? false; date = item?.date ?? ''; vendor = item?.vendor ?? ''; link = item?.link ?? ''; notes = item?.notes ?? ''; photo = item?.photo ?? '';
   });
 
   const areas = $derived([...new Set(itemsOf(project).map((i) => i.area.trim()).filter(Boolean))].sort());
@@ -40,7 +42,7 @@
   async function save() {
     const fields: Partial<ProjectItem> = {
       project_id: project.id, description: description.trim(), kind, area: area.trim(), amount_cents: amount.trim() ? Math.abs(parseCents(amount) ?? 0) : null,
-      priority, done, date: date || (done ? today() : null), vendor: vendor.trim(), link: safeLink, notes: notes.trim()
+      priority, done, date: date || (done ? today() : null), vendor: vendor.trim(), link: safeLink, notes: notes.trim(), photo
     };
     if (item) await organizer.update('project_items', item.id, fields);
     else await organizer.insert('project_items', [fields]);
@@ -50,6 +52,9 @@
 
 <Sheet bind:open title={item ? 'Editar item' : 'Novo item'}>
   {#snippet actions()}<button class="btn primary" disabled={!description.trim()} onclick={save}>Salvar</button>{/snippet}
+  <div class="top">
+    <PhotoPicker bind:value={photo} label="Foto" maxPixel={360} maxChars={50_000} wide={false} icon={kind === 'service' ? 'hammer' : 'shippingbox'} />
+  </div>
   <div style="margin-top: 6px"><Segmented label="Tipo" bind:value={kind} options={[{ value: 'product', label: 'Produto' }, { value: 'service', label: 'Serviço' }]} /></div>
   <div class="form-group" style="margin-top: 10px">
     <label class="form-row"><span class="field-label">O quê</span><input class="field" placeholder="ex.: Piso vinílico da sala" bind:value={description} /></label>
@@ -74,6 +79,7 @@
 </Sheet>
 
 <style>
+  .top { display: grid; place-items: center; padding: 6px 0 4px; }
   .prio { display: flex; gap: 8px; }
   .prio button { flex: 1; height: 40px; border-radius: 11px; border: 1px solid var(--stroke); background: var(--card-2); font-weight: 700; color: var(--c); }
   .prio button.on { background: color-mix(in srgb, var(--c) 22%, transparent); border-color: var(--c); }

@@ -11,6 +11,8 @@
   import CategoryReport from '$lib/screens/reports/CategoryReport.svelte';
   import Breakdown from '$lib/screens/reports/Breakdown.svelte';
   import { exportCSV } from '$lib/screens/reports/exportCsv';
+  import FlowCard from '$lib/screens/home/FlowCard.svelte';
+  import { flowHistory } from '$lib/features/month';
 
   type Tab = 'summary' | 'categories' | 'cost' | 'payment';
   let tab = $state<Tab>('summary');
@@ -18,6 +20,7 @@
   const entries = $derived(store.entries.filter(inScope));
   const accounts = $derived(store.accounts.filter(inScopeAccount));
   const current = monthOf(today());
+  const history = $derived(flowHistory(12, entries, accounts));
 </script>
 
 <div class="page">
@@ -30,6 +33,7 @@
     </div>
   </header>
   <WorkspaceBar />
+  <div class="no-print"><FlowCard {history} selected={month} title="Últimos 12 meses" onselect={(m) => (month = m)} /></div>
   <div class="row between monthbar">
     <button class="icon-btn" aria-label="Mês anterior" onclick={() => (month = addMonths(month, -1))}><Icon name="chevron-left" /></button>
     <button class="month" onclick={() => (month = current)} use:hint={['Mês', 'Toque para voltar ao mês atual.']}>{monthTitle(month)}</button>
@@ -53,7 +57,7 @@
   .print-title { display: none; }
   @media print {
     :global(body) { background: #fff !important; color: #000; }
-    :global(.sidebar), :global(.tabbar), .top, .monthbar { display: none !important; }
+    :global(.sidebar), :global(.tabbar), .top, .monthbar, .no-print { display: none !important; }
     .print-title { display: block; font: 700 20px var(--font-display); margin-bottom: 12px; }
     :global(.card) { background: #fff !important; border-color: #ddd !important; color: #000; break-inside: avoid; }
   }

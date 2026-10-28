@@ -31,6 +31,8 @@ export interface Vehicle extends Row {
   value_cents: number | null;
   odometer: number | null;
   notes: string;
+  /** Foto comprimida (data URL WebP, até ~120 KB). */
+  photo: string;
   archived: boolean;
   sort_order: number;
 }
@@ -65,6 +67,7 @@ export interface Project extends Row {
   symbol: string;
   color: string;
   budget_cents: number | null;
+  photo: string;
   archived: boolean;
   sort_order: number;
 }
@@ -81,6 +84,7 @@ export interface ProjectItem extends Row {
   vendor: string;
   link: string;
   notes: string;
+  photo: string;
 }
 
 export interface ShoppingList extends Row {

@@ -82,3 +82,15 @@ describe('Planilha mês a mês', () => {
     expect(sheetCSV(['', 'Set'], [{ label: 'Mercado; feira', values: [123_456] }, { label: 'Vazio', values: [null] }])).toBe('﻿;Set\r\n"Mercado; feira";1234,56\r\nVazio;');
   });
 });
+
+import { moneyTick, niceTicks } from '../src/lib/ui/charts/scale';
+describe('Eixos dos gráficos', () => {
+  it('marcas redondas', () => {
+    expect(niceTicks(312_000)).toEqual([0, 100_000, 200_000, 300_000, 400_000]);
+    expect(niceTicks(1_750_00)).toEqual([0, 50_000, 100_000, 150_000, 200_000]);
+    expect(niceTicks(0)).toEqual([0, 100]);
+  });
+  it('rótulos sem repetir', () => {
+    expect([150_000, 200_000, 50_000, 120_000_000].map(moneyTick)).toEqual(['1,5 mil', '2 mil', '500', '1,2 mi']);
+  });
+});

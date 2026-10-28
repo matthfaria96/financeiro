@@ -9,7 +9,7 @@ export function buildOrganizerDemo(personal: string): OrgSnapshot {
   const stamp = (day: Day) => `${day}T12:00:00.000Z`;
   const base = (id: string, household_id: string, day: Day = now) => ({ id, household_id, created_at: stamp(day) });
 
-  const car: Vehicle = { ...base('car-1', shared), name: 'Carro da família', model: 'Hatch 1.6 Flex automático', plate: 'ABC1D23', year: '2019', value_cents: 5_150_000, odometer: 94_350, notes: '', archived: false, sort_order: 0 };
+  const car: Vehicle = { ...base('car-1', shared), name: 'Carro da família', model: 'Hatch 1.6 Flex automático', plate: 'ABC1D23', year: '2019', value_cents: 5_150_000, odometer: 94_350, notes: '', photo: '', archived: false, sort_order: 0 };
   const logs: VehicleLog[] = [];
   let km = 96_100;
   for (let i = 0; i < 16; i++) {
@@ -34,8 +34,8 @@ export function buildOrganizerDemo(personal: string): OrgSnapshot {
     ...base(`mnt-${i}`, shared), vehicle_id: car.id, ...item, last_km: lastKm[i]?.[0] ?? null, last_date: lastKm[i]?.[1] ?? null, sort_order: i
   }));
 
-  const apto: Project = { ...base('prj-apto', shared), name: 'Apartamento', symbol: 'house', color: '#38D9F5', budget_cents: null, archived: false, sort_order: 0 };
-  const mine: Project = { ...base('prj-meu', personal), name: 'Minhas compras', symbol: 'bag', color: '#2BD4A4', budget_cents: null, archived: false, sort_order: 1 };
+  const apto: Project = { ...base('prj-apto', shared), name: 'Apartamento', symbol: 'house', color: '#38D9F5', budget_cents: 4_000_000, photo: '', archived: false, sort_order: 0 };
+  const mine: Project = { ...base('prj-meu', personal), name: 'Minhas compras', symbol: 'bag', color: '#2BD4A4', budget_cents: null, photo: '', archived: false, sort_order: 1 };
   const items: [Project, ProjectItem['kind'], string, string, number | null, number, boolean, number, string, string][] = [
     [apto, 'service', 'Pisos vinílicos novos', 'Sala', 675_000, 1, false, 0, '', ''], [apto, 'product', 'Churrasqueira elétrica compacta', 'Varanda', 89_900, 2, false, 0, '', ''],
     [apto, 'service', 'Parede ripada da sala', 'Sala', 717_300, 4, false, 0, 'Marcenaria', ''], [apto, 'product', 'Lâmpadas inteligentes (Zigbee)', 'Casa toda', 60_000, 3, false, 0, '', ''],
@@ -45,10 +45,11 @@ export function buildOrganizerDemo(personal: string): OrgSnapshot {
   ];
   const projectItems: ProjectItem[] = items.map(([project, kind, description, area, cents, priority, done, offset, vendor, notes], i) => ({
     ...base(`item-${i}`, project.household_id, addDays(now, -i)), project_id: project.id, kind, description, area, amount_cents: cents, priority, done,
-    date: done ? addDays(now, offset) : null, vendor, link: '', notes
+    date: done ? addDays(now, offset) : null, vendor, link: i === 1 ? 'https://www.amazon.com.br/' : i === 5 ? 'https://www.mercadolivre.com.br/' : '', notes, photo: ''
   }));
 
   const lists: ShoppingList[] = [
+    ...[38_910, 45_620, 36_480, 52_300, 40_150].map((cents, i) => ({ ...base(`list-past-${i}`, shared, addDays(now, -9 - 7 * (5 - i))), name: 'Mercado da semana', done_at: stamp(addDays(now, -8 - 7 * (5 - i))), total_cents: cents })),
     { ...base('list-old', shared, addDays(now, -9)), name: 'Mercado da semana', done_at: stamp(addDays(now, -8)), total_cents: 41_230 },
     { ...base('list-now', shared, addDays(now, -1)), name: 'Mercado da semana', done_at: null, total_cents: null }
   ];

@@ -5,6 +5,7 @@
   import { logKindColor, logKindShort } from '$lib/data/organizerTypes';
   import { formatKm, formatKmL, formatPerUnit, fuelInfo, odometerOf, spendByKind } from '$lib/features/car';
   import { hint } from '$lib/ui/hint';
+  import Donut from '$lib/ui/Donut.svelte';
 
   /** Números do carro: km, consumo, custo por km e gasto do ano por tipo. */
   let { vehicle }: { vehicle: Vehicle } = $props();
@@ -24,9 +25,11 @@
       <span class="caption">{money(Math.round(total / monthsSoFar), { cents: false })}/mês</span></div>
   </div>
   {#if total > 0}
-    <div class="bar" aria-hidden="true">{#each kinds as k (k.kind)}<span style:flex={k.cents} style:background={logKindColor[k.kind]}></span>{/each}</div>
-    <div class="legend">
-      {#each kinds as k (k.kind)}<span class="small"><i style:background={logKindColor[k.kind]}></i>{logKindShort[k.kind]} <b class="num">{money(k.cents, { cents: false })}</b></span>{/each}
+    <div class="split">
+      <Donut size={132} center={money(total, { cents: false })} caption={year} slices={kinds.map((k) => ({ id: k.kind, value: k.cents, color: logKindColor[k.kind], label: logKindShort[k.kind] }))} />
+      <div class="legend">
+        {#each kinds as k (k.kind)}<span class="small"><i style:background={logKindColor[k.kind]}></i><span class="grow">{logKindShort[k.kind]}</span><b class="num">{money(k.cents, { cents: false })}</b></span>{/each}
+      </div>
     </div>
   {/if}
 </section>
@@ -35,8 +38,9 @@
   .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
   @media (min-width: 640px) { .grid { grid-template-columns: repeat(4, 1fr); } }
   .grid > div { display: flex; flex-direction: column; gap: 3px; }
-  .bar { display: flex; height: 10px; border-radius: 6px; overflow: hidden; gap: 2px; }
-  .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; color: var(--text-2); }
-  .legend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+  .split { display: flex; gap: 20px; align-items: center; padding-top: 12px; border-top: 1px solid var(--stroke); }
+  .legend { flex: 1; display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px 18px; color: var(--text-2); }
+  .legend span { display: flex; align-items: center; gap: 8px; }
+  .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; flex: none; }
   .legend b { color: var(--text); font-weight: 600; }
 </style>

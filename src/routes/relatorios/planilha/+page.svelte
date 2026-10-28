@@ -8,6 +8,8 @@
   import WorkspaceBar from '$lib/ui/WorkspaceBar.svelte';
   import { hint } from '$lib/ui/hint';
   import SubHeader from '$lib/screens/more/SubHeader.svelte';
+  import BarChart from '$lib/ui/charts/BarChart.svelte';
+  import { seriesColor } from '$lib/ui/charts/scale';
   import { inScope, inScopeAccount } from '$lib/features/model';
   import { monthRange, monthStatus, sheetData, type CreditMonth, type SheetGrouping } from '$lib/features/sheet';
 
@@ -106,6 +108,15 @@
       <option value={6}>6 meses</option><option value={12}>12 meses</option><option value={24}>24 meses</option>
     </select>
   </div>
+  <section class="card">
+    <div class="card-head"><h3>Entradas × saídas</h3><span class="sub">meses previstos em tom mais claro</span></div>
+    <BarChart labels={months.map((m) => shortMonth(m).slice(0, 3))} height={210} current={months.findIndex((m) => monthStatus(m) === 'current')} faded={(i) => monthStatus(months[i]) === 'future'}
+      title="Entradas e saídas por mês" series={[
+        { id: 'in', name: 'Entradas', color: seriesColor.income, values: months.map((m) => data.sheet.sections.income.total.get(m) ?? 0) },
+        { id: 'credit', name: 'No crédito (faturas)', color: seriesColor.credit, stack: 'out', values: months.map((m) => data.sheet.sections.credit.total.get(m) ?? 0) },
+        { id: 'debit', name: 'No débito (conta e dinheiro)', color: seriesColor.account, stack: 'out', values: months.map((m) => data.sheet.sections.debit.total.get(m) ?? 0) }
+      ]} />
+  </section>
   <div class="card flush scroll" bind:this={scroller}>
     <table>
       <thead>

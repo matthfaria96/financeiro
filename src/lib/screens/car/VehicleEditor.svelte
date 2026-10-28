@@ -8,6 +8,7 @@
   import { hint } from '$lib/ui/hint';
   import SpacePicker from '$lib/screens/organizer/SpacePicker.svelte';
   import DeleteRow from '$lib/screens/organizer/DeleteRow.svelte';
+  import PhotoPicker from '$lib/screens/organizer/PhotoPicker.svelte';
 
   /** Cadastro do carro: nome, modelo, placa, valor, km e quem vê. */
   let { open = $bindable(), vehicle = null, onsaved }: { open: boolean; vehicle?: Vehicle | null; onsaved?: (vehicle: Vehicle) => void } = $props();
@@ -20,17 +21,18 @@
   let notes = $state('');
   let space = $state('');
   let withPlan = $state(true);
+  let photo = $state('');
 
   $effect(() => {
     if (!open) return;
     name = vehicle?.name ?? ''; model = vehicle?.model ?? ''; plate = vehicle?.plate ?? ''; year = vehicle?.year ?? '';
     value = vehicle?.value_cents ? centsToInput(vehicle.value_cents) : ''; km = vehicle?.odometer ? String(vehicle.odometer) : '';
-    notes = vehicle?.notes ?? ''; space = vehicle?.household_id ?? organizer.personalId; withPlan = true;
+    notes = vehicle?.notes ?? ''; photo = vehicle?.photo ?? ''; space = vehicle?.household_id ?? organizer.personalId; withPlan = true;
   });
 
   async function save() {
     const odometer = Number(km.replace(/\D/g, '')) || null;
-    const fields: Partial<Vehicle> = { name: name.trim(), model: model.trim(), plate: plate.trim().toUpperCase(), year: year.trim(), value_cents: parseCents(value), odometer, notes };
+    const fields: Partial<Vehicle> = { name: name.trim(), model: model.trim(), plate: plate.trim().toUpperCase(), year: year.trim(), value_cents: parseCents(value), odometer, notes, photo };
     let saved: Vehicle;
     if (vehicle) {
       await organizer.update('vehicles', vehicle.id, fields);
@@ -54,7 +56,8 @@
 
 <Sheet bind:open title={vehicle ? 'Editar carro' : 'Cadastrar carro'}>
   {#snippet actions()}<button class="btn primary" disabled={!name.trim()} onclick={save}>Salvar</button>{/snippet}
-  <div class="form-group" style="margin-top: 10px">
+  <div style="margin-top: 10px"><PhotoPicker bind:value={photo} label="Foto do carro" icon="car" /></div>
+  <div class="form-group" style="margin-top: 12px">
     <label class="form-row"><span class="field-label">Nome</span><input class="field" placeholder="ex.: HB20, Carro da família" bind:value={name} /></label>
     <label class="form-row"><span class="field-label">Modelo</span><input class="field" placeholder="ex.: 1.6 Flex automático" bind:value={model} /></label>
     <label class="form-row"><span class="field-label">Placa</span><input class="field" placeholder="opcional" bind:value={plate} /></label>

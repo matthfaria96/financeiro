@@ -1,12 +1,17 @@
-/* Sistema visual do Financeiro: escuro, verde profundo, cartões e vidro no estilo do iOS. */
+/* Sistema visual do Financeiro: escuro, verde profundo, vidro e degradês no estilo do macOS.
+   Desfoque de verdade (backdrop-filter) só na barra lateral, barras e folhas; os cartões imitam o vidro
+   com degradê + brilho na borda, que não custa nada para a GPU. */
 :root {
   --bg-top: #0f2c24;
   --bg-mid: #08120f;
   --bg-bottom: #040706;
-  --card: rgba(20, 27, 25, 0.92);
+  --card: linear-gradient(180deg, rgba(255, 255, 255, 0.068), rgba(255, 255, 255, 0.028));
+  --card-solid: #141b18;
   --card-2: rgba(255, 255, 255, 0.045);
-  --stroke: rgba(255, 255, 255, 0.07);
+  --stroke: rgba(255, 255, 255, 0.075);
   --stroke-strong: rgba(255, 255, 255, 0.14);
+  --highlight: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.25), 0 12px 32px rgba(0, 0, 0, 0.22);
   --text: #f4f7f6;
   --text-2: rgba(244, 247, 246, 0.58);
   --text-3: rgba(244, 247, 246, 0.38);
@@ -19,7 +24,7 @@
   --blue: #1e90ff;
   --radius: 22px;
   --radius-sm: 14px;
-  --sidebar: 236px;
+  --sidebar: 252px;
   --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', system-ui, sans-serif;
   --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, system-ui, sans-serif;
   --ease: cubic-bezier(0.32, 0.72, 0, 1);
@@ -36,13 +41,22 @@ html {
 body {
   margin: 0;
   min-height: 100dvh;
-  background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 38%, var(--bg-bottom) 100%) fixed;
-  background-color: var(--bg-bottom);
+  background: #060a09;
   color: var(--text);
   font: 400 16px/1.35 var(--font);
   font-feature-settings: 'tnum' 0;
   -webkit-font-smoothing: antialiased;
   overscroll-behavior-y: none;
+}
+
+/* Luzes de fundo (fixas, pintadas uma vez): dão a cor que o vidro dos cartões deixa passar. */
+body::before {
+  content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(900px 600px at 12% -8%, rgba(43, 212, 164, 0.20), transparent 62%),
+    radial-gradient(800px 560px at 88% -4%, rgba(57, 135, 229, 0.16), transparent 60%),
+    radial-gradient(900px 700px at 70% 108%, rgba(144, 133, 233, 0.12), transparent 60%),
+    linear-gradient(180deg, #0b1714 0%, #060a09 55%);
 }
 
 button, input, select, textarea { font: inherit; color: inherit; }
@@ -64,8 +78,22 @@ a.link { color: var(--accent); }
   background: var(--card);
   border: 1px solid var(--stroke);
   border-radius: var(--radius);
+  box-shadow: var(--highlight), var(--shadow);
   padding: 18px;
 }
+a.card { transition: border-color 0.2s, transform 0.2s var(--ease), background 0.2s; }
+a.card:hover { border-color: var(--stroke-strong); }
+.glass {
+  background: rgba(22, 30, 27, 0.62);
+  backdrop-filter: blur(28px) saturate(1.7); -webkit-backdrop-filter: blur(28px) saturate(1.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+.card-head h3 { margin: 0; font: 600 16px var(--font-display); letter-spacing: -0.01em; }
+.card-head .sub { font-size: 12.5px; color: var(--text-2); }
+.hero { font: 600 46px/1.05 var(--font-display); letter-spacing: -0.03em; }
+@media (min-width: 1200px) { .hero { font-size: 54px; } }
+.grad-text { background: linear-gradient(120deg, #ffffff 10%, #b8ffe6 60%, #8fd3ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .card.tight { padding: 14px; }
 .card.flush { padding: 0; overflow: hidden; }
 .stack { display: flex; flex-direction: column; gap: 12px; }
@@ -109,7 +137,7 @@ a.link { color: var(--accent); }
 
 /* Formulários (padrão "lista agrupada" do iOS) */
 .form-group {
-  background: var(--card); border: 1px solid var(--stroke); border-radius: 16px; overflow: hidden;
+  background: var(--card); border: 1px solid var(--stroke); border-radius: 16px; overflow: hidden; box-shadow: var(--highlight);
 }
 .form-group > * + * { border-top: 1px solid var(--stroke); }
 .form-row {
@@ -152,8 +180,20 @@ select.field option { background: #18201d; color: var(--text); }
 .section-title h2 { margin: 0; font: 600 20px/1.2 var(--font-display); letter-spacing: -0.01em; }
 
 @media (min-width: 960px) {
-  .page { padding-bottom: 48px; }
+  .page { max-width: 1180px; padding: 22px 36px 56px; gap: 16px; }
+  .page.narrow { max-width: 820px; }
 }
+
+/* Painéis do computador: 2 ou 3 colunas que viram uma no celular. */
+.grid-2, .grid-3, .grid-main { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); align-items: start; }
+@media (min-width: 900px) {
+  .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .grid-main { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); }
+  .span-2 { grid-column: span 2; }
+}
+.stretch { align-items: stretch; }
+.stretch > .card { height: 100%; }
 
 /* Lista de linhas dentro de um cartão */
 .list > * + * { border-top: 1px solid var(--stroke); }

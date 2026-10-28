@@ -9,6 +9,8 @@
   import { monthOf } from '$lib/core/dates';
   import { filter } from '../transactions/filter.svelte';
   import { goto } from '$app/navigation';
+  import BarChart from '$lib/ui/charts/BarChart.svelte';
+  import { shortMonth } from '$lib/core/dates';
 
   /** Fixo × variável (junta conta, dinheiro e cartão) ou meio de pagamento. Consumo pela data da compra. */
   let { month, entries, mode }: { month: Month; entries: Entry[]; mode: 'cost' | 'payment' } = $props();
@@ -16,13 +18,13 @@
   type Group = { id: string; title: string; icon: string; color: string; detail: string; test: (e: Entry) => boolean };
   const groups: Record<'cost' | 'payment', Group[]> = {
     cost: [
-      { id: 'fixed', title: 'Fixo', icon: 'pin', color: '#2BD4A4', detail: 'Contas que se repetem, de qualquer conta ou cartão.', test: (e) => costOf(e) === 'fixed' },
-      { id: 'variable', title: 'Variável', icon: 'activity', color: '#FF9F1C', detail: 'Gastos que mudam de um mês para outro.', test: (e) => costOf(e) === 'variable' }
+      { id: 'fixed', title: 'Fixo', icon: 'pin', color: '#3987e5', detail: 'Contas que se repetem, de qualquer conta ou cartão.', test: (e) => costOf(e) === 'fixed' },
+      { id: 'variable', title: 'Variável', icon: 'activity', color: '#d95926', detail: 'Gastos que mudam de um mês para outro.', test: (e) => costOf(e) === 'variable' }
     ],
     payment: [
-      { id: 'checking', title: 'Conta corrente', icon: 'bank', color: '#1E90FF', detail: 'Débito, Pix, boletos e transferências para outras pessoas.', test: (e) => accountOf(e)?.kind === 'checking' },
-      { id: 'cash', title: 'Dinheiro', icon: 'cash', color: '#A5D6A7', detail: 'Gastos em espécie lançados na conta Dinheiro.', test: (e) => accountOf(e)?.kind === 'cash' },
-      { id: 'card', title: 'Cartão', icon: 'card', color: '#B388FF', detail: 'Compras no crédito deste mês (pagas nas próximas faturas).', test: (e) => accountOf(e)?.kind === 'creditCard' }
+      { id: 'checking', title: 'Conta corrente', icon: 'bank', color: '#3987e5', detail: 'Débito, Pix, boletos e transferências para outras pessoas.', test: (e) => accountOf(e)?.kind === 'checking' },
+      { id: 'cash', title: 'Dinheiro', icon: 'cash', color: '#199e70', detail: 'Gastos em espécie lançados na conta Dinheiro.', test: (e) => accountOf(e)?.kind === 'cash' },
+      { id: 'card', title: 'Cartão', icon: 'card', color: '#d95926', detail: 'Compras no crédito deste mês (pagas nas próximas faturas).', test: (e) => accountOf(e)?.kind === 'creditCard' }
     ]
   };
 
@@ -45,6 +47,8 @@
       return { ...g, total, change: old > 0 ? (total - old) / old : null, top: [...byCategory.values()].filter((x) => x.cents > 0).sort((a, b) => b.cents - a.cents).slice(0, 8) };
     });
   });
+  const months = $derived(Array.from({ length: 6 }, (_, i) => addMonths(month, i - 5)));
+  const trend = $derived(groups[mode].map((g) => ({ id: g.id, name: g.title, color: g.color, stack: 'all', values: months.map((m) => -expenses(m).filter(g.test).reduce((s, e) => s + e.amount_cents, 0)) })));
   const sum = $derived(Math.max(computed.reduce((s, g) => s + g.total, 0), 1));
 
   function open(id: string) {
@@ -62,6 +66,12 @@
   </div>
 </section>
 
+<section class="card">
+  <div class="card-head"><h3>Últimos 6 meses</h3><span class="sub">pela data da compra</span></div>
+  <BarChart labels={months.map((m) => shortMonth(m).slice(0, 3))} current={5} series={trend} height={200} title="{mode === 'cost' ? 'Fixo e variável' : 'Meio de pagamento'} nos últimos 6 meses" />
+</section>
+
+<div class="grid-{computed.length === 3 ? '3' : '2'}">
 {#each computed as g (g.id)}
   <section class="card stack-sm" use:hint={[g.title, g.detail]}>
     <div class="row between"><b class="row" style="gap: 8px; color: {g.color}"><Icon name={g.icon} size={17} />{g.title}</b><span class="row" style="gap: 8px"><b class="num">{money(g.total)}</b><ChangeBadge change={g.change} /></span></div>
@@ -72,6 +82,7 @@
     {:else}<span class="small muted">Nada neste mês.</span>{/each}
   </section>
 {/each}
+</div>
 
 <style>
   .bar { display: flex; gap: 2px; height: 14px; border-radius: 7px; overflow: hidden; background: rgba(255, 255, 255, 0.06); }

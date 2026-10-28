@@ -7,10 +7,14 @@
   import SubHeader from '$lib/screens/more/SubHeader.svelte';
   import SharedBadge from '$lib/screens/organizer/SharedBadge.svelte';
   import { createList, duplicateList, itemsOf, lists } from '$lib/features/shopping';
+  import BarChart from '$lib/ui/charts/BarChart.svelte';
 
   const all = $derived(lists());
   const latest = $derived(all[0]);
   const day = (iso: string) => dayMonth(iso.slice(0, 10));
+
+  const paid = $derived(all.filter((l) => l.done_at && l.total_cents).toReversed().slice(-12));
+  const average = $derived(paid.length ? Math.round(paid.reduce((s, l) => s + l.total_cents!, 0) / paid.length) : 0);
 
   async function fresh() {
     const list = await createList(undefined, organizer.shared[0]?.id);
@@ -30,6 +34,12 @@
   </SubHeader>
   {#if latest}
     <button class="btn primary lg block" onclick={again} use:hint={['Nova a partir da última', 'Copia os itens da lista mais recente, todos desmarcados.']}><Icon name="copy-plus" size={18} />Nova lista a partir da última</button>
+  {/if}
+  {#if paid.length >= 2}
+    <section class="card">
+      <div class="card-head"><h3>Quanto deu cada compra</h3><span class="sub">média {money(average, { cents: false })}</span></div>
+      <BarChart labels={paid.map((l) => day(l.done_at!))} height={160} current={paid.length - 1} title="Total de cada compra" series={[{ id: 'total', name: 'Total', color: '#199e70', values: paid.map((l) => l.total_cents!) }]} />
+    </section>
   {/if}
   {#each all as list (list.id)}
     {@const items = itemsOf(list)}

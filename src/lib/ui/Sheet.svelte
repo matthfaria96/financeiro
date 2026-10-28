@@ -46,7 +46,8 @@
   .sheet {
     position: fixed; z-index: 81; left: 50%; top: 50%; transform: translate(-50%, -50%);
     width: min(560px, calc(100vw - 32px)); max-height: min(86vh, 900px); display: flex; flex-direction: column;
-    background: #121916; border: 1px solid var(--stroke-strong); border-radius: 24px; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+    background: rgba(20, 28, 25, 0.86); backdrop-filter: blur(30px) saturate(1.6); -webkit-backdrop-filter: blur(30px) saturate(1.6);
+    border: 1px solid var(--stroke-strong); border-radius: 24px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 30px 80px rgba(0, 0, 0, 0.6);
   }
   .sheet.wide { width: min(820px, calc(100vw - 32px)); }
   header { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; padding: 10px 10px 8px; border-bottom: 1px solid var(--stroke); }

@@ -10,6 +10,7 @@
   import { hint } from '$lib/ui/hint';
   import EntryRow from '$lib/screens/EntryRow.svelte';
   import MoveSheet from '$lib/screens/transactions/MoveSheet.svelte';
+  import TxInsights from '$lib/screens/transactions/TxInsights.svelte';
   import { filter, periodName, type Period } from '$lib/screens/transactions/filter.svelte';
   import { inScopeAccount, kindOf } from '$lib/features/model';
   import { reconcileMirrors } from '$lib/features/mirrors';
@@ -116,8 +117,10 @@
     {#if filter.active}<button class="btn ghost" onclick={() => filter.reset()}>Limpar</button>{/if}
   </div>
 
+  <div class="layout">
+  <div class="list">
   {#if list.length}
-    <div class="card tight row between totals" use:hint={['Resumo', 'Somas do que está filtrado. Transferências entre suas contas e pagamento de fatura ficam de fora.']}>
+    <div class="card tight row between totals mobile-only" use:hint={['Resumo', 'Somas do que está filtrado. Transferências entre suas contas e pagamento de fatura ficam de fora.']}>
       <div><span class="caption">Entradas</span><b class="num pos">{money(totals.income)}</b></div>
       <div><span class="caption">Saídas</span><b class="num">{money(totals.out)}</b></div>
       <div style="text-align: right"><span class="caption">Resultado</span><b class="num" class:pos={totals.net >= 0} class:neg={totals.net < 0}>{money(totals.net)}</b></div>
@@ -132,6 +135,9 @@
   {:else}
     <div class="empty stack-sm"><Icon name="search" size={34} class="faint" /><b>Nenhum lançamento</b><span class="muted small">{store.entries.length ? 'Mude o período ou limpe os filtros.' : 'Importe um extrato para começar.'}</span></div>
   {/each}
+  </div>
+  {#if list.length}<div class="side"><TxInsights entries={list} /></div>{/if}
+  </div>
 </div>
 
 {#if selecting && selected.size}
@@ -156,12 +162,20 @@
   .search input { flex: 1; background: none; border: 0; outline: none; color: var(--text); }
   .filters .chip { position: relative; }
   .filters select { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; align-items: start; }
+  .list { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .side { display: none; }
+  @media (min-width: 1100px) {
+    .layout { grid-template-columns: minmax(0, 1fr) 360px; }
+    .side { display: block; position: sticky; top: 22px; }
+    .mobile-only { display: none; }
+  }
   .totals > div { display: flex; flex-direction: column; gap: 2px; }
   .totals b { font-size: 15.5px; }
   .day { font-weight: 500; margin: 10px 4px -2px; }
   .empty { align-items: center; text-align: center; padding: 60px 0; }
   .menu-wrap { position: relative; }
-  .menu { position: absolute; right: 0; top: 46px; z-index: 30; padding: 6px; min-width: 220px; display: flex; flex-direction: column; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5); }
+  .menu { position: absolute; right: 0; top: 46px; z-index: 30; padding: 6px; min-width: 220px; display: flex; flex-direction: column; background: rgba(24, 32, 29, 0.94); backdrop-filter: blur(24px); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5); }
   .menu button { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; border: 0; background: none; text-align: left; }
   .menu button:hover { background: rgba(255, 255, 255, 0.07); }
   .selbar { position: fixed; z-index: 60; left: 12px; right: 12px; bottom: calc(84px + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 20px; background: rgba(28, 36, 33, 0.9); backdrop-filter: blur(20px); border: 1px solid var(--stroke-strong); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5); }

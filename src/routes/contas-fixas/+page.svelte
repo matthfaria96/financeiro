@@ -9,6 +9,7 @@
   import { hint } from '$lib/ui/hint';
   import BillRow from '$lib/screens/bills/BillRow.svelte';
   import BillEditor from '$lib/screens/bills/BillEditor.svelte';
+  import BillsPanel from '$lib/screens/bills/BillsPanel.svelte';
   import { merchantForBill } from '$lib/screens/bills/billLook';
   import { billStatus, dueDate, recurringSuggestions } from '$lib/features/bills';
   import { inScope, inScopeBill } from '$lib/features/model';
@@ -42,6 +43,7 @@
     <button class="icon-btn" aria-label="Nova conta fixa" onclick={() => edit(null)} use:hint={['Nova conta fixa', 'Uma conta que se repete todo mês (aluguel, luz, assinatura).']}><Icon name="plus" /></button>
   </header>
   <WorkspaceBar />
+  <div class="layout"><div class="main">
   <div class="row between">
     <button class="icon-btn" aria-label="Mês anterior" onclick={() => (month = addMonths(month, -1))}><Icon name="chevron-left" /></button>
     <button class="month" onclick={() => (month = monthOf(today()))}>{monthTitle(month)}</button>
@@ -81,6 +83,9 @@
       {/each}
     </div>
   {/if}
+  </div>
+  {#if bills.length}<aside class="side"><BillsPanel {bills} {month} {entries} /></aside>{/if}
+  </div>
 </div>
 
 <BillEditor bind:open bill={editing} />
@@ -88,6 +93,10 @@
 <style>
   .top h1 { margin: 6px 4px; font: 700 30px var(--font-display); letter-spacing: -0.02em; }
   .month { border: 0; padding: 8px 20px; border-radius: 999px; background: rgba(255, 255, 255, 0.07); font: 500 18px var(--font-display); }
+  .layout { display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr); align-items: start; }
+  .main { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .side { display: flex; flex-direction: column; gap: 16px; }
+  @media (min-width: 1100px) { .layout { grid-template-columns: minmax(0, 1fr) 340px; } .side { position: sticky; top: 22px; } }
   .cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
   .wd { text-align: center; font-size: 13px; color: var(--text-2); padding-bottom: 2px; }
   .cell { min-height: 72px; border-radius: 11px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--stroke); display: flex; flex-direction: column; align-items: center; padding-top: 7px; gap: 5px; }

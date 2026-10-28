@@ -1,22 +1,32 @@
 <script lang="ts">
-  import { percent } from '$lib/core/money';
-  /** Rosca em SVG puro (sem biblioteca de gráficos). */
-  let { slices, size = 220, thickness = 0.42, labels = true, center = '' }: { slices: { id: string; value: number; color: string }[]; size?: number; thickness?: number; labels?: boolean; center?: string } = $props();
+  import { money, percent } from '$lib/core/money';
+  /** Rosca em SVG puro. Passar o mouse numa fatia mostra nome, valor e % no centro. */
+  let { slices, size = 220, thickness = 0.32, labels = false, center = '', caption = '', format = (v: number) => money(v, { cents: false }) }: {
+    slices: { id: string; value: number; color: string; label?: string }[];
+    size?: number;
+    thickness?: number;
+    labels?: boolean;
+    center?: string;
+    caption?: string;
+    format?: (value: number) => string;
+  } = $props();
 
+  let hovered = $state<string | null>(null);
   const total = $derived(slices.reduce((s, x) => s + Math.max(0, x.value), 0));
   const arcs = $derived.by(() => {
     const r = 50;
     const inner = r * (1 - thickness);
-    const gap = slices.length > 1 ? 0.012 : 0;
+    const visible = slices.filter((s) => s.value > 0);
+    const gap = visible.length > 1 ? 0.014 : 0;
     let angle = -Math.PI / 2;
-    return slices.filter((s) => s.value > 0).map((slice) => {
+    return visible.map((slice) => {
       const share = slice.value / (total || 1);
       const sweep = share * Math.PI * 2;
       const a0 = angle + gap;
       const a1 = angle + sweep - gap;
       angle += sweep;
       const large = a1 - a0 > Math.PI ? 1 : 0;
-      const p = (a: number, radius: number) => `${50 + radius * Math.cos(a)} ${50 + radius * Math.sin(a)}`;
+      const p = (a: number, radius: number) => `${(50 + radius * Math.cos(a)).toFixed(2)} ${(50 + radius * Math.sin(a)).toFixed(2)}`;
       const path = share >= 0.999
         ? `M ${p(0, r)} A ${r} ${r} 0 1 1 ${p(Math.PI, r)} A ${r} ${r} 0 1 1 ${p(0, r)} M ${p(0, inner)} A ${inner} ${inner} 0 1 0 ${p(Math.PI, inner)} A ${inner} ${inner} 0 1 0 ${p(0, inner)} Z`
         : `M ${p(a0, r)} A ${r} ${r} 0 ${large} 1 ${p(a1, r)} L ${p(a1, inner)} A ${inner} ${inner} 0 ${large} 0 ${p(a0, inner)} Z`;
@@ -24,16 +34,34 @@
       return { ...slice, path, share, labelAt: p(mid, (r + inner) / 2).split(' ').map(Number) };
     });
   });
+  const focus = $derived(arcs.find((a) => a.id === hovered));
 </script>
 
-<svg viewBox="0 0 100 100" width={size} height={size} role="img" aria-label="Gráfico de rosca">
-  {#each arcs as arc (arc.id)}
-    <path d={arc.path} fill={arc.color} fill-rule="evenodd" />
-    {#if labels && arc.share >= 0.06}
-      <text x={arc.labelAt[0]} y={arc.labelAt[1]} text-anchor="middle" dominant-baseline="central" font-size="5.4" font-weight="700" fill="rgba(0,0,0,0.78)">{percent(arc.share)}</text>
+<div class="donut" style:width="{size}px" style:height="{size}px">
+  <svg viewBox="0 0 100 100" width={size} height={size} role="img" aria-label={caption || 'Gráfico de rosca'} onpointerleave={() => (hovered = null)}>
+    {#each arcs as arc (arc.id)}
+      <path d={arc.path} fill={arc.color} fill-rule="evenodd" opacity={hovered && hovered !== arc.id ? 0.35 : 1}
+        transform={hovered === arc.id ? `translate(${((arc.labelAt[0] - 50) * 0.05).toFixed(2)} ${((arc.labelAt[1] - 50) * 0.05).toFixed(2)})` : ''}
+        role="button" tabindex="0" aria-label="{arc.label ?? arc.id}: {format(arc.value)} ({percent(arc.share)})"
+        onpointerenter={() => (hovered = arc.id)} onfocus={() => (hovered = arc.id)} onblur={() => (hovered = null)} />
+      {#if labels && arc.share >= 0.08 && !hovered}
+        <text x={arc.labelAt[0]} y={arc.labelAt[1]} text-anchor="middle" dominant-baseline="central" font-size="5" font-weight="700" fill="#fff" pointer-events="none">{percent(arc.share)}</text>
+      {/if}
+    {/each}
+  </svg>
+  <div class="center" aria-hidden="true">
+    {#if focus}
+      <span class="name ellipsis">{focus.label ?? ''}</span><b>{format(focus.value)}</b><span class="name">{percent(focus.share)}</span>
+    {:else if center}
+      {#if caption}<span class="name">{caption}</span>{/if}<b>{center}</b>
     {/if}
-  {/each}
-  {#if center}
-    <text x="50" y="50" text-anchor="middle" dominant-baseline="central" font-size="5.6" fill="var(--text)">{center}</text>
-  {/if}
-</svg>
+  </div>
+</div>
+
+<style>
+  .donut { position: relative; flex: none; container-type: inline-size; }
+  path { transition: opacity 0.2s, transform 0.2s var(--ease); outline: none; }
+  .center { position: absolute; inset: 20%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; pointer-events: none; line-height: 1.15; gap: 2px; }
+  .center b { font: 600 clamp(12px, 9cqw, 24px) var(--font-display); }
+  .name { font-size: clamp(10px, 5.2cqw, 12.5px); color: var(--text-2); max-width: 100%; }
+</style>

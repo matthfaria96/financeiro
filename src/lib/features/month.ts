@@ -154,3 +154,9 @@ export function outlook(entries: Entry[], accounts: Account[], bills: Bill[], mo
   }
   return result;
 }
+
+/** Últimos `count` meses (o atual por último) com o fluxo de cada um, para os gráficos. */
+export function flowHistory(count: number, entries: Entry[], accounts: Account[]): { month: Month; flow: MonthFlow }[] {
+  const now = monthOf(today());
+  return Array.from({ length: count }, (_, index) => addMonths(now, index - count + 1)).map((month) => ({ month, flow: monthFlow(month, entries, accounts) }));
+}

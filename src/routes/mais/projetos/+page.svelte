@@ -33,36 +33,50 @@
   {/if}
 
   <SectionTitle title="Projetos" />
+  <div class="covers">
   {#each projects as project (project.id)}
     {@const t = totals(itemsOf(project))}
-    <a class="card row project" class:archived={project.archived} href="#/mais/projetos/{project.id}">
-      <CategoryIcon symbol={project.symbol} color={project.color} size={44} />
-      <div class="grow stack-sm" style="gap: 3px; min-width: 0">
-        <div class="row" style="gap: 8px"><b class="ellipsis">{project.name}</b><SharedBadge householdId={project.household_id} />{#if project.archived}<span class="pill faint">Arquivado</span>{/if}</div>
-        <span class="caption">{t.pending} planejado{t.pending === 1 ? '' : 's'} · {t.done} feito{t.done === 1 ? '' : 's'}</span>
+    <a class="card flush project" class:archived={project.archived} href="#/mais/projetos/{project.id}">
+      <div class="cover" style:--c={project.color} style:background-image={project.photo ? `url(${project.photo})` : undefined}>
+        {#if !project.photo}<CategoryIcon symbol={project.symbol} color={project.color} size={52} />{/if}
+        <span class="badge"><SharedBadge householdId={project.household_id} /></span>
       </div>
-      <div class="sums">
-        <span class="num" use:hint={['Já gasto', 'Soma dos itens feitos.']}>{money(t.spent, { cents: false })}</span>
-        {#if t.planned}<span class="caption num warn" use:hint={['Falta', 'Soma estimada do que está planejado.']}>+{money(t.planned, { cents: false })}</span>{/if}
+      <div class="info">
+        <div class="row" style="gap: 8px"><b class="ellipsis grow">{project.name}</b>{#if project.archived}<span class="pill faint">Arquivado</span>{/if}</div>
+        <span class="caption">{t.pending} planejado{t.pending === 1 ? '' : 's'} · {t.done} feito{t.done === 1 ? '' : 's'}</span>
+        <div class="meter" use:hint={['Feito × falta', 'Verde: já gasto. Laranja: o que ainda está planejado.']}>
+          {#if t.spent + t.planned > 0}<span style:flex={t.spent} class="done"></span><span style:flex={t.planned} class="todo"></span>{/if}
+        </div>
+        <div class="row between"><span class="num">{money(t.spent, { cents: false })}</span>{#if t.planned}<span class="caption num warn">+{money(t.planned, { cents: false })}</span>{/if}</div>
       </div>
     </a>
-  {:else}
+  {/each}
+  </div>
+  {#if !projects.length}
     <div class="card stack empty">
       <Icon name="house" size={34} class="faint" />
       <b>Planeje compras e serviços</b>
       <p class="muted small">Crie um projeto (ex.: Apartamento) e anote o que quer comprar ou contratar, com prioridade e valor. Quando fizer, marque e anote loja e data: vira o histórico do que foi gasto.</p>
       <button class="btn primary" onclick={() => (creating = true)}><Icon name="plus" size={16} />Novo projeto</button>
     </div>
-  {/each}
+  {/if}
   {#if archivedCount}<button class="btn ghost" onclick={() => (showArchived = !showArchived)}>{showArchived ? 'Esconder arquivados' : `Mostrar arquivados (${archivedCount})`}</button>{/if}
 </div>
 <ProjectEditor bind:open={creating} onsaved={(p) => (location.hash = `#/mais/projetos/${p.id}`)} />
 {#if editing}<ItemEditor bind:open={itemOpen} project={editing.project} item={editing.item} />{/if}
 
 <style>
-  .project { color: inherit; gap: 14px; }
+  .covers { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+  .project { color: inherit; display: flex; flex-direction: column; }
+  .project:hover { transform: translateY(-2px); }
   .archived { opacity: 0.6; }
-  .sums { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+  .cover { position: relative; height: 132px; display: grid; place-items: center; background-size: cover; background-position: center;
+    background-color: #111815; background-image: radial-gradient(300px 140px at 70% 0%, color-mix(in srgb, var(--c) 35%, transparent), transparent 70%); }
+  .badge { position: absolute; top: 10px; right: 10px; }
+  .info { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 8px; }
+  .meter { display: flex; gap: 2px; height: 8px; border-radius: 4px; overflow: hidden; background: rgba(255, 255, 255, 0.06); }
+  .meter .done { background: #199e70; }
+  .meter .todo { background: #d95926; }
   .empty { align-items: center; text-align: center; padding: 28px 18px; }
   .empty p { margin: 0; max-width: 440px; }
 </style>

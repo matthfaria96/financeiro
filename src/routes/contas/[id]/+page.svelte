@@ -14,7 +14,12 @@
   import EntryRow from '$lib/screens/EntryRow.svelte';
   import AccountEditor from '$lib/screens/accounts/AccountEditor.svelte';
   import { filter } from '$lib/screens/transactions/filter.svelte';
-  import { balanceOf, kindOf, lastEntryDate } from '$lib/features/model';
+  import { balanceOf, billDueOf, kindOf, lastEntryDate } from '$lib/features/model';
+  import LineChart from '$lib/ui/charts/LineChart.svelte';
+  import BarChart from '$lib/ui/charts/BarChart.svelte';
+  import { seriesColor } from '$lib/ui/charts/scale';
+  import { bankColor } from '$lib/ui/look';
+  import { lastDay, shortMonth } from '$lib/core/dates';
 
   const account = $derived(store.accountById.get(page.params.id ?? ''));
   const entries = $derived(account ? (store.entriesByAccount.get(account.id) ?? []).toSorted((a, b) => b.date.localeCompare(a.date)) : []);
@@ -26,6 +31,12 @@
   const thisMonth = $derived(entries.filter((e) => monthOf(e.date) === monthOf(today()) && kindOf(e) !== 'transfer'));
   const batches = $derived(store.import_batches.filter((b) => b.account_id === account?.id).toSorted((a, b) => b.imported_at.localeCompare(a.imported_at)));
   let editing = $state(false);
+  const labels = $derived(months.map((m) => shortMonth(m).slice(0, 3)));
+  const now = today();
+  const balances = $derived(account ? months.map((m) => (first && m >= first ? balanceOf(account, lastDay(m) < now ? lastDay(m) : now) : null)) : []);
+  const perMonth = (sign: 1 | -1) => months.map((m) => entries.filter((e) => !e.is_mirror && monthOf(e.date) === m && kindOf(e) !== 'transfer' && Math.sign(e.amount_cents) === sign).reduce((s, e) => s + sign * e.amount_cents, 0));
+  // Cartão: valor de cada fatura pelo mês de vencimento.
+  const bills = $derived(months.map((m) => entries.filter((e) => !e.is_mirror && kindOf(e) === 'expense' && monthOf(billDueOf(e) ?? e.date) === m).reduce((s, e) => s - e.amount_cents, 0)));
 </script>
 
 {#if account}
@@ -45,6 +56,19 @@
         </span>
       </div>
     </section>
+    {#if entries.length}
+      <div class="grid-2 stretch">
+        {#if account.kind === 'creditCard'}
+          <section class="card"><div class="card-head"><h3>Faturas</h3><span class="sub">por mês de vencimento</span></div>
+            <BarChart {labels} current={11} height={200} title="Valor das faturas" series={[{ id: 'bill', name: 'Fatura', color: bankColor(account), values: bills }]} /></section>
+        {:else}
+          <section class="card"><div class="card-head"><h3>Saldo</h3><span class="sub">no fim de cada mês</span></div>
+            <LineChart {labels} height={200} title="Saldo no fim de cada mês" series={[{ id: 'bal', name: 'Saldo', color: bankColor(account), values: balances }]} /></section>
+        {/if}
+        <section class="card"><div class="card-head"><h3>Entrou e saiu</h3><span class="sub">sem transferências entre contas</span></div>
+          <BarChart {labels} current={11} height={200} title="Entrou e saiu por mês" series={[{ id: 'in', name: 'Entrou', color: seriesColor.income, values: perMonth(1) }, { id: 'out', name: 'Saiu', color: seriesColor.account, values: perMonth(-1) }]} /></section>
+      </div>
+    {/if}
     <div class="two">
       <button class="btn primary lg" onclick={() => ui.startImport(account.id)}><Icon name="import" size={18} />Importar extrato</button>
       <button class="btn lg" onclick={() => { filter.set({ accountId: account.id, period: 'all' }); goto('#/transacoes'); }}><Icon name="list" size={18} />Ver lançamentos</button>

@@ -8,6 +8,7 @@
   import { palette } from '$lib/ui/look';
   import SpacePicker from '$lib/screens/organizer/SpacePicker.svelte';
   import DeleteRow from '$lib/screens/organizer/DeleteRow.svelte';
+  import PhotoPicker from '$lib/screens/organizer/PhotoPicker.svelte';
   import { projectSymbols } from '$lib/features/projects';
 
   /** Projeto: um apartamento, uma reforma, as compras de alguém. */
@@ -18,15 +19,16 @@
   let budget = $state('');
   let space = $state('');
   let archived = $state(false);
+  let photo = $state('');
 
   $effect(() => {
     if (!open) return;
     name = project?.name ?? ''; symbol = project?.symbol ?? 'house'; color = project?.color ?? '#38D9F5';
-    budget = project?.budget_cents ? centsToInput(project.budget_cents) : ''; space = project?.household_id ?? organizer.personalId; archived = project?.archived ?? false;
+    budget = project?.budget_cents ? centsToInput(project.budget_cents) : ''; space = project?.household_id ?? organizer.personalId; archived = project?.archived ?? false; photo = project?.photo ?? '';
   });
 
   async function save() {
-    const fields: Partial<Project> = { name: name.trim(), symbol, color, budget_cents: parseCents(budget), archived };
+    const fields: Partial<Project> = { name: name.trim(), symbol, color, budget_cents: parseCents(budget), archived, photo };
     let saved: Project;
     if (project) {
       await organizer.update('projects', project.id, fields);
@@ -42,7 +44,7 @@
 
 <Sheet bind:open title={project ? 'Editar projeto' : 'Novo projeto'}>
   {#snippet actions()}<button class="btn primary" disabled={!name.trim()} onclick={save}>Salvar</button>{/snippet}
-  <div class="preview"><CategoryIcon {symbol} {color} size={56} /></div>
+  <div class="preview"><PhotoPicker bind:value={photo} label="Foto de capa" icon={symbol} /></div>
   <div class="form-group">
     <label class="form-row"><span class="field-label">Nome</span><input class="field" placeholder="ex.: Apartamento, Reforma, Minhas compras" bind:value={name} /></label>
     <label class="form-row" use:hint={['Orçamento', 'Opcional: quanto pretende gastar no total. O app mostra quanto ainda sobra.']}><span class="field-label">Orçamento</span><input class="field num" inputmode="decimal" placeholder="opcional" bind:value={budget} /></label>
@@ -60,7 +62,7 @@
 </Sheet>
 
 <style>
-  .preview { display: grid; place-items: center; padding: 8px 0 14px; }
+  .preview { padding: 8px 0 14px; }
   .picks { display: flex; flex-wrap: wrap; gap: 8px; }
   .pick { border: 2px solid transparent; border-radius: 12px; background: none; padding: 2px; }
   .pick.on { border-color: var(--accent); }

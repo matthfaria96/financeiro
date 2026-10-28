@@ -1,23 +1,21 @@
 <script lang="ts">
   import { store } from '$lib/data/store.svelte';
   import { ui } from '$lib/ui/ui.svelte';
-  import { money } from '$lib/core/money';
-  import { addMonths, lastDay, monthOf, today } from '$lib/core/dates';
+  import { addMonths, dayHeader, lastDay, monthOf, today } from '$lib/core/dates';
   import { monthReport } from '$lib/core/reports';
   import Icon from '$lib/ui/Icon.svelte';
-  import SectionTitle from '$lib/ui/SectionTitle.svelte';
   import WorkspaceBar from '$lib/ui/WorkspaceBar.svelte';
-  import ChangeBadge from '$lib/ui/ChangeBadge.svelte';
-  import Donut from '$lib/ui/Donut.svelte';
-  import AreaChart from '$lib/ui/AreaChart.svelte';
   import { hint } from '$lib/ui/hint';
-  import OutlookCards from '$lib/screens/home/OutlookCards.svelte';
-  import AccountRow from '$lib/screens/accounts/AccountRow.svelte';
-  import AccountEditor from '$lib/screens/accounts/AccountEditor.svelte';
+  import NetWorthCard from '$lib/screens/home/NetWorthCard.svelte';
+  import MonthCard from '$lib/screens/home/MonthCard.svelte';
+  import ForecastCard from '$lib/screens/home/ForecastCard.svelte';
+  import FlowCard from '$lib/screens/home/FlowCard.svelte';
+  import SpendingCard from '$lib/screens/home/SpendingCard.svelte';
+  import WalletCard from '$lib/screens/home/WalletCard.svelte';
   import BillRow from '$lib/screens/bills/BillRow.svelte';
   import ExportGuide from '$lib/screens/import/ExportGuide.svelte';
   import { balanceOf, categoryOf, inScope, inScopeAccount, inScopeBill, kindOf, rootOf } from '$lib/features/model';
-  import { outlook } from '$lib/features/month';
+  import { flowHistory, outlook } from '$lib/features/month';
   import { billStatus } from '$lib/features/bills';
   import { matchKey } from '$lib/features/rules';
 
@@ -27,12 +25,6 @@
   const look = $derived(entries.length ? outlook(entries, accounts, bills, store.forecastMonths) : null);
   const month = monthOf(today());
 
-  const groups = $derived([
-    { title: 'Contas e dinheiro', icon: 'bank', note: 'disponível', items: accounts.filter((a) => a.kind === 'checking' || a.kind === 'cash'), card: false },
-    { title: 'Investimentos', icon: 'invest', note: 'investido', items: accounts.filter((a) => a.kind === 'savings'), card: false },
-    { title: 'Cartões', icon: 'card', note: 'em aberto', items: accounts.filter((a) => a.kind === 'creditCard'), card: true }
-  ].filter((g) => g.items.length));
-
   const spending = $derived.by(() => {
     const items = entries.filter((e) => !e.is_mirror).map((e) => {
       const root = rootOf(categoryOf(e));
@@ -40,79 +32,69 @@
     });
     return monthReport(month, items, 'expenses');
   });
-  const pendingBills = $derived(bills.map((b) => ({ bill: b, status: billStatus(b, month, entries) })).filter((x) => x.status.type !== 'paid').slice(0, 4));
-  const history = $derived(Array.from({ length: 9 }, (_, i) => addMonths(month, i - 8)).map((m) => ({ month: m, cents: accounts.reduce((s, a) => s + balanceOf(a, lastDay(m) < today() ? lastDay(m) : today()), 0) })));
-
+  const pendingBills = $derived(bills.map((b) => ({ bill: b, status: billStatus(b, month, entries) })).filter((x) => x.status.type !== 'paid').slice(0, 5));
+  const worth = $derived(Array.from({ length: 9 }, (_, i) => addMonths(month, i - 8)).map((m) => ({ month: m, cents: accounts.filter((a) => a.kind !== 'creditCard').reduce((s, a) => s + balanceOf(a, lastDay(m) < today() ? lastDay(m) : today()), 0) })));
+  const flows = $derived(flowHistory(6, entries, accounts));
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
+  const me = $derived(store.people.find((p) => p.role === 'me')?.name.replace(/^Eu$/, '') ?? '');
 </script>
 
 <div class="page">
   <header class="row between top">
-    <h1>Início</h1>
-    <button class="icon-btn" onclick={() => ui.startImport()} use:hint={['Importar extrato', 'Escolha a conta e o arquivo do banco. Você confere antes de gravar.']} aria-label="Importar extrato"><Icon name="import" /></button>
+    <div><h1>{greeting}{me ? `, ${me}` : ''}</h1><span class="muted small">{dayHeader(today())}</span></div>
+    <div class="row" style="gap: 8px">
+      <button class="btn" onclick={() => (ui.newEntryOpen = true)} use:hint={['Novo lançamento', 'Anote um gasto ou entrada à mão.']}><Icon name="plus" size={16} />Lançamento</button>
+      <button class="btn primary" onclick={() => ui.startImport()} use:hint={['Importar extrato', 'Escolha a conta e o arquivo do banco. Você confere antes de gravar.']}><Icon name="import" size={16} />Importar</button>
+    </div>
   </header>
   <WorkspaceBar />
 
   {#if !store.accounts.length || !store.entries.length}
     <section class="card stack welcome rise">
       <h2>Vamos começar</h2>
-      <p class="muted">O Financeiro lê os extratos do banco, separa por categoria e monta os relatórios sozinho.</p>
+      <p class="muted">O Financeiro lê os extratos do banco, separa por categoria e monta os relatórios e gráficos sozinho.</p>
       <div class="step"><span class="n" class:done={store.accounts.length > 0}>{#if store.accounts.length}<Icon name="check" size={15} stroke={3} />{:else}1{/if}</span>
         <div class="grow"><b>Cadastre suas contas</b><p class="muted small">Cada conta e cartão (seus, da esposa, da casa), com o banco e de quem é.</p>
           {#if !store.accounts.length}<button class="btn primary" onclick={() => (ui.newAccountOpen = true)}>Cadastrar conta</button>{/if}</div></div>
       <div class="step"><span class="n">2</span>
-        <div class="grow"><b>Importe o extrato de cada uma</b><p class="muted small">No app do banco, exporte o extrato ou a fatura e escolha a conta aqui.</p>
+        <div class="grow"><b>Importe o extrato de cada uma</b><p class="muted small">No app do banco, exporte o extrato ou a fatura e escolha a conta aqui — ou arraste o arquivo para esta janela.</p>
           <button class="btn" disabled={!store.accounts.length} onclick={() => ui.startImport()}>Importar extrato</button></div></div>
       <details><summary class="muted small">Qual arquivo exportar de cada banco</summary><ExportGuide /></details>
     </section>
   {/if}
 
-  {#if look}<OutlookCards outlook={look} months={store.forecastMonths} />{/if}
-
-  {#if store.accounts.length}
-    <SectionTitle title="Contas e cartões">
-      <button class="btn ghost" onclick={() => (ui.newAccountOpen = true)} use:hint={['Cadastrar conta', 'Qualquer banco: conta, cartão, investimento ou dinheiro.']}><Icon name="plus" size={16} />Cadastrar</button>
-    </SectionTitle>
-    {#each groups as group (group.title)}
-      {@const total = group.card ? group.items.reduce((s, a) => s + Math.max(0, -balanceOf(a)), 0) : group.items.reduce((s, a) => s + balanceOf(a), 0)}
-      <div class="row between group-head"><span class="row small muted" style="gap: 6px"><Icon name={group.icon} size={14} />{group.title}</span><span class="small muted num">{money(total)} {group.note}</span></div>
-      {#each group.items as account (account.id)}<AccountRow {account} />{/each}
-    {/each}
-  {/if}
-
-  {#if spending.slices.length}
-    <SectionTitle title="Para onde foi este mês"><ChangeBadge change={spending.change} /></SectionTitle>
-    <a class="card stack where" href="#/relatorios" use:hint={['Para onde foi', 'Consumo do mês pela data da compra, inclusive no cartão. Abre os relatórios.']}>
-      <div class="row" style="align-items: baseline; gap: 8px"><span class="value-lg">{money(spending.totalCents, { cents: false })}</span><span class="muted small grow">em compras e contas</span><Icon name="chevron-right" size={16} class="faint" /></div>
-      <div class="row" style="gap: 18px; align-items: center">
-        <Donut size={120} labels={false} slices={spending.slices.map((s) => ({ id: s.groupId, value: s.totalCents, color: store.categoryByKey.get(s.groupId)?.color ?? '#78909C' }))} />
-        <div class="grow stack-sm">
-          {#each spending.slices.slice(0, 5) as slice (slice.groupId)}
-            {@const category = store.categoryByKey.get(slice.groupId)}
-            <div class="row between small"><span class="row ellipsis" style="gap: 8px"><span style:color={category?.color}><Icon name={category?.symbol ?? 'tag'} size={15} /></span>{category?.name ?? 'Outros'}</span><span class="num">{money(slice.totalCents, { cents: false })}</span></div>
-          {/each}
-        </div>
+  {#if look}
+    <div class="grid-main stretch">
+      <NetWorthCard outlook={look} history={worth} />
+      <div class="side">
+        <MonthCard outlook={look} />
+        <ForecastCard outlook={look} months={store.forecastMonths} />
       </div>
-      <span class="caption">Pode ser diferente do "já saiu", que é o que saiu da conta.</span>
-    </a>
+    </div>
+    <div class="grid-2 stretch">
+      <FlowCard history={flows} />
+      {#if spending.slices.length}<SpendingCard report={spending} />{/if}
+    </div>
   {/if}
 
-  {#if pendingBills.length}
-    <SectionTitle title="Próximas contas fixas" />
-    <a class="card stack" href="#/contas-fixas">
-      {#each pendingBills as item (item.bill.id)}<BillRow bill={item.bill} status={item.status} />{/each}
-    </a>
-  {/if}
-
-  {#if entries.length}
-    <SectionTitle title="Patrimônio" />
-    <section class="card"><div class="label" style="margin-bottom: 6px">Evolução nos últimos meses</div><AreaChart points={history} /></section>
+  {#if accounts.length}
+    <div class="grid-main">
+      <WalletCard {accounts} />
+      {#if pendingBills.length}
+        <section class="card">
+          <div class="card-head"><h3>Próximas contas fixas</h3><a class="sub link" href="#/contas-fixas">Calendário</a></div>
+          <div class="stack">{#each pendingBills as item (item.bill.id)}<BillRow bill={item.bill} status={item.status} />{/each}</div>
+        </section>
+      {/if}
+    </div>
   {/if}
 </div>
 
-<AccountEditor bind:open={ui.newAccountOpen} />
-
 <style>
-  .top h1 { margin: 6px 4px; font: 700 30px var(--font-display); letter-spacing: -0.02em; }
+  .top h1 { margin: 6px 4px 2px; font: 700 30px var(--font-display); letter-spacing: -0.02em; }
+  .top .small { margin-left: 4px; }
+  .side { display: flex; flex-direction: column; gap: 16px; }
   .welcome h2 { margin: 0; font: 700 22px var(--font-display); }
   .welcome p { margin: 0; }
   .step { display: flex; gap: 14px; align-items: flex-start; }
@@ -120,7 +102,5 @@
   .n { width: 30px; height: 30px; border-radius: 50%; flex: none; display: grid; place-items: center; font-weight: 700; background: rgba(255, 255, 255, 0.08); }
   .n.done { background: var(--accent); color: #04140e; }
   details summary { cursor: pointer; margin-bottom: 10px; }
-  .group-head { padding: 6px 4px 0; }
-  .where { transition: background 0.2s; }
-  .where:hover { background: rgba(26, 34, 31, 0.95); }
+  .link { color: var(--accent); font-weight: 600; }
 </style>
