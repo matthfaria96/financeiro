@@ -13,12 +13,12 @@ function open(): Promise<IDBDatabase> {
   });
 }
 
-export async function readCache(householdId: string): Promise<Snapshot | null> {
+export async function readKey<T>(key: string): Promise<T | null> {
   try {
     const db = await open();
     return await new Promise((resolve) => {
-      const request = db.transaction(STORE).objectStore(STORE).get(householdId);
-      request.onsuccess = () => resolve((request.result as Snapshot) ?? null);
+      const request = db.transaction(STORE).objectStore(STORE).get(key);
+      request.onsuccess = () => resolve((request.result as T) ?? null);
       request.onerror = () => resolve(null);
     });
   } catch {
@@ -26,14 +26,17 @@ export async function readCache(householdId: string): Promise<Snapshot | null> {
   }
 }
 
-export async function writeCache(snapshot: Snapshot): Promise<void> {
+export async function writeKey(key: string, value: unknown): Promise<void> {
   try {
     const db = await open();
-    db.transaction(STORE, 'readwrite').objectStore(STORE).put(JSON.parse(JSON.stringify(snapshot)), snapshot.household.id);
+    db.transaction(STORE, 'readwrite').objectStore(STORE).put(JSON.parse(JSON.stringify(value)), key);
   } catch {
     // Sem armazenamento (aba privada): só não abre instantâneo da próxima vez.
   }
 }
+
+export const readCache = (householdId: string) => readKey<Snapshot>(householdId);
+export const writeCache = (snapshot: Snapshot) => writeKey(snapshot.household.id, snapshot);
 
 export async function clearCache(): Promise<void> {
   try {

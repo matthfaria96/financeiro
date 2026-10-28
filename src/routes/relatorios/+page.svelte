@@ -24,6 +24,7 @@
   <header class="row between top">
     <h1>Relatórios</h1>
     <div class="row" style="gap: 8px">
+      <a class="btn" href="#/relatorios/planilha" use:hint={['Mês a mês', 'Tabela com todos os meses lado a lado: entradas, crédito, débito, balanço e saldo — como numa planilha.']}><Icon name="table" size={16} />Mês a mês</a>
       <button class="icon-btn" aria-label="Imprimir ou salvar PDF" onclick={() => print()} use:hint={['PDF', 'Abre a impressão: escolha "Salvar como PDF" para guardar o relatório deste mês.']}><Icon name="file" /></button>
       <button class="icon-btn" aria-label="Exportar planilha" onclick={() => exportCSV(month, entries)} use:hint={['Planilha CSV', 'Baixa os lançamentos do mês para abrir no Excel, Numbers ou Google Planilhas.']}><Icon name="export" /></button>
     </div>

@@ -3,6 +3,7 @@
   import { onMount, type Snippet } from 'svelte';
   import { page } from '$app/state';
   import { store } from '$lib/data/store.svelte';
+  import { organizer } from '$lib/data/organizer.svelte';
   import { ui } from '$lib/ui/ui.svelte';
   import Icon from '$lib/ui/Icon.svelte';
   import Toasts from '$lib/ui/Toasts.svelte';
@@ -31,6 +32,12 @@
   });
 
   let dragging = $state(false);
+
+  // Carro, casa e listas: carregam quando a casa pessoal está pronta; saem junto com o login.
+  $effect(() => {
+    if (store.status === 'ready' && store.household) void organizer.start();
+    if (store.status === 'signedOut') organizer.reset();
+  });
 
   onMount(async () => {
     await store.start();

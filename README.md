@@ -1,6 +1,6 @@
 # Financeiro
 
-Controle das contas de casa no navegador: celular, tablet ou computador, instalável na tela inicial. Importa extratos e faturas de 24 bancos e cartões brasileiros (Nubank, Inter, Itaú, Bradesco, Santander, BB, Caixa, C6 e outros; OFX, CSV, PDF), categoriza sozinho, separa por pessoa e área de trabalho e mostra o mês do jeito certo: o que entrou, o que saiu da conta, o que foi comprado no crédito e o que falta pagar.
+Controle das contas de casa no navegador: celular, tablet ou computador, instalável na tela inicial. Importa extratos e faturas de 24 bancos e cartões brasileiros (Nubank, Inter, Itaú, Bradesco, Santander, BB, Caixa, C6 e outros; OFX, CSV, PDF), categoriza sozinho, separa por pessoa e área de trabalho e mostra o mês do jeito certo: o que entrou, o que saiu da conta, o que foi comprado no crédito e o que falta pagar. Tem também a tabela mês a mês (como uma planilha), carro (abastecimentos com km/L, gastos e revisões), casa e compras planejadas e lista do mercado, que dá para compartilhar com outra pessoa sem abrir o financeiro.
 
 - **App**: SvelteKit (Svelte 5) estático, publicado no GitHub Pages. Gráficos em SVG puro, ícones Lucide embutidos só os usados, leitor de PDF carregado só quando necessário (~140 KB gzip na abertura).
 - **Dados**: Supabase (Postgres) com RLS em todas as tabelas. Tudo pertence a uma "casa"; só membros logados leem ou escrevem. Sem login, nada.

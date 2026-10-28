@@ -10,6 +10,8 @@ export interface Household {
   id: string;
   name: string;
   invite_code: string;
+  /** 'personal': o financeiro de alguém. 'shared': espaço compartilhado (carro, casa, listas). */
+  kind?: 'personal' | 'shared';
   settings: { forecast_months?: number; workspaces_enabled?: boolean };
 }
 

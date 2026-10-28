@@ -24,7 +24,9 @@ const map = {
   move: 'arrow-right-left', cloud: 'cloud', refresh: 'refresh-cw', lock: 'lock', mail: 'mail', pin: 'pin', activity: 'activity',
   clock: 'clock', list: 'list', filter: 'filter', store: 'store', history: 'history', layers: 'layers', ban: 'ban', copy: 'copy',
   link: 'link', wallet: 'wallet', piggy: 'piggy-bank', bank: 'landmark', card: 'credit-card', cash: 'banknote', invest: 'trending-up',
-  receipt: 'receipt', eye: 'eye', 'eye-off': 'eye-off', star: 'star', heartFill: 'heart', person: 'user-round', child: 'baby', people: 'users-round', 'trending-up': 'trending-up', 'trending-down': 'trending-down', grip: 'grip-horizontal', menu: 'menu'
+  receipt: 'receipt', eye: 'eye', 'eye-off': 'eye-off', star: 'star', heartFill: 'heart', person: 'user-round', child: 'baby', people: 'users-round', 'trending-up': 'trending-up', 'trending-down': 'trending-down', grip: 'grip-horizontal', menu: 'menu',
+  share: 'share-2', gauge: 'gauge', 'list-checks': 'list-checks', 'external-link': 'external-link', 'square-check': 'square-check', square: 'square',
+  table: 'table-2', 'copy-plus': 'copy-plus', basket: 'shopping-basket', flag: 'flag', 'calendar-check': 'calendar-check'
 };
 
 const icons = {};

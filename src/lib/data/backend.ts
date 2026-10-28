@@ -121,8 +121,11 @@ export async function currentSession(): Promise<Session | null> {
   return data.session;
 }
 
-/** Casa do usuário logado (a primeira em que é membro). */
+/** Casa pessoal do usuário logado (espaços compartilhados não contam: lá não há financeiro). */
 export async function myHouseholdId(userId: string): Promise<string | null> {
-  const { data } = await supabase().from('household_members').select('household_id').eq('user_id', userId).limit(1);
-  return data?.[0]?.household_id ?? null;
+  const { data } = await supabase().from('household_members').select('household_id').eq('user_id', userId);
+  const ids = (data ?? []).map((row) => row.household_id as string);
+  if (ids.length <= 1) return ids[0] ?? null;
+  const { data: houses } = await supabase().from('households').select('id, kind').in('id', ids);
+  return houses?.find((house) => house.kind !== 'shared')?.id ?? null;
 }

@@ -3,6 +3,9 @@
   import SectionTitle from '$lib/ui/SectionTitle.svelte';
   import MoreRow from '$lib/screens/more/MoreRow.svelte';
   import { inScopeAccount } from '$lib/features/model';
+  import { organizer } from '$lib/data/organizer.svelte';
+  const openLists = $derived(organizer.shopping_lists.filter((l) => !l.done_at).length);
+  const pendingItems = $derived(organizer.project_items.filter((i) => !i.done).length);
 </script>
 
 <div class="page">
@@ -14,6 +17,13 @@
     <MoreRow href="#/mais/estabelecimentos" title="Estabelecimentos" detail="Logos e fotos, e como cada lugar é reconhecido." icon="store" color="#E056FD" count={store.merchants.length} />
     <MoreRow href="#/mais/pessoas" title="Pessoas" detail="De quem é cada gasto: você, esposa, casa, filho…" icon="users" color="#FF8FAB" count={store.people.length} />
     {#if store.workspacesEnabled}<MoreRow href="#/mais/areas" title="Áreas de trabalho" detail="Espaços separados, cada um com suas contas." icon="layers" color="#2EC4B6" count={store.workspaces.length} />{/if}
+  </div>
+  <SectionTitle title="Organizar" />
+  <div class="card flush list">
+    <MoreRow href="#/mais/compras" title="Lista de compras" detail="Lista do mercado: marque no carrinho e duplique para a próxima." icon="basket" color="#2BD4A4" count={openLists || null} />
+    <MoreRow href="#/mais/projetos" title="Casa e compras" detail="Apartamento e compras planejadas: prioridade, valor e o que já foi feito." icon="house" color="#38D9F5" count={pendingItems || null} />
+    <MoreRow href="#/mais/carro" title="Carro" detail="Abastecimentos com km/L, gastos, seguro, IPVA e plano de revisões." icon="car" color="#FF9F1C" count={organizer.vehicles.length || null} />
+    <MoreRow href="#/mais/compartilhar" title="Compartilhar" detail="Escolha o que sua esposa vê; ela faz o mesmo com o dela." icon="share" color="#FF8FAB" count={organizer.shared.length || null} />
   </div>
   <SectionTitle title="Arquivos" />
   <div class="card flush list"><MoreRow href="#/mais/importacoes" title="Importações" detail="Arquivos importados: mover para outra conta ou desfazer." icon="history" color="#4DD0E1" count={store.import_batches.length} /></div>
