@@ -16,7 +16,7 @@
   const transfer = $derived(kindOf(entry) === 'transfer');
 </script>
 
-<button class="card tight entry" {onclick} aria-pressed={selected ?? undefined}>
+<button class="entry" {onclick} aria-pressed={selected ?? undefined}>
   {#if selected !== null}
     <span class="check" class:on={selected}><Icon name={selected ? 'check-circle' : 'circle'} size={22} /></span>
   {/if}
@@ -40,16 +40,17 @@
 </button>
 
 <style>
-  .entry { display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; transition: background 0.2s, transform 0.15s var(--ease); }
-  .entry:hover { background: rgba(26, 34, 31, 0.95); }
-  .entry:active { transform: scale(0.99); }
+  .entry { display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; padding: 11px 16px; border: 0; background: none; transition: background 0.15s; }
+  .entry:hover { background: rgba(255, 255, 255, 0.035); }
+  .entry:active { background: rgba(255, 255, 255, 0.06); }
+  :global(.entries) > :global(.entry + .entry) { border-top: 1px solid var(--stroke); }
   .text { display: flex; flex-direction: column; gap: 3px; }
-  .title { font-size: 16.5px; }
+  .title { font-size: 15.5px; }
   .meta { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--text-2); }
   .tag { background: rgba(255, 255, 255, 0.08); color: var(--text-2); }
   .fixed { background: var(--accent-soft); color: var(--accent); }
   .right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex: none; }
-  .right :global(.amount) { font-size: 16.5px; font-weight: 500; }
+  .right :global(.amount) { font-size: 15.5px; font-weight: 600; }
   .check { color: var(--text-3); display: grid; }
   .check.on { color: var(--accent); }
 </style>

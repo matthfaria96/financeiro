@@ -52,7 +52,7 @@
   }
 </script>
 
-<div class="page">
+<div class="page narrow">
   <SubHeader title="Ajustes" />
 
   <SectionTitle title="Casa" />

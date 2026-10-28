@@ -2,6 +2,7 @@
   import { store } from '$lib/data/store.svelte';
   import { shortDate } from '$lib/core/dates';
   import Icon from '$lib/ui/Icon.svelte';
+  import BankCard from '$lib/ui/BankCard.svelte';
   import { hint } from '$lib/ui/hint';
   import SubHeader from '$lib/screens/more/SubHeader.svelte';
   import MoveSheet from '$lib/screens/transactions/MoveSheet.svelte';
@@ -16,11 +17,23 @@
 
 <div class="page">
   <SubHeader title="Importações" />
+  <div class="grid">
   {#each batches as batch (batch.id)}
-    <div class="card stack-sm">
-      <b class="row ellipsis" style="gap: 8px"><Icon name="file" size={16} color="var(--accent)" />{batch.file_name}</b>
-      <span class="caption">{batch.summary}</span>
-      <span class="caption">{shortDate(batch.imported_at.slice(0, 10))} · {store.accountById.get(batch.account_id ?? '')?.name ?? 'conta apagada'} · {count(batch.id)} lançamentos</span>
+    {@const account = store.accountById.get(batch.account_id ?? '')}
+    {@const format = (batch.format || batch.file_name.split('.').pop() || '').toUpperCase()}
+    <div class="card stack batch">
+      <div class="row" style="gap: 14px">
+        {#if account}<BankCard {account} width={92} />{:else}<span class="nocard"><Icon name="file" size={22} /></span>{/if}
+        <div class="grow" style="min-width: 0">
+          <b class="row ellipsis" style="gap: 8px"><span class="fmt" class:ofx={format === 'OFX'} class:pdf={format === 'PDF'}>{format}</span><span class="ellipsis">{batch.file_name}</span></b>
+          <div class="caption ellipsis">{account?.name ?? 'Conta apagada'} · importado em {shortDate(batch.imported_at.slice(0, 10))}</div>
+          <div class="caption">{batch.first_date ? `${shortDate(batch.first_date)} a ${shortDate(batch.last_date ?? batch.first_date)}` : ''}</div>
+        </div>
+      </div>
+      <div class="row nums">
+        <div><span class="caption">Lançamentos</span><b class="num">{count(batch.id)}</b></div>
+        <div><span class="caption">Repetidos ignorados</span><b class="num">{batch.skipped_count}</b></div>
+      </div>
       {#if undoing === batch.id}
         <div class="row" style="gap: 8px"><span class="grow small neg">Apagar os {count(batch.id)} lançamentos deste arquivo? O saldo volta ao de antes.</span><button class="btn" onclick={() => (undoing = null)}>Cancelar</button><button class="btn danger" onclick={async () => { await undoImport(batch.id); undoing = null; store.toast('Importação desfeita.'); }}>Desfazer</button></div>
       {:else}
@@ -33,6 +46,18 @@
   {:else}
     <div class="card small muted">Nada importado ainda. Os arquivos que você importar aparecem aqui.</div>
   {/each}
+  </div>
 </div>
+
+<style>
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 14px; }
+  @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+  .nocard { width: 92px; height: 58px; border-radius: 9px; display: grid; place-items: center; background: rgba(255, 255, 255, 0.05); color: var(--text-3); flex: none; }
+  .fmt { font-size: 10.5px; font-weight: 800; letter-spacing: 0.04em; padding: 2px 6px; border-radius: 5px; background: rgba(57, 135, 229, 0.18); color: #8fc0ff; flex: none; }
+  .fmt.ofx { background: rgba(43, 212, 164, 0.16); color: var(--accent); }
+  .fmt.pdf { background: rgba(255, 107, 91, 0.16); color: #ff9b8f; }
+  .nums { gap: 24px; padding-top: 10px; border-top: 1px solid var(--stroke); }
+  .nums > div { display: flex; flex-direction: column; gap: 2px; }
+</style>
 
 <MoveSheet bind:open={moveOpen} ids={store.entries.filter((e) => e.batch_id === moving && !e.is_mirror).map((e) => e.id)} title="Mover importação" ondone={() => {}} />

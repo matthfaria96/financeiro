@@ -19,9 +19,13 @@
   {#each vehicles as vehicle (vehicle.id)}
     {@const next = planOf(vehicle)[0]}
     {@const spent = spendByKind(vehicle, yearStart).reduce((s, k) => s + k.cents, 0)}
-    <a class="card stack car" href="#/mais/carro/{vehicle.id}">
+    <a class="card flush car" href="#/mais/carro/{vehicle.id}">
+      <div class="cover" style:background-image={vehicle.photo ? `linear-gradient(180deg, transparent 45%, rgba(6,10,9,0.75)), url(${vehicle.photo})` : undefined}>
+        {#if !vehicle.photo}<Icon name="car" size={56} stroke={1.3} />{/if}
+        {#if vehicle.plate}<span class="plate">{vehicle.plate}</span>{/if}
+      </div>
+      <div class="stack body">
       <div class="row">
-        <span class="tile"><Icon name="car" size={22} color="#fff" /></span>
         <div class="grow"><div class="row" style="gap: 8px"><b class="ellipsis">{vehicle.name}</b><SharedBadge householdId={vehicle.household_id} /></div>
           <div class="caption ellipsis">{[vehicle.model, vehicle.plate].filter(Boolean).join(' · ') || 'Toque para ver o histórico'}</div></div>
         <Icon name="chevron-right" size={15} class="faint" />
@@ -34,6 +38,7 @@
       {#if next && next.due.state !== 'ok' && next.due.state !== 'unknown'}
         <div class="alert" style:--c={dueColor[next.due.state]}><Icon name="wrench.and.screwdriver" size={15} /><span class="grow small"><b>{next.item.name}</b> · {dueText(next.due)}</span></div>
       {/if}
+      </div>
     </a>
   {:else}
     <div class="card stack empty">
@@ -47,8 +52,11 @@
 <VehicleEditor bind:open={creating} onsaved={(v) => (location.hash = `#/mais/carro/${v.id}`)} />
 
 <style>
-  .car { color: inherit; }
-  .tile { width: 44px; height: 44px; border-radius: 13px; display: grid; place-items: center; flex: none; background: linear-gradient(160deg, #ff9f1c, #c96f00); }
+  .car { color: inherit; display: block; }
+  .cover { position: relative; height: 180px; display: grid; place-items: center; color: rgba(255, 255, 255, 0.2); background-size: cover; background-position: center;
+    background-color: #121915; background-image: radial-gradient(500px 200px at 80% 0%, rgba(255, 159, 28, 0.28), transparent 70%); }
+  .plate { position: absolute; left: 16px; bottom: 14px; font: 700 13px ui-monospace, Menlo, monospace; letter-spacing: 0.12em; padding: 3px 9px; border-radius: 6px; color: #101820; background: linear-gradient(180deg, #fff, #e3e8ee); border-top: 4px solid #1f4fbf; }
+  .body { padding: 16px 18px 18px; }
   .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
   .stats > div { display: flex; flex-direction: column; gap: 3px; }
   .alert { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-radius: 12px; color: var(--c); background: color-mix(in srgb, var(--c) 12%, transparent); }

@@ -2,6 +2,7 @@
   import { enterDemo } from '$lib/data/demoMode';
   import { store, describe } from '$lib/data/store.svelte';
   import Segmented from '$lib/ui/Segmented.svelte';
+  import AuthShowcase from './AuthShowcase.svelte';
 
   let mode = $state<'create' | 'join'>('create');
   let house = $state('Nossa casa');
@@ -26,7 +27,8 @@
 </script>
 
 <div class="wrap">
-  <form class="panel stack" onsubmit={submit}>
+  <div class="side"><AuthShowcase /></div>
+  <form class="panel stack glass-panel" onsubmit={submit}>
     <h1>Bem-vindo</h1>
     <p class="muted">Os dados ficam numa "casa". Quem é da casa (você, sua esposa…) vê e edita tudo junto.</p>
     <Segmented label="Como começar" bind:value={mode} options={[{ value: 'create', label: 'Criar minha casa' }, { value: 'join', label: 'Entrar com código' }]} />
@@ -45,7 +47,14 @@
 </div>
 
 <style>
-  .wrap { min-height: 100dvh; display: grid; place-items: center; padding: 24px; }
+  .wrap { min-height: 100dvh; display: grid; place-items: center; padding: 24px; gap: 64px; }
+  .side { display: none; }
+  @media (min-width: 1000px) {
+    .wrap { grid-template-columns: minmax(0, 560px) 420px; justify-content: center; }
+    .side { display: block; }
+    .glass-panel { padding: 34px 30px; border-radius: 28px; background: rgba(22, 30, 27, 0.6); backdrop-filter: blur(28px) saturate(1.6); -webkit-backdrop-filter: blur(28px) saturate(1.6);
+      border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 30px 80px rgba(0, 0, 0, 0.45); }
+  }
   .panel { width: min(400px, 100%); text-align: center; }
   h1 { margin: 0; font: 700 30px var(--font-display); }
   p { margin: 0; }

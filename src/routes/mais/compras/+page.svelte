@@ -8,6 +8,7 @@
   import SharedBadge from '$lib/screens/organizer/SharedBadge.svelte';
   import { createList, duplicateList, itemsOf, lists } from '$lib/features/shopping';
   import BarChart from '$lib/ui/charts/BarChart.svelte';
+  import { itemEmoji } from '$lib/core/shopping';
 
   const all = $derived(lists());
   const latest = $derived(all[0]);
@@ -54,6 +55,7 @@
         {#if list.total_cents}<span class="num">{money(list.total_cents)}</span>{/if}
         <Icon name="chevron-right" size={15} class="faint" />
       </div>
+      {#if items.length}<div class="emojis" aria-hidden="true">{#each items.slice(0, 12) as item (item.id)}<span class:got={item.checked && !list.done_at}>{itemEmoji(item.name)}</span>{/each}{#if items.length > 12}<span class="more">+{items.length - 12}</span>{/if}</div>{/if}
       {#if !list.done_at && items.length}<div class="bar"><span style:width="{(got / items.length) * 100}%"></span></div>{/if}
     </a>
   {:else}
@@ -71,6 +73,10 @@
   .list-card.done { opacity: 0.72; }
   .tile { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; flex: none; background: linear-gradient(160deg, #2bd4a4, #11876a); }
   .tile.done { background: linear-gradient(160deg, #5a6b75, #34424b); }
+  .emojis { display: flex; flex-wrap: wrap; gap: 4px; }
+  .emojis span { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; font-size: 16px; background: rgba(255, 255, 255, 0.05); }
+  .emojis span.got { opacity: 0.35; }
+  .emojis .more { width: auto; padding: 0 8px; font-size: 12px; color: var(--text-2); }
   .bar { height: 6px; border-radius: 4px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
   .bar span { display: block; height: 100%; background: var(--accent); border-radius: 4px; transition: width 0.3s var(--ease); }
   .empty { align-items: center; text-align: center; padding: 28px 18px; }

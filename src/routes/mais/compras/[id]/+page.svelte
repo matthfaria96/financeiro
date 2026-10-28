@@ -2,7 +2,8 @@
   import { page } from '$app/state';
   import { organizer } from '$lib/data/organizer.svelte';
   import type { ShoppingItem } from '$lib/data/organizerTypes';
-  import { parseItem } from '$lib/core/shopping';
+  import { itemEmoji, parseItem } from '$lib/core/shopping';
+  import Ring from '$lib/ui/charts/Ring.svelte';
   import { money } from '$lib/core/money';
   import Icon from '$lib/ui/Icon.svelte';
   import { hint } from '$lib/ui/hint';
@@ -63,6 +64,7 @@
     {#if editingId === item.id}
       <input class="input grow" bind:value={editText} use:focus onblur={() => saveEdit(item)} onkeydown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') editingId = ''; }} aria-label="Editar item" />
     {:else}
+      <span class="emoji" aria-hidden="true">{itemEmoji(item.name)}</span>
       <button class="name grow" onclick={() => toggle(item)} ondblclick={() => startEdit(item)}>
         <span>{item.name}</span>{#if item.quantity}<span class="qty">{item.quantity}</span>{/if}
       </button>
@@ -78,30 +80,35 @@
       <button class="icon-btn" aria-label="Duplicar lista" onclick={again} use:hint={['Duplicar', 'Cria uma lista nova com estes itens, desmarcados.']}><Icon name="copy-plus" /></button>
       <button class="icon-btn" aria-label="Ajustes da lista" onclick={() => (settings = true)} use:hint={['Lista', 'Nome, total, quem vê e apagar.']}><Icon name="settings" /></button>
     </SubHeader>
-    <div class="row sub"><SharedBadge householdId={list.household_id} />
-      <span class="caption grow">{inCart.length} de {items.length} no carrinho{list.total_cents ? ` · deu ${money(list.total_cents)}` : ''}</span></div>
-
-    {#if list.done_at}
-      <div class="card row done-card"><Icon name="check-circle" size={20} /><span class="grow small">Compra finalizada.</span><button class="btn" onclick={() => reopenList(list!)}>Reabrir</button></div>
-    {/if}
+    <section class="card head-card">
+      <Ring value={items.length ? inCart.length / items.length : 0} size={76} stroke={8} label="{inCart.length}/{items.length}" sub="no carrinho" />
+      <div class="grow stack-sm" style="gap: 4px">
+        <div class="row" style="gap: 8px; flex-wrap: wrap"><SharedBadge householdId={list.household_id} />{#if list.done_at}<span class="pill done-pill"><Icon name="check" size={11} stroke={3} />Finalizada</span>{/if}</div>
+        <span class="small muted">{pending.length ? `Faltam ${pending.length} ${pending.length === 1 ? 'item' : 'itens'}` : items.length ? 'Tudo no carrinho!' : 'Lista vazia'}{list.total_cents ? ` · deu ${money(list.total_cents)}` : ''}</span>
+      </div>
+      {#if list.done_at}<button class="btn" onclick={() => reopenList(list!)}>Reabrir</button>
+      {:else if items.length}<button class="btn primary" onclick={() => (finishing = true)} use:hint={['Finalizar compra', 'Anota o total e cria a próxima lista com os mesmos itens.']}><Icon name="check" size={16} />Finalizar</button>{/if}
+    </section>
 
     <form class="add" onsubmit={add}>
       <input class="input" bind:value={text} placeholder="Adicionar: 2 leite, pão, 1 kg carne…" aria-label="Adicionar itens" enterkeyhint="done" autocomplete="off" />
       <button class="btn primary" disabled={!text.trim()} aria-label="Adicionar"><Icon name="plus" size={18} /></button>
     </form>
 
-    <div class="card flush">
-      {#each pending as item (item.id)}{@render row(item)}{:else}{#if items.length}<p class="muted small pad">Tudo no carrinho!</p>{:else}<p class="muted small pad">Lista vazia. Escreva acima; vírgula separa vários itens.</p>{/if}{/each}
+    <div class="columns">
+      <div class="stack-sm">
+        <div class="col-title caption">FALTA PEGAR · {pending.length}</div>
+        <div class="card flush">
+          {#each pending as item (item.id)}{@render row(item)}{:else}{#if items.length}<p class="muted small pad">Tudo no carrinho! 🎉</p>{:else}<p class="muted small pad">Lista vazia. Escreva acima; vírgula separa vários itens.</p>{/if}{/each}
+        </div>
+      </div>
+      {#if inCart.length}
+        <div class="stack-sm">
+          <div class="row between col-title"><span class="caption">NO CARRINHO · {inCart.length}</span><button class="btn ghost" onclick={uncheckAll} use:hint={['Desmarcar tudo', 'Volta todos os itens para a lista.']}>Desmarcar tudo</button></div>
+          <div class="card flush cart">{#each inCart as item (item.id)}{@render row(item)}{/each}</div>
+        </div>
+      {/if}
     </div>
-
-    {#if inCart.length}
-      <div class="row between cart-title"><span class="caption">NO CARRINHO</span><button class="btn ghost" onclick={uncheckAll} use:hint={['Desmarcar tudo', 'Volta todos os itens para a lista.']}>Desmarcar tudo</button></div>
-      <div class="card flush">{#each inCart as item (item.id)}{@render row(item)}{/each}</div>
-    {/if}
-
-    {#if !list.done_at && items.length}
-      <button class="btn lg block finish" onclick={() => (finishing = true)} use:hint={['Finalizar compra', 'Anota o total e cria a próxima lista com os mesmos itens.']}><Icon name="check" size={18} />Finalizar compra</button>
-    {/if}
     <ListSettings bind:open={settings} {list} />
     <FinishSheet bind:open={finishing} {list} />
   {:else}
@@ -111,7 +118,13 @@
 </div>
 
 <style>
-  .sub { margin: -6px 4px 0; gap: 8px; }
+  .head-card { display: flex; align-items: center; gap: 16px; }
+  .done-pill { color: var(--positive); background: rgba(74, 222, 128, 0.14); }
+  .columns { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); align-items: start; }
+  @media (min-width: 1000px) { .columns { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .col-title { margin: 2px 6px 0; min-height: 28px; display: flex; align-items: center; }
+  .cart { opacity: 0.85; }
+  .emoji { width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; font-size: 20px; flex: none; background: rgba(255, 255, 255, 0.05); }
   .add { display: flex; gap: 8px; }
   .add .btn { height: 46px; width: 52px; padding: 0; }
   .item { display: flex; align-items: center; gap: 6px; padding: 4px 10px 4px 6px; min-height: 54px; }
@@ -125,7 +138,5 @@
   .icon-btn.mini { width: 32px; height: 32px; border-color: transparent; background: none; opacity: 0.55; }
   .icon-btn.mini:hover { opacity: 1; }
   .pad { padding: 16px; margin: 0; }
-  .cart-title { margin: 6px 4px 0; }
-  .done-card { color: var(--positive); gap: 10px; }
-  .finish { color: var(--accent); background: var(--accent-soft); border-color: rgba(43, 212, 164, 0.35); }
+
 </style>

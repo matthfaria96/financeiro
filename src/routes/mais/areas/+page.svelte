@@ -28,7 +28,7 @@
   }
 </script>
 
-<div class="page">
+<div class="page narrow">
   <SubHeader title="Áreas de trabalho"><button class="icon-btn" aria-label="Nova área" onclick={() => edit(null)}><Icon name="plus" /></button></SubHeader>
   <div class="card flush list">
     {#each store.workspaces.toSorted((a, b) => a.sort_order - b.sort_order) as w (w.id)}

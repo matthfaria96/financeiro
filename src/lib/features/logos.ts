@@ -27,6 +27,12 @@ export function hostOf(text: string): string | null {
   }
 }
 
+/** Logo direto pelo site (Google, 128 px). O navegador guarda em cache; nada vai para o banco. */
+export function autoLogo(website: string): string {
+  const host = hostOf(website);
+  return host ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=128` : '';
+}
+
 export function sources(domain: string): { url: string; source: string }[] {
   const d = encodeURIComponent(domain);
   return [

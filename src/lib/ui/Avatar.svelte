@@ -4,19 +4,31 @@
   import type { Category, Merchant } from '$lib/data/types';
   import { UNCATEGORIZED } from '$lib/core/catalog';
   import { colorFor } from '$lib/features/rules';
+  import { autoLogo } from '$lib/features/logos';
 
   /** Estabelecimento em destaque (logo, foto, emoji ou iniciais) com o ícone da subcategoria no canto;
    *  sem estabelecimento, o ícone da categoria é o avatar. */
-  let { merchant = null, category = null, name = '', size = 44 }: { merchant?: Pick<Merchant, 'name' | 'emoji' | 'color' | 'image_url' | 'image_data' | 'is_logo'> | null; category?: Category | null; name?: string; size?: number } = $props();
+  let { merchant = null, category = null, name = '', size = 44 }: { merchant?: (Pick<Merchant, 'name' | 'emoji' | 'color' | 'image_url' | 'image_data' | 'is_logo'> & { website?: string }) | null; category?: Category | null; name?: string; size?: number } = $props();
   let broken = $state(false);
   const image = $derived(merchant && !broken ? merchant.image_data || merchant.image_url : '');
+  // Sem imagem escolhida: tenta o logo pelo site do estabelecimento (só o domínio sai do aparelho).
+  // Enquanto carrega (ou se vier só o globo genérico, < 48 px), fica o emoji/iniciais.
+  const auto = $derived(!image && merchant?.website ? autoLogo(merchant.website) : '');
+  let autoReady = $state(false);
+  $effect(() => {
+    void auto;
+    autoReady = false;
+  });
 </script>
 
 <span class="avatar" style:width="{size}px" style:height="{size}px" aria-hidden="true">
   {#if merchant}
-    <span class="main" class:logo={merchant.is_logo && image} style:background={image ? (merchant.is_logo ? '#fff' : 'transparent') : merchant.color}>
+    {#if auto && !autoReady}<img class="probe" src={auto} alt="" referrerpolicy="no-referrer" onload={(e) => (autoReady = (e.currentTarget as HTMLImageElement).naturalWidth >= 48)} />{/if}
+    <span class="main" class:logo={(merchant.is_logo && image) || (auto && autoReady)} style:background={image ? (merchant.is_logo ? '#fff' : 'transparent') : auto && autoReady ? '#fff' : merchant.color}>
       {#if image}
         <img src={image} alt="" loading="lazy" decoding="async" onerror={() => (broken = true)} style:padding={merchant.is_logo ? `${size * 0.15}px` : '0'} />
+      {:else if auto && autoReady}
+        <img src={auto} alt="" style:padding="{size * 0.16}px" />
       {:else if merchant.emoji}
         <span style:font-size="{size * 0.5}px">{merchant.emoji}</span>
       {:else}
@@ -44,6 +56,7 @@
   .avatar { position: relative; flex: none; display: inline-block; }
   .main { position: absolute; inset: 0; border-radius: 50%; display: grid; place-items: center; overflow: hidden; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1); }
   .main img { width: 100%; height: 100%; object-fit: cover; }
+  .probe { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
   .main.logo img { object-fit: contain; }
   .ini { font-weight: 700; letter-spacing: -0.02em; color: inherit; }
   .main:not([style*='color-mix']) .ini { color: #fff; }

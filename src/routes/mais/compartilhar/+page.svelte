@@ -44,7 +44,7 @@
   onMount(() => void organizer.refreshSpaces().catch(() => {}));
 </script>
 
-<div class="page">
+<div class="page narrow">
   <SubHeader title="Compartilhar" />
   <section class="card stack intro">
     <div class="row"><span class="tile"><Icon name="share" size={20} color="#fff" /></span><b class="grow">Compartilhe só o que quiser</b></div>

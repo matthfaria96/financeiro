@@ -84,7 +84,7 @@
     </section>
     {#if entries.length}
       <SectionTitle title="Últimos lançamentos" />
-      {#each entries.slice(0, 8) as entry (entry.id)}<EntryRow {entry} onclick={() => ui.editEntry(entry.id)} />{/each}
+      <div class="card flush entries">{#each entries.slice(0, 8) as entry (entry.id)}<EntryRow {entry} onclick={() => ui.editEntry(entry.id)} />{/each}</div>
     {/if}
     {#if batches.length}
       <SectionTitle title="Arquivos importados" />

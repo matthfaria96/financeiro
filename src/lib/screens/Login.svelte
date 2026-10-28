@@ -3,6 +3,7 @@
   import { supabase } from '$lib/data/backend';
   import { store, describe } from '$lib/data/store.svelte';
   import Icon from '$lib/ui/Icon.svelte';
+  import AuthShowcase from './AuthShowcase.svelte';
 
   let email = $state('');
   let password = $state('');
@@ -33,7 +34,8 @@
 </script>
 
 <div class="wrap">
-  <form class="panel stack" onsubmit={submit}>
+  <div class="side"><AuthShowcase /></div>
+  <form class="panel stack glass-panel" onsubmit={submit}>
     <div class="logo"><Icon name="trending-up" size={34} stroke={2.4} /></div>
     <h1>Financeiro</h1>
     <p class="muted">As contas da casa em qualquer aparelho. Só quem tem acesso à sua casa vê os dados.</p>
@@ -52,7 +54,14 @@
 </div>
 
 <style>
-  .wrap { min-height: 100dvh; display: grid; place-items: center; padding: 24px; }
+  .wrap { min-height: 100dvh; display: grid; place-items: center; padding: 24px; gap: 64px; }
+  .side { display: none; }
+  @media (min-width: 1000px) {
+    .wrap { grid-template-columns: minmax(0, 560px) 420px; justify-content: center; }
+    .side { display: block; }
+    .glass-panel { padding: 34px 30px; border-radius: 28px; background: rgba(22, 30, 27, 0.6); backdrop-filter: blur(28px) saturate(1.6); -webkit-backdrop-filter: blur(28px) saturate(1.6);
+      border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 30px 80px rgba(0, 0, 0, 0.45); }
+  }
   .panel { width: min(380px, 100%); text-align: center; align-items: stretch; }
   .logo { width: 76px; height: 76px; margin: 0 auto 4px; border-radius: 22px; display: grid; place-items: center; color: #b8ffe6; background: linear-gradient(160deg, #14503e, #050c09); box-shadow: 0 10px 40px rgba(43, 212, 164, 0.25), inset 0 0 0 1px rgba(255, 255, 255, 0.08); }
   h1 { margin: 0; font: 700 30px var(--font-display); letter-spacing: -0.02em; }

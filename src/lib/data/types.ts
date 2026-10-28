@@ -28,6 +28,8 @@ export interface Person {
   name: string;
   role: PersonRole;
   color: string;
+  /** Foto comprimida (data URL WebP); vazia = ícone do papel. */
+  photo?: string;
   sort_order: number;
 }
 

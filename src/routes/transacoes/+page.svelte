@@ -128,10 +128,13 @@
   {/if}
 
   {#each days as [day, entries] (day)}
-    <div class="day muted">{dayHeader(day)}</div>
-    {#each entries as entry (entry.id)}
-      <EntryRow {entry} selected={selecting ? selected.has(entry.id) : null} onclick={() => (selecting ? !entry.is_mirror && toggle(entry.id) : ui.editEntry(entry.id))} />
-    {/each}
+    {@const spent = entries.filter((e) => !e.is_mirror && kindOf(e) === 'expense').reduce((sum, e) => sum - e.amount_cents, 0)}
+    <div class="day row between"><span>{dayHeader(day)}</span>{#if spent > 0}<span class="num caption">{money(spent)}</span>{/if}</div>
+    <div class="card flush entries">
+      {#each entries as entry (entry.id)}
+        <EntryRow {entry} selected={selecting ? selected.has(entry.id) : null} onclick={() => (selecting ? !entry.is_mirror && toggle(entry.id) : ui.editEntry(entry.id))} />
+      {/each}
+    </div>
   {:else}
     <div class="empty stack-sm"><Icon name="search" size={34} class="faint" /><b>Nenhum lançamento</b><span class="muted small">{store.entries.length ? 'Mude o período ou limpe os filtros.' : 'Importe um extrato para começar.'}</span></div>
   {/each}
@@ -172,7 +175,7 @@
   }
   .totals > div { display: flex; flex-direction: column; gap: 2px; }
   .totals b { font-size: 15.5px; }
-  .day { font-weight: 500; margin: 10px 4px -2px; }
+  .day { font-weight: 600; font-size: 14px; color: var(--text-2); margin: 10px 6px -4px; }
   .empty { align-items: center; text-align: center; padding: 60px 0; }
   .menu-wrap { position: relative; }
   .menu { position: absolute; right: 0; top: 46px; z-index: 30; padding: 6px; min-width: 220px; display: flex; flex-direction: column; background: rgba(24, 32, 29, 0.94); backdrop-filter: blur(24px); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5); }

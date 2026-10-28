@@ -94,3 +94,11 @@ describe('Eixos dos gráficos', () => {
     expect([150_000, 200_000, 50_000, 120_000_000].map(moneyTick)).toEqual(['1,5 mil', '2 mil', '500', '1,2 mi']);
   });
 });
+
+import { itemEmoji } from '../src/lib/core/shopping';
+describe('Figurinhas da lista', () => {
+  it('reconhece pelo nome', () => {
+    expect(['Leite integral', 'Pão de forma', 'Ovos', 'Arroz', 'Feijão', 'Maçã', 'Papel higiênico', 'Detergente', 'Frango', 'Café', 'Sal', 'Salsicha', 'Pastel'].map(itemEmoji))
+      .toEqual(['🥛', '🍞', '🥚', '🍚', '🫘', '🍎', '🧻', '🧴', '🍗', '☕', '🧂', '🥓', '🛒']);
+  });
+});
