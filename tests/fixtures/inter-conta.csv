@@ -1,0 +1,9 @@
+Extrato Conta Corrente 
+Conta ;12345678
+Período ;01/10/2026 a 27/10/2026
+Saldo ;2.345,67
+
+Data Lançamento;Histórico;Descrição;Valor;Saldo
+27/10/2026;Pix enviado ;Supermercado Bom Preço;-312,45;2.345,67
+20/10/2026;Pagamento efetuado;Enel Distribuição;-245,10;2.658,12
+15/10/2026;Pix recebido;Fulano de Tal;1.000,00;2.903,22

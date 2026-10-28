@@ -1,0 +1,164 @@
+<script lang="ts">
+  import { store } from '$lib/data/store.svelte';
+  import type { Account, AccountKind } from '$lib/data/types';
+  import type { Bank } from '$lib/core/statement';
+  import { bankName } from '$lib/core/statement';
+  import { centsToInput, parseCents } from '$lib/core/money';
+  import { today } from '$lib/core/dates';
+  import Sheet from '$lib/ui/Sheet.svelte';
+  import BankCard from '$lib/ui/BankCard.svelte';
+  import Segmented from '$lib/ui/Segmented.svelte';
+  import Toggle from '$lib/ui/Toggle.svelte';
+  import { hint } from '$lib/ui/hint';
+  import { kindShort, roleName } from '$lib/ui/look';
+  import { balanceOf } from '$lib/features/model';
+  import { newAccount } from '$lib/features/imports.svelte';
+  import { reconcileMirrors } from '$lib/features/mirrors';
+
+  /** Cadastro/edição de conta: banco, tipo, de quem é, área, fatura (cartão), investimento e saldo de hoje. */
+  let { open = $bindable(), account = null, onsaved }: { open: boolean; account?: Account | null; onsaved?: (account: Account) => void } = $props();
+
+  let name = $state('');
+  let nameEdited = $state(false);
+  let bank = $state<Bank>('nubank');
+  let kind = $state<AccountKind>('checking');
+  let digits = $state('');
+  let person = $state<string>('');
+  let workspace = $state<string>('');
+  let closing = $state(2);
+  let due = $state(10);
+  let source = $state('');
+  let balanceText = $state('');
+  let initialBalance = '';
+  let archived = $state(false);
+  let confirmDelete = $state(false);
+
+  $effect(() => {
+    if (!open) return;
+    confirmDelete = false;
+    if (account) {
+      name = account.name; nameEdited = true; bank = account.bank; kind = account.kind; digits = account.last_digits;
+      person = account.default_person_id ?? ''; workspace = account.workspace_id ?? ''; closing = account.closing_day; due = account.due_day;
+      source = account.investment_source_id ?? ''; archived = account.archived;
+      const b = balanceOf(account);
+      balanceText = centsToInput(account.kind === 'creditCard' ? -b : b);
+    } else {
+      nameEdited = false; bank = 'nubank'; kind = 'checking'; digits = ''; workspace = store.scopeId; closing = 2; due = 10; source = ''; archived = false; balanceText = '';
+      person = store.people.find((p) => p.role === 'me')?.id ?? '';
+      autoName();
+    }
+    initialBalance = balanceText;
+  });
+
+  function autoName() {
+    if (nameEdited) return;
+    const owner = store.personById.get(person);
+    const suffix = owner && owner.role !== 'me' && owner.role !== 'house' ? ` (${owner.name})` : '';
+    name = (bank === 'other' ? kindShort[kind] : `${bankName[bank]} ${kindShort[kind].toLowerCase()}`) + suffix;
+  }
+
+  async function save() {
+    const fields: Partial<Account> = {
+      name: name.trim(), bank, kind, last_digits: digits.replace(/\D/g, '').slice(-4), default_person_id: person || null,
+      workspace_id: workspace || null, closing_day: closing, due_day: due, investment_source_id: kind === 'savings' ? source || null : null, archived
+    };
+    // Saldo de hoje: só se mudou; vira o saldo de referência (cartão: em aberto = negativo).
+    const typed = balanceText !== initialBalance ? parseCents(balanceText) : null;
+    if (typed !== null) {
+      const cents = kind === 'creditCard' ? -Math.abs(typed) : typed;
+      const current = account ?? null;
+      Object.assign(fields, { prev_anchor_balance_cents: current?.anchor_balance_cents ?? null, prev_anchor_date: current?.anchor_date ?? null, anchor_balance_cents: cents, anchor_date: today(), anchor_batch_id: null });
+    }
+    let saved: Account;
+    if (account) {
+      await store.update('accounts', account.id, fields);
+      saved = store.accountById.get(account.id)!;
+    } else {
+      [saved] = await store.insert('accounts', [newAccount({ ...fields, sort_order: store.accounts.length })]);
+    }
+    await reconcileMirrors();
+    open = false;
+    store.toast(account ? 'Conta salva.' : 'Conta cadastrada.');
+    onsaved?.(saved);
+  }
+
+  async function remove() {
+    if (!account) return;
+    await store.remove('accounts', [account.id]);
+    open = false;
+    store.toast('Conta apagada.');
+    history.back();
+  }
+
+  const preview = $derived({ bank, kind, color: '', name: name || 'Nova conta', last_digits: digits.replace(/\D/g, '').slice(-4) });
+  const banks: [Bank, string][] = [['nubank', '#9B1FE8'], ['inter', '#FF8A1F'], ['other', '#5A6B75']];
+</script>
+
+<Sheet bind:open title={account ? 'Editar conta' : 'Cadastrar conta'}>
+  {#snippet actions()}<button class="btn primary" disabled={!name.trim()} onclick={save}>{account ? 'Salvar' : 'Cadastrar'}</button>{/snippet}
+  <div class="preview"><BankCard account={preview} width={220} /><b>{name || 'Nova conta'}</b></div>
+
+  <div class="form-title">Banco</div>
+  <div class="banks">
+    {#each banks as [value, color] (value)}
+      <button class="bank" class:on={bank === value} style:--c={color} onclick={() => { bank = value; autoName(); }} use:hint={[bankName[value], 'Banco da conta. Ajuda a reconhecer os arquivos importados.']}>{bankName[value]}</button>
+    {/each}
+  </div>
+  <div style="margin-top: 10px"><Segmented label="Tipo" bind:value={kind} options={(['checking', 'creditCard', 'savings', 'cash'] as AccountKind[]).map((k) => ({ value: k, label: kindShort[k] }))} /></div>
+  <div class="form-group" style="margin-top: 10px">
+    <label class="form-row"><span class="field-label">Nome</span><input class="field" bind:value={name} oninput={() => (nameEdited = true)} /></label>
+    <label class="form-row"><span class="field-label">Últimos 4 dígitos</span><input class="field" inputmode="numeric" placeholder="opcional" bind:value={digits} /></label>
+  </div>
+
+  <div class="form-title">Organização</div>
+  <div class="form-group">
+    <label class="form-row" use:hint={['De quem é', 'Tudo que for importado nesta conta já vem marcado para esta pessoa.']}><span class="field-label">De quem é</span>
+      <select class="field" bind:value={person} onchange={autoName}><option value="">Ninguém</option>{#each store.people as p (p.id)}<option value={p.id}>{p.name}</option>{/each}</select></label>
+    {#if store.workspacesEnabled}
+      <label class="form-row" use:hint={['Área de trabalho', 'A conta, seus lançamentos e relatórios só aparecem nesta área (e em Tudo).']}><span class="field-label">Área de trabalho</span>
+        <select class="field" bind:value={workspace}><option value="">Nenhuma</option>{#each store.workspaces as w (w.id)}<option value={w.id}>{w.name}</option>{/each}</select></label>
+    {/if}
+  </div>
+
+  {#if kind === 'creditCard'}
+    <div class="form-title">Fatura</div>
+    <div class="form-group">
+      <label class="form-row" use:hint={['Fechamento', 'Compras a partir deste dia vão para a fatura seguinte. Se variar, você ajusta ao importar.']}><span class="field-label">Fecha por volta do dia</span><input class="field" type="number" min="1" max="31" bind:value={closing} /></label>
+      <label class="form-row"><span class="field-label">Vence no dia</span><input class="field" type="number" min="1" max="31" bind:value={due} /></label>
+    </div>
+  {/if}
+  {#if kind === 'savings'}
+    <div class="form-title">Investimento</div>
+    <div class="form-group">
+      <label class="form-row" use:hint={['Acompanhar', 'Aplicações e resgates (caixinha, RDB) dessa conta entram e saem deste investimento sozinhos.']}><span class="field-label">Acompanhar aplicações de</span>
+        <select class="field" bind:value={source}><option value="">Nenhuma</option>{#each store.accounts.filter((a) => a.kind === 'checking') as a (a.id)}<option value={a.id}>{a.name}</option>{/each}</select></label>
+    </div>
+    <p class="form-footer">O rendimento não aparece no extrato: de vez em quando, informe o saldo de hoje abaixo.</p>
+  {/if}
+
+  <div class="form-title">Saldo</div>
+  <div class="form-group">
+    <label class="form-row" use:hint={['Saldo de hoje', kind === 'creditCard' ? 'Quanto está em aberto no cartão agora.' : 'O saldo que aparece no app do banco agora. Importar extratos antigos depois não estraga este valor.']}>
+      <span class="field-label">{kind === 'creditCard' ? 'Em aberto hoje' : 'Saldo de hoje no banco'}</span><input class="field num" inputmode="decimal" placeholder="opcional" bind:value={balanceText} /></label>
+  </div>
+  <p class="form-footer">Pode deixar em branco: o extrato em OFX traz o saldo e acerta sozinho.</p>
+
+  {#if account}
+    <div class="form-group" style="margin-top: 18px">
+      <div class="form-row"><span class="field-label grow">Arquivada (some da tela inicial)</span><Toggle label="Arquivada" bind:checked={archived} /></div>
+      {#if confirmDelete}
+        <div class="form-row"><span class="grow small neg">Apagar a conta e os lançamentos dela? Não dá para desfazer.</span><button class="btn danger" onclick={remove}>Apagar</button></div>
+      {:else}
+        <button class="form-row btn-row neg" onclick={() => (confirmDelete = true)}>Apagar conta e lançamentos</button>
+      {/if}
+    </div>
+  {/if}
+</Sheet>
+
+<style>
+  .preview { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 14px 0 4px; }
+  .banks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .bank { height: 46px; border-radius: 12px; border: 0; font-weight: 600; color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); transition: background 0.2s; }
+  .bank.on { background: var(--c); color: #fff; }
+  .btn-row { background: none; border: 0; width: 100%; text-align: left; }
+</style>

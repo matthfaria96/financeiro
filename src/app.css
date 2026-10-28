@@ -1,0 +1,177 @@
+/* Sistema visual do Financeiro: escuro, verde profundo, cartões e vidro no estilo do iOS. */
+:root {
+  --bg-top: #0f2c24;
+  --bg-mid: #08120f;
+  --bg-bottom: #040706;
+  --card: rgba(20, 27, 25, 0.92);
+  --card-2: rgba(255, 255, 255, 0.045);
+  --stroke: rgba(255, 255, 255, 0.07);
+  --stroke-strong: rgba(255, 255, 255, 0.14);
+  --text: #f4f7f6;
+  --text-2: rgba(244, 247, 246, 0.58);
+  --text-3: rgba(244, 247, 246, 0.38);
+  --accent: #2bd4a4;
+  --accent-soft: rgba(43, 212, 164, 0.14);
+  --positive: #4ade80;
+  --negative: #ff6b5b;
+  --warning: #ffa63d;
+  --purple: #b388ff;
+  --blue: #1e90ff;
+  --radius: 22px;
+  --radius-sm: 14px;
+  --sidebar: 236px;
+  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', system-ui, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, system-ui, sans-serif;
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 38%, var(--bg-bottom) 100%) fixed;
+  background-color: var(--bg-bottom);
+  color: var(--text);
+  font: 400 16px/1.35 var(--font);
+  font-feature-settings: 'tnum' 0;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
+}
+
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: inherit; text-decoration: none; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+::selection { background: rgba(43, 212, 164, 0.35); }
+
+.num { font-variant-numeric: tabular-nums; }
+.muted { color: var(--text-2); }
+.faint { color: var(--text-3); }
+.pos { color: var(--positive); }
+.neg { color: var(--negative); }
+.warn { color: var(--warning); }
+
+/* Cartões */
+.card {
+  background: var(--card);
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius);
+  padding: 18px;
+}
+.card.tight { padding: 14px; }
+.card.flush { padding: 0; overflow: hidden; }
+.stack { display: flex; flex-direction: column; gap: 12px; }
+.stack-sm { display: flex; flex-direction: column; gap: 8px; }
+.row { display: flex; align-items: center; gap: 12px; }
+.row.between { justify-content: space-between; }
+.grow { flex: 1; min-width: 0; }
+.ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.label { font-size: 15px; font-weight: 600; color: var(--text-2); }
+.value-xl { font: 400 34px/1.1 var(--font-display); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.value-lg { font: 400 28px/1.1 var(--font-display); letter-spacing: -0.015em; font-variant-numeric: tabular-nums; }
+.value-md { font: 600 19px/1.2 var(--font-display); font-variant-numeric: tabular-nums; }
+.caption { font-size: 12.5px; color: var(--text-2); }
+.small { font-size: 14px; }
+
+/* Botões */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 40px; padding: 0 16px; border-radius: 12px; border: 1px solid var(--stroke-strong);
+  background: rgba(255, 255, 255, 0.07); font-weight: 600; font-size: 15px;
+  transition: transform 0.15s var(--ease), background 0.2s;
+  white-space: nowrap;
+}
+.btn:hover { background: rgba(255, 255, 255, 0.11); }
+.btn:active { transform: scale(0.97); }
+.btn.primary { background: var(--accent); color: #04140e; border-color: transparent; }
+.btn.primary:hover { background: #3fe3b4; }
+.btn.danger { color: var(--negative); }
+.btn.ghost { background: transparent; border-color: transparent; color: var(--accent); padding: 0 8px; }
+.btn.lg { height: 48px; font-size: 16px; border-radius: 14px; }
+.btn.block { width: 100%; }
+.btn:disabled { opacity: 0.45; pointer-events: none; }
+.icon-btn {
+  width: 38px; height: 38px; border-radius: 50%; display: inline-grid; place-items: center;
+  border: 1px solid var(--stroke); background: rgba(255, 255, 255, 0.06);
+  transition: background 0.2s, transform 0.15s var(--ease);
+}
+.icon-btn:hover { background: rgba(255, 255, 255, 0.11); }
+.icon-btn:active { transform: scale(0.94); }
+
+/* Formulários (padrão "lista agrupada" do iOS) */
+.form-group {
+  background: var(--card); border: 1px solid var(--stroke); border-radius: 16px; overflow: hidden;
+}
+.form-group > * + * { border-top: 1px solid var(--stroke); }
+.form-row {
+  display: flex; align-items: center; gap: 12px; min-height: 50px; padding: 8px 16px;
+}
+.form-row > .field-label { flex: 0 0 auto; color: var(--text); }
+.form-row > .field { flex: 1; min-width: 0; text-align: right; }
+.form-title { font-size: 13px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.04em; margin: 18px 16px 6px; }
+.form-footer { font-size: 13px; color: var(--text-2); margin: 6px 16px 0; line-height: 1.4; }
+input.field, textarea.field, select.field {
+  width: 100%; background: transparent; border: 0; outline: none; text-align: right; color: var(--text);
+  padding: 6px 0; min-height: 34px;
+}
+input.field::placeholder, textarea.field::placeholder { color: var(--text-3); }
+textarea.field { text-align: left; resize: vertical; min-height: 60px; }
+select.field { appearance: none; -webkit-appearance: none; text-align-last: right; cursor: pointer; padding-right: 18px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='14' viewBox='0 0 10 14'%3E%3Cpath d='M1 5l4-4 4 4M1 9l4 4 4-4' stroke='%23a8b0ad' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") right center no-repeat; }
+select.field option { background: #18201d; color: var(--text); }
+.input {
+  width: 100%; height: 46px; border-radius: 12px; border: 1px solid var(--stroke-strong);
+  background: rgba(255, 255, 255, 0.06); padding: 0 14px; outline: none; color: var(--text);
+}
+.input:focus { border-color: var(--accent); }
+
+/* Pílulas e chips */
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: 12px;
+  border: 1px solid var(--stroke); background: var(--card-2); font-size: 14.5px; font-weight: 500; white-space: nowrap;
+  transition: background 0.2s;
+}
+.chip.active { color: var(--accent); background: var(--accent-soft); border-color: rgba(43, 212, 164, 0.35); }
+.pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+
+.scroll-x { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 2px 0; }
+.scroll-x::-webkit-scrollbar { display: none; }
+
+/* Página */
+.page { width: 100%; max-width: 780px; margin: 0 auto; padding: 8px 16px calc(110px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 12px; }
+.section-title { display: flex; align-items: baseline; justify-content: space-between; margin: 14px 4px 0; }
+.section-title h2 { margin: 0; font: 600 20px/1.2 var(--font-display); letter-spacing: -0.01em; }
+
+@media (min-width: 960px) {
+  .page { padding-bottom: 48px; }
+}
+
+/* Lista de linhas dentro de um cartão */
+.list > * + * { border-top: 1px solid var(--stroke); }
+.list-row { display: flex; align-items: center; gap: 14px; padding: 12px 16px; width: 100%; text-align: left; background: none; border: 0; }
+button.list-row:hover, a.list-row:hover { background: rgba(255, 255, 255, 0.03); }
+
+/* Animações curtas */
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.rise { animation: rise 0.35s var(--ease) both; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+/* Balão de explicação (use:hint) */
+.hint-bubble {
+  position: fixed; z-index: 200; max-width: 260px; padding: 7px 10px; border-radius: 9px; pointer-events: none;
+  background: rgba(40, 48, 45, 0.96); border: 1px solid var(--stroke-strong); box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+  display: flex; flex-direction: column; gap: 2px; font-size: 11.5px; color: var(--text-2); opacity: 0; transform: translateY(-2px);
+  transition: opacity 0.15s, transform 0.15s;
+}
+.hint-bubble strong { font-size: 12px; color: var(--text); }
+.hint-bubble.on { opacity: 1; transform: none; }
