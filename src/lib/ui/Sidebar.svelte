@@ -3,6 +3,7 @@
   import { store } from '$lib/data/store.svelte';
   import { organizer } from '$lib/data/organizer.svelte';
   import { ui } from './ui.svelte';
+  import { exitDemo } from '$lib/data/demoMode';
   import { money } from '$lib/core/money';
   import Icon from './Icon.svelte';
   import BankCard from './BankCard.svelte';
@@ -116,7 +117,11 @@
     <button class="btn primary block import" onclick={() => ui.startImport()} use:hint={['Importar extrato', 'Escolha a conta e o arquivo do banco (OFX, CSV ou PDF). Também dá para arrastar o arquivo para a janela.']}>
       <Icon name="import" size={17} />Importar extrato
     </button>
-    <div class="who caption ellipsis">{store.demo ? 'Demonstração: dados fictícios, nada é salvo.' : store.userEmail}</div>
+    {#if store.demo}
+      <button class="btn block exit" onclick={exitDemo} use:hint={['Sair da demonstração', 'Volta para a sua conta (ou para o login). Nada da demonstração foi salvo.']}><Icon name="logout" size={15} />Sair da demonstração</button>
+    {:else}
+      <div class="who caption ellipsis">{store.userEmail}</div>
+    {/if}
   </div>
 </nav>
 
@@ -143,4 +148,5 @@
   .bottom { padding-top: 10px; border-top: 1px solid var(--stroke); display: flex; flex-direction: column; gap: 8px; }
   .import { box-shadow: 0 6px 20px rgba(43, 212, 164, 0.25); background: linear-gradient(180deg, #3fe3b4, #20b98d); }
   .who { padding: 0 4px; }
+  .exit { height: 34px; font-size: 13.5px; color: var(--warning); }
 </style>

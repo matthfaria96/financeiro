@@ -17,6 +17,7 @@
   import NewEntry from '$lib/screens/transactions/NewEntry.svelte';
   import AccountEditor from '$lib/screens/accounts/AccountEditor.svelte';
   import { seedDemo } from '$lib/features/demoData';
+  import { exitDemo } from '$lib/data/demoMode';
 
   let { children }: { children: Snippet } = $props();
 
@@ -83,6 +84,12 @@
   <div class="shell">
     <Sidebar />
     <main>
+      {#if store.demo}
+        <div class="demo-bar glass" role="status">
+          <Icon name="sparkles" size={16} /><span class="grow"><b>Demonstração</b> · dados fictícios, nada é salvo e nada mexe na sua conta</span>
+          <button class="btn sm" onclick={exitDemo}>Sair</button>
+        </div>
+      {/if}
       {@render children()}
     </main>
     <nav class="tabbar" aria-label="Seções">
@@ -122,5 +129,10 @@
     .shell > :global(.sidebar) { display: flex; }
     main { padding-top: 0; }
   }
+  .demo-bar { position: sticky; top: 8px; z-index: 40; margin: 8px 16px 0; display: flex; align-items: center; gap: 10px; padding: 8px 10px 8px 14px; border-radius: 14px; font-size: 13.5px; color: var(--text-2); }
+  .demo-bar b { color: var(--warning); }
+  .demo-bar :global(svg) { color: var(--warning); flex: none; }
+  .demo-bar .btn.sm { height: 30px; padding: 0 12px; font-size: 13px; }
+  @media (min-width: 960px) { .demo-bar { margin: 12px auto 0; max-width: 1108px; width: calc(100% - 72px); } }
   .dropzone { position: fixed; inset: 12px; z-index: 150; border-radius: 28px; border: 2px dashed var(--accent); background: rgba(8, 18, 15, 0.85); display: grid; place-items: center; align-content: center; gap: 8px; color: var(--accent); font-weight: 600; pointer-events: none; }
 </style>

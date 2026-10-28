@@ -6,6 +6,7 @@
   import { hint } from '$lib/ui/hint';
   import SubHeader from '$lib/screens/more/SubHeader.svelte';
   import { reapplyAll } from '$lib/features/rules';
+  import { enterDemo, exitDemo } from '$lib/data/demoMode';
 
   let workspaces = $state(store.workspacesEnabled);
   let months = $state(store.forecastMonths);
@@ -100,8 +101,22 @@
       </div>
       {#if passwordMessage}<div class="form-row caption">{passwordMessage}</div>{/if}
     {/if}
-    <button class="form-row plain" onclick={() => store.signOut()}><Icon name="logout" size={16} />Sair deste aparelho</button>
+    {#if store.demo}
+      <button class="form-row plain" onclick={exitDemo}><Icon name="logout" size={16} />Sair da demonstração</button>
+    {:else}
+      <button class="form-row plain" onclick={() => store.signOut()}><Icon name="logout" size={16} />Sair deste aparelho</button>
+    {/if}
   </div>
+
+  <SectionTitle title="Demonstração" />
+  <div class="form-group">
+    {#if store.demo}
+      <button class="form-row plain" onclick={exitDemo} use:hint={['Sair da demonstração', 'Volta para a sua conta (ou para o login).']}><Icon name="logout" size={16} />Sair da demonstração e voltar para a minha conta</button>
+    {:else}
+      <button class="form-row plain" onclick={() => enterDemo(true)} use:hint={['Ver a demonstração', 'Abre numa aba nova o app com dados fictícios. Nada do que você fizer lá chega à sua conta.']}><Icon name="sparkles" size={16} />Abrir a demonstração numa aba nova</button>
+    {/if}
+  </div>
+  <p class="form-footer">A demonstração tem contas, cartões, carro, projetos e listas fictícios para testar tudo. Ela roda só no navegador: nada é salvo e nada mexe nos seus dados.</p>
   <p class="form-footer">Seus dados ficam na sua conta do Supabase, protegidos por login: só quem é da casa lê. O arquivo do banco é lido no próprio aparelho.</p>
 </div>
 

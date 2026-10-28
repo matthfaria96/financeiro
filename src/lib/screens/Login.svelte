@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { enterDemo } from '$lib/data/demoMode';
   import { supabase } from '$lib/data/backend';
   import { store, describe } from '$lib/data/store.svelte';
   import Icon from '$lib/ui/Icon.svelte';
@@ -45,7 +46,8 @@
     <button type="button" class="btn ghost" onclick={() => { mode = mode === 'login' ? 'reset' : 'login'; message = ''; }}>
       {mode === 'login' ? 'Esqueci a senha' : 'Voltar para entrar'}
     </button>
-    <a class="btn ghost" href="?demo#/">Ver a demonstração</a>
+    <button type="button" class="btn demo" onclick={() => enterDemo()}><Icon name="sparkles" size={16} />Ver a demonstração</button>
+    <p class="caption">A demonstração usa dados fictícios e não precisa de conta.</p>
   </form>
 </div>
 
@@ -55,4 +57,5 @@
   .logo { width: 76px; height: 76px; margin: 0 auto 4px; border-radius: 22px; display: grid; place-items: center; color: #b8ffe6; background: linear-gradient(160deg, #14503e, #050c09); box-shadow: 0 10px 40px rgba(43, 212, 164, 0.25), inset 0 0 0 1px rgba(255, 255, 255, 0.08); }
   h1 { margin: 0; font: 700 30px var(--font-display); letter-spacing: -0.02em; }
   p { margin: 0 0 8px; }
+  .demo { margin-top: 8px; color: var(--accent); }
 </style>

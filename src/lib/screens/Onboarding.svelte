@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { enterDemo } from '$lib/data/demoMode';
   import { store, describe } from '$lib/data/store.svelte';
   import Segmented from '$lib/ui/Segmented.svelte';
 
@@ -38,6 +39,7 @@
     {/if}
     <button class="btn primary lg block" disabled={busy}>{mode === 'create' ? 'Criar e começar' : 'Entrar na casa'}</button>
     {#if message}<p class="small neg">{message}</p>{/if}
+    <button type="button" class="btn ghost" onclick={() => enterDemo(true)}>Ver a demonstração (nova aba)</button>
     <button type="button" class="btn ghost" onclick={() => store.signOut()}>Sair ({store.userEmail})</button>
   </form>
 </div>
