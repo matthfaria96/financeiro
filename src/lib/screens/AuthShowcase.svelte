@@ -36,7 +36,7 @@
 
 <style>
   .show { display: flex; flex-direction: column; gap: 26px; max-width: 520px; }
-  .art { position: relative; height: 330px; }
+  .art { position: relative; height: 372px; }
   .glow { position: absolute; inset: 10% 5% 0 10%; background: radial-gradient(closest-side, rgba(43, 212, 164, 0.25), transparent); filter: blur(10px); }
   .art > div:not(.glow) { position: absolute; }
   .card-a { left: 0; top: 30px; transform: rotate(-11deg); z-index: 1; }
