@@ -4,7 +4,7 @@ import { clearCache, readCache, writeCache } from './cache';
 import { buildDemo } from './demo';
 import { tableNames, type Account, type Category, type Entry, type Household, type Member, type Merchant, type Person, type Snapshot, type TableName, type Tables, type Workspace } from './types';
 
-export type Status = 'loading' | 'signedOut' | 'noHousehold' | 'ready' | 'error';
+export type Status = 'loading' | 'signedOut' | 'noHousehold' | 'ready' | 'error' | 'setPassword';
 
 export interface Toast {
   id: number;
@@ -72,10 +72,17 @@ class Store {
     }
     const demo = new URLSearchParams(location.search).has('demo') || !supabaseConfigured;
     if (demo) return this.startDemo();
-    supabase().auth.onAuthStateChange((event) => {
+    supabase().auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT') this.reset('signedOut');
+      // Veio do link "esqueci a senha": pede a senha nova antes de entrar.
+      if (event === 'PASSWORD_RECOVERY' && session) {
+        this.userId = session.user.id;
+        this.userEmail = session.user.email ?? '';
+        this.status = 'setPassword';
+      }
     });
     const session = await currentSession();
+    if (this.status === 'setPassword') return;
     if (!session) return void (this.status = 'signedOut');
     await this.enter(session.user.id, session.user.email ?? '');
   }
@@ -125,6 +132,11 @@ class Store {
     const { error } = await supabase().rpc('join_household', { code, member_name: memberName });
     if (error) throw new Error(error.message.includes('inválido') ? 'Código não encontrado. Confira com quem te convidou.' : error.message);
     await this.enter(this.userId, this.userEmail);
+  }
+
+  async changePassword(password: string) {
+    const { error } = await supabase().auth.updateUser({ password });
+    if (error) throw new Error(error.message.includes('different') ? 'A senha nova precisa ser diferente da atual.' : error.message);
   }
 
   async signOut() {

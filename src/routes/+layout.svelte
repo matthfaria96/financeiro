@@ -9,6 +9,7 @@
   import { hint } from '$lib/ui/hint';
   import Login from '$lib/screens/Login.svelte';
   import Onboarding from '$lib/screens/Onboarding.svelte';
+  import SetPassword from '$lib/screens/SetPassword.svelte';
   import ImportFlow from '$lib/screens/import/ImportFlow.svelte';
   import EntryEditor from '$lib/screens/transactions/EntryEditor.svelte';
   import NewEntry from '$lib/screens/transactions/NewEntry.svelte';
@@ -57,6 +58,8 @@
   <div class="splash"><div class="logo"><Icon name="trending-up" size={34} stroke={2.4} /></div></div>
 {:else if store.status === 'signedOut'}
   <Login />
+{:else if store.status === 'setPassword'}
+  <SetPassword />
 {:else if store.status === 'noHousehold'}
   <Onboarding />
 {:else if store.status === 'error'}

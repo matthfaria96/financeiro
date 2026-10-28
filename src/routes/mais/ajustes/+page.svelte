@@ -12,6 +12,18 @@
   let reapplied = $state<number | null>(null);
   let confirmErase = $state(false);
   let copied = $state(false);
+  let newPassword = $state('');
+  let passwordMessage = $state('');
+  async function savePassword() {
+    if (newPassword.length < 8) return void (passwordMessage = 'Use pelo menos 8 caracteres.');
+    try {
+      await store.changePassword(newPassword);
+      newPassword = '';
+      passwordMessage = 'Senha trocada.';
+    } catch (error) {
+      passwordMessage = error instanceof Error ? error.message : 'Não foi possível trocar.';
+    }
+  }
 
   $effect(() => {
     if (workspaces !== store.workspacesEnabled) void toggleWorkspaces(workspaces);
@@ -81,6 +93,13 @@
   <SectionTitle title="Conta" />
   <div class="form-group">
     <div class="form-row"><span class="field-label">Entrou como</span><span class="field">{store.demo ? 'Demonstração' : store.userEmail}</span></div>
+    {#if !store.demo}
+      <div class="form-row" use:hint={['Trocar senha', 'Muda a senha de acesso desta conta (vale em todos os aparelhos).']}>
+        <input class="field" style="text-align: left" type="password" autocomplete="new-password" placeholder="Senha nova (8+ caracteres)" bind:value={newPassword} />
+        <button class="btn" disabled={!newPassword} onclick={savePassword}>Trocar senha</button>
+      </div>
+      {#if passwordMessage}<div class="form-row caption">{passwordMessage}</div>{/if}
+    {/if}
     <button class="form-row plain" onclick={() => store.signOut()}><Icon name="logout" size={16} />Sair deste aparelho</button>
   </div>
   <p class="form-footer">Seus dados ficam na sua conta do Supabase, protegidos por login: só quem é da casa lê. O arquivo do banco é lido no próprio aparelho.</p>
