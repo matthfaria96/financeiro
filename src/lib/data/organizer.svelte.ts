@@ -22,6 +22,7 @@ class Organizer {
   maintenance_items = $state<OrgTables['maintenance_items'][]>([]);
   projects = $state<OrgTables['projects'][]>([]);
   project_items = $state<OrgTables['project_items'][]>([]);
+  notebooks = $state<OrgTables['notebooks'][]>([]);
   shopping_lists = $state<OrgTables['shopping_lists'][]>([]);
   shopping_items = $state<OrgTables['shopping_items'][]>([]);
 
@@ -204,17 +205,20 @@ class Organizer {
 
   async remove(table: OrgTable, ids: string[]) {
     if (!ids.length) return;
-    const set = new Set(ids);
     const saved = new Map<OrgTable, unknown[]>();
-    const drop = (target: OrgTable, keep: (row: Record<string, unknown>) => boolean) => {
-      saved.set(target, this.list(target));
-      this.setList(target, this.list(target).filter((row) => keep(row as unknown as Record<string, unknown>)));
+    // O banco apaga os filhos em cascata (inclusive netos: caderno → listas → itens); aqui espelhamos.
+    const drop = (target: OrgTable, gone: Set<string>, key: string | null) => {
+      const list = this.list(target);
+      const removed = list.filter((row) => gone.has(key ? ((row as unknown as Record<string, unknown>)[key] as string) : row.id));
+      if (!removed.length) return;
+      if (!saved.has(target)) saved.set(target, list);
+      this.setList(target, list.filter((row) => !removed.includes(row)));
+      const removedIds = new Set(removed.map((row) => row.id));
+      for (const [child, parent] of Object.entries(parentOf) as [OrgTable, { table: OrgTable; key: string }][]) {
+        if (parent.table === target) drop(child, removedIds, parent.key);
+      }
     };
-    drop(table, (row) => !set.has(row.id as string));
-    // O banco apaga os filhos em cascata; aqui espelhamos.
-    for (const [child, parent] of Object.entries(parentOf) as [OrgTable, { table: OrgTable; key: string }][]) {
-      if (parent.table === table) drop(child, (row) => !set.has(row[parent.key] as string));
-    }
+    drop(table, new Set(ids), null);
     if (store.demo) return;
     const { error } = await supabase().from(table).delete().in('id', ids);
     if (!error) return this.persist();
@@ -222,23 +226,28 @@ class Organizer {
     store.toast(`Não foi possível apagar: ${describe(error)}`, 'error');
   }
 
-  /** Leva um carro, projeto ou lista (com tudo que tem dentro) para outro espaço. */
-  async move(table: 'vehicles' | 'projects' | 'shopping_lists', id: string, spaceId: string) {
+  /** Leva um carro, projeto, caderno ou lista (com tudo que tem dentro) para outro espaço. */
+  async move(table: 'vehicles' | 'projects' | 'notebooks' | 'shopping_lists', id: string, spaceId: string) {
     const item = this.list(table).find((row) => row.id === id);
     if (!item || item.household_id === spaceId) return;
     const from = item.household_id;
-    const children = (Object.entries(parentOf) as [OrgTable, { table: OrgTable; key: string }][]).filter(([, parent]) => parent.table === table);
-    const relabel = (target: string) => {
-      this.setList(table, this.list(table).map((row) => (row.id === id ? { ...row, household_id: target } : row)) as never);
-      for (const [child, parent] of children) {
-        this.setList(child, this.list(child).map((row) => ((row as unknown as Record<string, unknown>)[parent.key] === id ? { ...row, household_id: target } : row)) as never);
+    const relabel = (target: OrgTable, ids: Set<string>, key: string | null, space: string) => {
+      const moved: string[] = [];
+      this.setList(target, this.list(target).map((row) => {
+        const hit = ids.has(key ? ((row as unknown as Record<string, unknown>)[key] as string) : row.id);
+        if (hit) moved.push(row.id);
+        return hit ? { ...row, household_id: space } : row;
+      }) as never);
+      const next = new Set(moved);
+      for (const [child, parent] of Object.entries(parentOf) as [OrgTable, { table: OrgTable; key: string }][]) {
+        if (parent.table === target && next.size) relabel(child, next, parent.key, space);
       }
     };
-    relabel(spaceId);
+    relabel(table, new Set([id]), null, spaceId);
     if (store.demo) return;
     const { error } = await supabase().from(table).update({ household_id: spaceId } as never).eq('id', id);
     if (!error) return this.persist();
-    relabel(from);
+    relabel(table, new Set([id]), null, from);
     store.toast(`Não foi possível mover: ${describe(error)}`, 'error');
   }
 

@@ -1,192 +1,107 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { page } from '$app/state';
+  import { goto } from '$app/navigation';
   import { store } from '$lib/data/store.svelte';
-  import { ui } from '$lib/ui/ui.svelte';
+  import { addMonths, dayMonth, monthOf, monthTitle, today, type Month } from '$lib/core/dates';
   import { money } from '$lib/core/money';
-  import { dayHeader, shortMonth } from '$lib/core/dates';
   import Icon from '$lib/ui/Icon.svelte';
+  import BankCard from '$lib/ui/BankCard.svelte';
+  import Avatar from '$lib/ui/Avatar.svelte';
   import WorkspaceBar from '$lib/ui/WorkspaceBar.svelte';
+  import ChartButton from '$lib/ui/ChartButton.svelte';
   import { hint } from '$lib/ui/hint';
-  import EntryRow from '$lib/screens/EntryRow.svelte';
-  import MoveSheet from '$lib/screens/transactions/MoveSheet.svelte';
-  import TxInsights from '$lib/screens/transactions/TxInsights.svelte';
-  import { prefs } from '$lib/ui/prefs.svelte';
-  import { filter, periodName, type Period } from '$lib/screens/transactions/filter.svelte';
-  import { inScopeAccount, kindOf } from '$lib/features/model';
-  import { reconcileMirrors } from '$lib/features/mirrors';
+  import BalanceCard from '$lib/screens/money/BalanceCard.svelte';
+  import GroupsCard from '$lib/screens/money/GroupsCard.svelte';
+  import ChartsSheet from '$lib/screens/money/ChartsSheet.svelte';
+  import { merchantForBill } from '$lib/screens/bills/billLook';
+  import { filter } from '$lib/screens/transactions/filter.svelte';
+  import { inScope, inScopeAccount } from '$lib/features/model';
+  import { analyzeMonth, forecastMonth } from '$lib/features/analytics';
 
-  onMount(() => {
-    if (page.url.searchParams.get('semcategoria')) filter.set({ period: 'all', uncategorized: true });
-  });
+  /** Lançamentos (o "analítico"): o mês escolhido em saldo, entradas, saídas por categoria e balanço.
+   *  Meses futuros mostram o que já está previsto (faturas e contas fixas). */
+  const current = monthOf(today());
+  let month = $state<Month>(current);
+  const entries = $derived(store.entries.filter(inScope));
+  const accounts = $derived(store.accounts.filter((a) => !a.archived && inScopeAccount(a)).toSorted((a, b) => a.sort_order - b.sort_order));
+  const first = $derived(entries.map((e) => monthOf(e.date)).sort()[0] ?? current);
+  const options = $derived(Array.from({ length: 64 }, (_, i) => addMonths(current, 3 - i)).filter((m) => m >= first || m >= current));
+  const future = $derived(month > current);
+  const analysis = $derived(analyzeMonth(month, entries, accounts));
+  const forecast = $derived(future ? forecastMonth(month, accounts) : null);
+  let chartsOpen = $state(false);
 
-  const list = $derived(store.entries.filter((e) => filter.matches(e)).toSorted((a, b) => b.date.localeCompare(a.date) || b.created_at.localeCompare(a.created_at)));
-  const days = $derived.by(() => {
-    const map = new Map<string, typeof list>();
-    for (const entry of list) map.set(entry.date, [...(map.get(entry.date) ?? []), entry]);
-    return [...map.entries()];
-  });
-  const totals = $derived.by(() => {
-    const counted = list.filter((e) => kindOf(e) !== 'transfer');
-    const income = counted.filter((e) => e.amount_cents > 0).reduce((s, e) => s + e.amount_cents, 0);
-    const out = counted.filter((e) => e.amount_cents < 0).reduce((s, e) => s + e.amount_cents, 0);
-    return { income, out, net: income + out };
-  });
-
-  let selecting = $state(false);
-  let selected = $state<Set<string>>(new Set());
-  let moving = $state(false);
-  let confirmDelete = $state(false);
-  let menu = $state(false);
-  let moreFilters = $state(false);
-
-  $effect(() => {
-    // Trocou filtro ou área: limpa a seleção (para nunca mexer no que não está à vista).
-    void [filter.period, filter.month, filter.categoryId, filter.accountId, filter.personId, filter.cost, filter.uncategorized, store.scopeId];
-    selected = new Set();
-  });
-
-  function toggle(id: string) {
-    const next = new Set(selected);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    selected = next;
+  function search() {
+    filter.set({ month });
+    goto('#/transacoes/todos');
   }
-
-  async function removeSelected() {
-    await store.remove('entries', [...selected]);
-    await reconcileMirrors();
-    store.toast(`${selected.size} lançamentos apagados.`);
-    selected = new Set();
-    selecting = false;
-    confirmDelete = false;
-  }
-
-  const accounts = $derived(store.accounts.filter(inScopeAccount));
-  const roots = $derived(store.categories.filter((c) => !c.parent_id).toSorted((a, b) => a.sort_order - b.sort_order));
 </script>
 
-<div class="page" class:narrow={!prefs.full}>
+<div class="page">
   <header class="row between top">
-    <h1>Lançamentos</h1>
+    <div class="month">
+      <button class="icon-btn" aria-label="Mês anterior" disabled={month <= options.at(-1)!} onclick={() => (month = addMonths(month, -1))}><Icon name="chevron-left" /></button>
+      <label class="picker" use:hint={['Mês', 'Escolha o mês. Dá para ver os próximos meses com o que já está previsto.']}>
+        <span>{monthTitle(month)}</span><Icon name="chevron-down" size={16} />
+        <select bind:value={month} aria-label="Mês">{#each options as m (m)}<option value={m}>{monthTitle(m)}{m > current ? ' (previsão)' : ''}</option>{/each}</select>
+      </label>
+      <button class="icon-btn" aria-label="Próximo mês" disabled={month >= options[0]} onclick={() => (month = addMonths(month, 1))}><Icon name="chevron-right" /></button>
+    </div>
     <div class="row" style="gap: 8px">
-      {#if selecting}
-        <button class="btn" onclick={() => { selecting = false; selected = new Set(); }}>Concluir</button>
-      {:else}
-        <div class="menu-wrap">
-          <button class="icon-btn" aria-label="Mais ações" onclick={() => (menu = !menu)} use:hint={['Mais ações', 'Novo lançamento, selecionar vários para mover ou apagar, importar.']}><Icon name="more" /></button>
-          {#if menu}
-            <div class="menu card" role="menu">
-              <button role="menuitem" onclick={() => { menu = false; ui.newEntryOpen = true; }}><Icon name="plus" size={16} />Novo lançamento</button>
-              <button role="menuitem" onclick={() => { menu = false; selecting = true; }}><Icon name="check-circle" size={16} />Selecionar vários</button>
-              <button role="menuitem" onclick={() => { menu = false; ui.startImport(); }}><Icon name="import" size={16} />Importar extrato</button>
-            </div>
-          {/if}
-        </div>
-      {/if}
+      <ChartButton onclick={() => (chartsOpen = true)} detail="Entradas × saídas por mês, saídas por categoria e saldo no tempo." />
+      <ChartButton icon="calendar" label="Calendário" detail="Faturas e contas fixas: o que vence, o que já foi pago." onclick={() => goto('#/a-pagar')} />
+      <ChartButton icon="search" label="Buscar" detail="Todos os lançamentos deste mês, com busca e filtros." onclick={search} />
     </div>
   </header>
   <WorkspaceBar />
-  <label class="search"><Icon name="search" size={17} class="faint" /><input placeholder="Pesquisar" bind:value={filter.search} /></label>
 
-  <div class="scroll-x filters">
-    <label class="chip" class:active={filter.period !== 'thisMonth' || filter.month} use:hint={['Período', 'De quando são os lançamentos mostrados.']}>
-      {filter.month ? shortMonth(filter.month) : periodName[filter.period]}<Icon name="chevron-down" size={13} />
-      <select value={filter.period} onchange={(e) => { filter.period = e.currentTarget.value as Period; filter.month = null; }}>{#each Object.entries(periodName) as [value, label]}<option {value}>{label}</option>{/each}</select>
-    </label>
-    <label class="chip" class:active={filter.categoryId} use:hint={['Categoria', 'Mostra só uma categoria (com as subcategorias).']}>
-      {store.categoryById.get(filter.categoryId ?? '')?.name ?? 'Categoria'}<Icon name="chevron-down" size={13} />
-      <select value={filter.categoryId ?? ''} onchange={(e) => (filter.categoryId = e.currentTarget.value || null)}>
-        <option value="">Todas</option>
-        {#each roots as root (root.id)}
-          <optgroup label={root.name}><option value={root.id}>{root.name} (tudo)</option>{#each store.categories.filter((c) => c.parent_id === root.id) as sub (sub.id)}<option value={sub.id}>{sub.name}</option>{/each}</optgroup>
+  {#if forecast}
+    <section class="card">
+      <div class="card-head"><h3>Previsão de {monthTitle(month).split(' ')[0].toLowerCase()}</h3><b class="num warn big">{money(forecast.total, { cents: false })}</b></div>
+      <p class="caption" style="margin: -6px 0 10px">O que já se sabe que vai sair: faturas (compras feitas e parcelas) e contas fixas.</p>
+      <div class="rows">
+        {#each forecast.faturas as f (f.account.id + f.due)}
+          <div class="row item"><BankCard account={f.account} width={38} /><span class="grow">Fatura {f.account.name}<span class="caption"> · vence {dayMonth(f.due)}</span></span><span class="num">{money(f.cents)}</span></div>
         {/each}
-      </select>
-    </label>
-    <label class="chip" class:active={filter.accountId} use:hint={['Conta', 'Mostra só uma conta ou cartão.']}>
-      {store.accountById.get(filter.accountId ?? '')?.name ?? 'Conta'}<Icon name="chevron-down" size={13} />
-      <select value={filter.accountId ?? ''} onchange={(e) => (filter.accountId = e.currentTarget.value || null)}><option value="">Todas</option>{#each accounts as a (a.id)}<option value={a.id}>{a.name}</option>{/each}</select>
-    </label>
-    {#if prefs.full || moreFilters || filter.personId || filter.cost || filter.uncategorized}
-    <label class="chip" class:active={filter.personId} use:hint={['De quem', 'Só o que é seu, da sua esposa, da casa, do filho…']}>
-      {store.personById.get(filter.personId ?? '')?.name ?? 'De quem'}<Icon name="chevron-down" size={13} />
-      <select value={filter.personId ?? ''} onchange={(e) => (filter.personId = e.currentTarget.value || null)}><option value="">Todos</option>{#each store.people as p (p.id)}<option value={p.id}>{p.name}</option>{/each}</select>
-    </label>
-    <label class="chip" class:active={filter.cost} use:hint={['Fixo ou variável', 'Só os gastos fixos (que se repetem) ou só os variáveis.']}>
-      {filter.cost === 'fixed' ? 'Fixos' : filter.cost === 'variable' ? 'Variáveis' : 'Fixo/variável'}<Icon name="chevron-down" size={13} />
-      <select value={filter.cost ?? ''} onchange={(e) => (filter.cost = (e.currentTarget.value || null) as typeof filter.cost)}><option value="">Todos</option><option value="fixed">Só fixos</option><option value="variable">Só variáveis</option></select>
-    </label>
-    <button class="chip" class:active={filter.uncategorized} onclick={() => (filter.uncategorized = !filter.uncategorized)} use:hint={['Sem categoria', 'Só o que o app não soube classificar.']}>Sem categoria</button>
-    {:else}
-    <button class="chip" onclick={() => (moreFilters = true)} use:hint={['Mais filtros', 'De quem é, fixo ou variável e sem categoria.']}><Icon name="filter" size={13} />Mais filtros</button>
-    {/if}
-    {#if filter.active}<button class="btn ghost" onclick={() => filter.reset()}>Limpar</button>{/if}
-  </div>
-
-  <div class="layout" class:wide={prefs.full}>
-  <div class="list">
-  {#if list.length}
-    <div class="card tight row between totals" class:mobile-only={prefs.full} use:hint={['Resumo', 'Somas do que está filtrado. Transferências entre suas contas e pagamento de fatura ficam de fora.']}>
-      <div><span class="caption">Entradas</span><b class="num pos">{money(totals.income)}</b></div>
-      <div><span class="caption">Saídas</span><b class="num">{money(totals.out)}</b></div>
-      <div style="text-align: right"><span class="caption">Resultado</span><b class="num" class:pos={totals.net >= 0} class:neg={totals.net < 0}>{money(totals.net)}</b></div>
+        {#each forecast.bills as bill (bill.id)}
+          <div class="row item"><Avatar merchant={merchantForBill(bill) ?? null} category={store.categoryById.get(bill.category_id ?? '') ?? null} name={bill.name} size={32} /><span class="grow">{bill.name}<span class="caption"> · dia {bill.day_of_month}</span></span><span class="num">{money(bill.amount_cents)}</span></div>
+        {:else}{#if !forecast.faturas.length}<p class="muted small">Nada previsto ainda para este mês.</p>{/if}{/each}
+      </div>
+    </section>
+  {:else}
+    <div class="layout">
+      <div class="col">
+        <BalanceCard {analysis} title={month === current ? 'Saldo financeiro' : 'Saldo no fim do mês'} />
+        <GroupsCard title="Entradas" groups={analysis.income} total={analysis.incomeTotal} tone="pos" />
+        <section class="card balance">
+          <div class="card-head"><h3>Balanço</h3></div>
+          <div class="row between"><span class="muted">Entradas</span><span class="num pos">{money(analysis.incomeTotal)}</span></div>
+          <div class="row between"><span class="muted">Saídas</span><span class="num">{money(analysis.expenseTotal)}</span></div>
+          <div class="row between final"><b>Final</b><b class="num" class:pos={analysis.balance >= 0} class:neg={analysis.balance < 0}>{money(analysis.balance)}</b></div>
+        </section>
+      </div>
+      <div class="col">
+        <GroupsCard title="Saídas por categoria" groups={analysis.expenses} total={analysis.expenseTotal} />
+      </div>
     </div>
   {/if}
-
-  {#each days as [day, entries] (day)}
-    {@const spent = entries.filter((e) => !e.is_mirror && kindOf(e) === 'expense').reduce((sum, e) => sum - e.amount_cents, 0)}
-    <div class="day row between"><span>{dayHeader(day)}</span>{#if spent > 0}<span class="num caption">{money(spent)}</span>{/if}</div>
-    <div class="card flush entries">
-      {#each entries as entry (entry.id)}
-        <EntryRow {entry} selected={selecting ? selected.has(entry.id) : null} onclick={() => (selecting ? !entry.is_mirror && toggle(entry.id) : ui.editEntry(entry.id))} />
-      {/each}
-    </div>
-  {:else}
-    <div class="empty stack-sm"><Icon name="search" size={34} class="faint" /><b>Nenhum lançamento</b><span class="muted small">{store.entries.length ? 'Mude o período ou limpe os filtros.' : 'Importe um extrato para começar.'}</span></div>
-  {/each}
-  </div>
-  {#if list.length && prefs.full}<div class="side"><TxInsights entries={list} /></div>{/if}
-  </div>
 </div>
-
-{#if selecting && selected.size}
-  <div class="selbar">
-    <b>{selected.size} selecionados</b>
-    <button class="btn ghost" onclick={() => (selected = new Set(list.filter((e) => !e.is_mirror).map((e) => e.id)))}>Todos</button>
-    <span class="grow"></span>
-    {#if confirmDelete}
-      <button class="btn danger" onclick={removeSelected}>Apagar {selected.size}?</button>
-    {:else}
-      <button class="btn" onclick={() => (confirmDelete = true)}><Icon name="trash" size={16} />Apagar</button>
-    {/if}
-    <button class="btn primary" onclick={() => (moving = true)}><Icon name="move" size={16} />Mover…</button>
-  </div>
-{/if}
-
-<MoveSheet bind:open={moving} ids={[...selected]} ondone={() => { selected = new Set(); selecting = false; }} />
+<ChartsSheet bind:open={chartsOpen} focus="categories" month={future ? current : month} {entries} {accounts} />
 
 <style>
-  .top h1 { margin: 6px 4px; font: 700 30px var(--font-display); letter-spacing: -0.02em; }
-  .search { display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 14px; border-radius: 14px; background: rgba(255, 255, 255, 0.07); border: 1px solid var(--stroke); }
-  .search input { flex: 1; background: none; border: 0; outline: none; color: var(--text); }
-  .filters .chip { position: relative; }
-  .filters select { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-  .layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; align-items: start; }
-  .list { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-  .side { display: none; }
-  @media (min-width: 1100px) {
-    .layout.wide { grid-template-columns: minmax(0, 1fr) 360px; }
-    .side { display: block; position: sticky; top: 22px; }
-    .mobile-only { display: none; }
-  }
-  .totals > div { display: flex; flex-direction: column; gap: 2px; }
-  .totals b { font-size: 15.5px; }
-  .day { font-weight: 600; font-size: 14px; color: var(--text-2); margin: 10px 6px -4px; }
-  .empty { align-items: center; text-align: center; padding: 60px 0; }
-  .menu-wrap { position: relative; }
-  .menu { position: absolute; right: 0; top: 46px; z-index: 30; padding: 6px; min-width: 220px; display: flex; flex-direction: column; background: rgba(24, 32, 29, 0.94); backdrop-filter: blur(24px); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5); }
-  .menu button { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; border: 0; background: none; text-align: left; }
-  .menu button:hover { background: rgba(255, 255, 255, 0.07); }
-  .selbar { position: fixed; z-index: 60; left: 12px; right: 12px; bottom: calc(84px + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 20px; background: rgba(28, 36, 33, 0.9); backdrop-filter: blur(20px); border: 1px solid var(--stroke-strong); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5); }
-  @media (min-width: 960px) { .selbar { left: calc(var(--sidebar) + 24px); right: 24px; bottom: 24px; } }
+  .top { gap: 10px; flex-wrap: wrap; }
+  .month { display: flex; align-items: center; gap: 8px; }
+  .picker { position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--stroke-strong); background: rgba(255, 255, 255, 0.07); font: 600 19px var(--font-display); cursor: pointer; }
+  .picker select { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .icon-btn:disabled { opacity: 0.3; }
+  .layout { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); align-items: start; }
+  @media (min-width: 1000px) { .layout { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+  .balance { display: flex; flex-direction: column; gap: 10px; font-size: 15px; }
+  .balance .card-head { margin-bottom: 0; }
+  .final { padding-top: 12px; border-top: 1px solid var(--stroke-strong); }
+  .final b { font: 600 22px var(--font-display); }
+  .rows { display: flex; flex-direction: column; }
+  .item { gap: 12px; padding: 9px 0; font-size: 15px; }
+  .item + .item { border-top: 1px solid var(--stroke); }
+  .big { font: 600 24px var(--font-display); }
 </style>

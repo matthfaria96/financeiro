@@ -87,7 +87,16 @@ export interface ProjectItem extends Row {
   photo: string;
 }
 
+/** Caderno de listas (Mercado, Farmácia, Petshop…): a lista mais nova é a atual. */
+export interface Notebook extends Row {
+  name: string;
+  emoji: string;
+  color: string;
+  sort_order: number;
+}
+
 export interface ShoppingList extends Row {
+  notebook_id: string | null;
   name: string;
   done_at: string | null;
   total_cents: number | null;
@@ -98,6 +107,8 @@ export interface ShoppingItem extends Row {
   name: string;
   quantity: string;
   checked: boolean;
+  /** Passa para a próxima lista ao "gerar nova mantendo os itens". */
+  repeat: boolean;
   sort_order: number;
 }
 
@@ -107,18 +118,20 @@ export interface OrgTables {
   maintenance_items: MaintenanceItem;
   projects: Project;
   project_items: ProjectItem;
+  notebooks: Notebook;
   shopping_lists: ShoppingList;
   shopping_items: ShoppingItem;
 }
 
 export type OrgTable = keyof OrgTables;
-export const orgTables: OrgTable[] = ['vehicles', 'vehicle_logs', 'maintenance_items', 'projects', 'project_items', 'shopping_lists', 'shopping_items'];
+export const orgTables: OrgTable[] = ['vehicles', 'vehicle_logs', 'maintenance_items', 'projects', 'project_items', 'notebooks', 'shopping_lists', 'shopping_items'];
 
 /** Tabelas filhas: ficam sempre no espaço do pai (o banco garante; aqui espelhamos na tela). */
 export const parentOf: Partial<Record<OrgTable, { table: OrgTable; key: string }>> = {
   vehicle_logs: { table: 'vehicles', key: 'vehicle_id' },
   maintenance_items: { table: 'vehicles', key: 'vehicle_id' },
   project_items: { table: 'projects', key: 'project_id' },
+  shopping_lists: { table: 'notebooks', key: 'notebook_id' },
   shopping_items: { table: 'shopping_lists', key: 'list_id' }
 };
 

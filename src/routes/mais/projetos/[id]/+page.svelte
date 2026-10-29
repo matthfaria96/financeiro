@@ -45,7 +45,7 @@
 
 <div class="page">
   {#if project}
-    <SubHeader title={project.name} back="#/mais/projetos">
+    <SubHeader title={project.name} back="#/notas/desejos">
       <button class="icon-btn" aria-label="Editar projeto" onclick={() => (editingProject = true)} use:hint={['Editar projeto', 'Nome, ícone, orçamento e quem vê.']}><Icon name="pencil" /></button>
       <button class="icon-btn" aria-label="Novo item" onclick={() => edit(null)} use:hint={['Novo item', 'Produto ou serviço para planejar ou anotar.']}><Icon name="plus" /></button>
     </SubHeader>
@@ -96,7 +96,7 @@
     <ProjectEditor bind:open={editingProject} {project} />
     <ItemEditor bind:open={itemOpen} {project} {item} />
   {:else}
-    <SubHeader title="Projeto" back="#/mais/projetos" />
+    <SubHeader title="Projeto" back="#/notas/desejos" />
     <p class="muted">{organizer.loadedFor ? 'Projeto não encontrado.' : 'Carregando…'}</p>
   {/if}
 </div>

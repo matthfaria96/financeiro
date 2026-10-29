@@ -1,6 +1,6 @@
 import { addDays, today, type Day } from '$lib/core/dates';
 import { defaultMaintenancePlan } from '$lib/core/vehicle';
-import type { MaintenanceItem, OrgSnapshot, Project, ProjectItem, ShoppingItem, ShoppingList, Vehicle, VehicleLog } from './organizerTypes';
+import type { MaintenanceItem, Notebook, OrgSnapshot, Project, ProjectItem, ShoppingItem, ShoppingList, Vehicle, VehicleLog } from './organizerTypes';
 
 /** Carro, casa e listas fictícios para a demonstração (um espaço compartilhado "Nós dois"). */
 export function buildOrganizerDemo(personal: string): OrgSnapshot {
@@ -48,20 +48,38 @@ export function buildOrganizerDemo(personal: string): OrgSnapshot {
     date: done ? addDays(now, offset) : null, vendor, link: i === 1 ? 'https://www.amazon.com.br/' : i === 5 ? 'https://www.mercadolivre.com.br/' : '', notes, photo: ''
   }));
 
-  const lists: ShoppingList[] = [
-    ...[38_910, 45_620, 36_480, 52_300, 40_150].map((cents, i) => ({ ...base(`list-past-${i}`, shared, addDays(now, -9 - 7 * (5 - i))), name: 'Mercado da semana', done_at: stamp(addDays(now, -8 - 7 * (5 - i))), total_cents: cents })),
-    { ...base('list-old', shared, addDays(now, -9)), name: 'Mercado da semana', done_at: stamp(addDays(now, -8)), total_cents: 41_230 },
-    { ...base('list-now', shared, addDays(now, -1)), name: 'Mercado da semana', done_at: null, total_cents: null }
+  const notebooks: Notebook[] = [
+    { ...base('nb-mercado', shared), name: 'Mercado', emoji: '🛒', color: '#2BD4A4', sort_order: 0 },
+    { ...base('nb-farmacia', personal), name: 'Farmácia', emoji: '💊', color: '#FF6B6B', sort_order: 1 },
+    { ...base('nb-pet', shared), name: 'Petshop', emoji: '🐾', color: '#FF9F1C', sort_order: 2 }
   ];
-  const groceries: [string, string][] = [['Leite', '6'], ['Pão de forma', ''], ['Ovos', '1 dz'], ['Arroz', '5 kg'], ['Feijão', '2'], ['Banana', ''], ['Café', '2'], ['Papel higiênico', ''], ['Detergente', '3'], ['Frango', '1 kg']];
-  const shoppingItems: ShoppingItem[] = lists.flatMap((list) => groceries.map(([name, quantity], i) => ({
-    ...base(`${list.id}-${i}`, shared, addDays(now, -1)), list_id: list.id, name, quantity, checked: list.done_at !== null || i < 3, sort_order: i
-  })));
+  const list = (id: string, notebook: Notebook, offset: number, done: number | null, cents: number | null): ShoppingList =>
+    ({ ...base(id, notebook.household_id, addDays(now, offset)), notebook_id: notebook.id, name: notebook.name, done_at: done === null ? null : stamp(addDays(now, done)), total_cents: cents });
+  const lists: ShoppingList[] = [
+    ...[38_910, 45_620, 36_480, 52_300, 40_150].map((cents, i) => list(`list-past-${i}`, notebooks[0], -9 - 7 * (5 - i), -8 - 7 * (5 - i), cents)),
+    list('list-old', notebooks[0], -9, -8, 41_230),
+    list('list-now', notebooks[0], -1, null, null),
+    list('list-farm', notebooks[1], -3, null, null),
+    list('list-pet', notebooks[2], -12, null, null)
+  ];
+  // [nome, quantidade, repete]
+  const contents: Record<string, [string, string, boolean][]> = {
+    mercado: [['Leite', '6', true], ['Pão de forma', '', true], ['Ovos', '1 dz', true], ['Arroz', '5 kg', true], ['Feijão', '2', true], ['Banana', '', true], ['Café', '2', true],
+      ['Papel higiênico', '', true], ['Detergente', '3', true], ['Frango', '1 kg', true], ['Cabo de vassoura', '', false], ['Pá de lixo', '', false]],
+    farmacia: [['Dipirona', '', true], ['Protetor solar', '', false], ['Vitamina D', '', true]],
+    pet: [['Ração 10 kg', '', true], ['Areia', '2', true], ['Petisco', '', true], ['Brinquedo', '', false]]
+  };
+  const shoppingItems: ShoppingItem[] = lists.flatMap((l) => {
+    const rows = contents[l.notebook_id === 'nb-farmacia' ? 'farmacia' : l.notebook_id === 'nb-pet' ? 'pet' : 'mercado'];
+    return rows.map(([name, quantity, repeat], i) => ({
+      ...base(`${l.id}-${i}`, l.household_id, addDays(now, -1)), list_id: l.id, name, quantity, repeat, checked: l.done_at !== null || (l.id === 'list-now' && i < 3), sort_order: i
+    }));
+  });
 
   return {
     spaces: [{ id: personal, name: 'Minha casa', kind: 'personal', invite_code: '' }, { id: shared, name: 'Nós dois', kind: 'shared', invite_code: 'DEMO1234' }],
     members: [{ household_id: shared, user_id: '', display_name: 'Você' }, { household_id: shared, user_id: 'demo-esposa', display_name: 'Esposa' }],
-    vehicles: [car], vehicle_logs: logs, maintenance_items: plan, projects: [apto, mine], project_items: projectItems,
+    vehicles: [car], vehicle_logs: logs, maintenance_items: plan, projects: [apto, mine], project_items: projectItems, notebooks,
     shopping_lists: lists, shopping_items: shoppingItems
   };
 }

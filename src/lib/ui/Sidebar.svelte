@@ -1,106 +1,28 @@
 <script lang="ts">
   import { page } from '$app/state';
   import { store } from '$lib/data/store.svelte';
-  import { organizer } from '$lib/data/organizer.svelte';
   import { ui } from './ui.svelte';
-  import { money } from '$lib/core/money';
   import Icon from './Icon.svelte';
-  import BankCard from './BankCard.svelte';
   import { hint } from './hint';
-  import { balanceOf, inScopeAccount } from '$lib/features/model';
-  import { pendingThisMonth } from '$lib/features/payables';
-  import { prefs } from './prefs.svelte';
+  import { sectionOf, sections } from './nav';
 
-  /** Menu lateral do computador: tudo à mão (visão, organizar, contas com saldo, cadastros e ajustes). */
-  interface Link {
-    path: string;
-    label: string;
-    icon: string;
-    color: string;
-    count?: number | null;
-  }
-  // Quantas faturas e contas fixas ainda faltam pagar neste mês (o número ao lado de "A pagar").
-  const payCount = $derived(pendingThisMonth().count);
-  // Visão simples: as quatro perguntas do dia a dia, Organizar e Ajustes. A completa acrescenta o resto.
-  const sections = $derived<{ id: string; title: string; links: Link[] }[]>([
-    { id: 'visao', title: '', links: [
-      { path: '/', label: 'Início', icon: 'home', color: '#2bd4a4' },
-      { path: '/transacoes', label: 'Lançamentos', icon: 'transactions', color: '#3987e5' },
-      { path: '/a-pagar', label: 'A pagar', icon: 'receipt', color: '#ff6b6b', count: payCount || null },
-      { path: '/relatorios', label: 'Relatórios', icon: 'reports', color: '#9085e9' },
-      ...(prefs.full ? [
-        { path: '/relatorios/planilha', label: 'Mês a mês', icon: 'table', color: '#38d9f5' },
-        { path: '/contas-fixas', label: 'Calendário de contas', icon: 'calendar', color: '#ff9f1c' }
-      ] : [])
-    ] },
-    { id: 'organizar', title: 'Organizar', links: [
-      { path: '/mais/compras', label: 'Lista de compras', icon: 'basket', color: '#2bd4a4', count: organizer.shopping_lists.filter((l) => !l.done_at).length || null },
-      { path: '/mais/projetos', label: 'Casa e compras', icon: 'house', color: '#38d9f5' },
-      { path: '/mais/carro', label: 'Carro', icon: 'car', color: '#ff9f1c' }
-    ] }
-  ]);
-  const settingsPaths = ['/mais', '/mais/contas', '/mais/categorias', '/mais/estabelecimentos', '/mais/pessoas', '/mais/areas', '/mais/importacoes', '/mais/compartilhar', '/mais/ajustes'];
-
-  const route = $derived(page.route.id ?? '/');
-  const allPaths = $derived([...sections.flatMap((s) => s.links.map((l) => l.path)), ...settingsPaths]);
-  // O link mais específico que contém a rota atual ("/relatorios/planilha" ganha de "/relatorios").
-  const active = $derived(allPaths.filter((p) => route === p || (p !== '/' && route.startsWith(`${p}/`))).sort((a, b) => b.length - a.length)[0] ?? '');
-  const accounts = $derived(store.accounts.filter((a) => !a.archived && inScopeAccount(a)).toSorted((a, b) => a.sort_order - b.sort_order));
-
-  let closed = $state<Record<string, boolean>>(read());
-  function read(): Record<string, boolean> {
-    try {
-      return JSON.parse(localStorage.getItem('financeiro.sidebar') ?? '{}');
-    } catch {
-      return {};
-    }
-  }
-  function toggle(id: string) {
-    closed = { ...closed, [id]: !closed[id] };
-    try {
-      localStorage.setItem('financeiro.sidebar', JSON.stringify(closed));
-    } catch {
-      // aba privada
-    }
-  }
+  /** Menu lateral fino do computador: Início, Lançamentos e Notas; Configuração e Importar embaixo. */
+  const active = $derived(sectionOf(page.route.id ?? '/'));
+  const ordered = $derived([sections[1], sections[0], sections[2]]);
 </script>
 
-{#snippet head(id: string, title: string)}
-  <button class="head" onclick={() => toggle(id)} aria-expanded={!closed[id]}>{title}<Icon name={closed[id] ? 'chevron-right' : 'chevron-down'} size={12} /></button>
-{/snippet}
-
 <nav class="sidebar glass" aria-label="Seções">
-  <div class="brand"><span class="logo"><Icon name="trending-up" size={17} stroke={2.6} /></span><span class="grow">Financeiro</span>
-    <button class="icon-btn sm" aria-label="Novo lançamento" onclick={() => (ui.newEntryOpen = true)} use:hint={['Novo lançamento', 'Anote um gasto ou entrada à mão (dinheiro, por exemplo).']}><Icon name="plus" size={16} /></button>
-  </div>
-  <div class="scroll">
-    {#each sections as section (section.id)}
-      {#if section.title}{@render head(section.id, section.title)}{:else}<div class="gap"></div>{/if}
-      {#if !closed[section.id]}
-        {#each section.links as link (link.path)}
-          <a href="#{link.path}" class="link" class:on={active === link.path} aria-current={active === link.path ? 'page' : undefined}>
-            <span class="ico" style:--c={link.color}><Icon name={link.icon} size={15} stroke={2.2} /></span><span class="grow ellipsis">{link.label}</span>
-            {#if link.count}<span class="count">{link.count}</span>{/if}
-          </a>
-        {/each}
-      {/if}
+  <div class="brand"><span class="logo"><Icon name="trending-up" size={17} stroke={2.6} /></span>Financeiro</div>
+  <div class="links">
+    {#each ordered as s (s.id)}
+      <a href={s.href} class="link" class:on={active === s.id} aria-current={active === s.id ? 'page' : undefined}>
+        <span class="ico" style:--c={s.color}><Icon name={s.icon} size={17} stroke={2.2} /></span>{s.label}
+      </a>
     {/each}
-
-    {#if prefs.full}
-      {@render head('contas', 'Contas')}
-      {#if !closed.contas}
-        {#each accounts as account (account.id)}
-          {@const balance = account.kind === 'creditCard' ? -balanceOf(account) : balanceOf(account)}
-          <a href="#/contas/{account.id}" class="link acc" class:on={route === '/contas/[id]' && page.params.id === account.id}>
-            <BankCard {account} width={30} /><span class="grow ellipsis">{account.name}</span><span class="bal num" class:owed={account.kind === 'creditCard'}>{money(balance, { cents: false })}</span>
-          </a>
-        {/each}
-      {/if}
-    {/if}
   </div>
   <div class="bottom">
-    <a href="#/mais" class="link" class:on={settingsPaths.includes(active)} aria-current={settingsPaths.includes(active) ? 'page' : undefined}>
-      <span class="ico" style:--c="#8e8e93"><Icon name="settings" size={15} stroke={2.2} /></span><span class="grow">Ajustes</span>
+    <a href="#/mais" class="link" class:on={active === 'settings'} aria-current={active === 'settings' ? 'page' : undefined}>
+      <span class="ico" style:--c="#8e8e93"><Icon name="settings" size={17} stroke={2.2} /></span>Configuração
     </a>
     <button class="btn primary block import" onclick={() => ui.startImport()} use:hint={['Importar extrato', 'Escolha a conta e o arquivo do banco (OFX, CSV ou PDF). Também dá para arrastar o arquivo para a janela.']}>
       <Icon name="import" size={17} />Importar extrato
@@ -110,25 +32,15 @@
 </nav>
 
 <style>
-  .sidebar { display: flex; flex-direction: column; position: sticky; top: 0; height: 100dvh; padding: 14px 10px 12px; border-width: 0 1px 0 0; border-radius: 0; }
-  .brand { display: flex; align-items: center; gap: 10px; font: 700 17px var(--font-display); padding: 4px 6px 12px; }
+  .sidebar { display: flex; flex-direction: column; position: sticky; top: 0; height: 100dvh; padding: 16px 12px 12px; border-width: 0 1px 0 0; border-radius: 0; }
+  .brand { display: flex; align-items: center; gap: 10px; font: 700 17px var(--font-display); padding: 4px 6px 22px; }
   .logo { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; color: #b8ffe6; background: linear-gradient(160deg, #1d7a5e, #06140f); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12), 0 4px 14px rgba(43, 212, 164, 0.25); }
-  .icon-btn.sm { width: 28px; height: 28px; }
-  .scroll { flex: 1; overflow-y: auto; scrollbar-width: none; margin: 0 -4px; padding: 0 4px; }
-  .scroll::-webkit-scrollbar { display: none; }
-  .gap { height: 6px; }
-  .head { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 12px 8px 4px; border: 0; background: none; font-size: 11.5px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; }
-  .head :global(svg) { opacity: 0; transition: opacity 0.15s; }
-  .head:hover :global(svg) { opacity: 1; }
-  .link { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 34px; padding: 5px 8px; border-radius: 9px; border: 0; background: none; text-align: left; color: var(--text); font-size: 14px; transition: background 0.15s; }
+  .links { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+  .link { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 6px 10px; border-radius: 12px; color: var(--text); font-size: 15.5px; font-weight: 500; transition: background 0.15s; }
   .link:hover { background: rgba(255, 255, 255, 0.055); }
   .link.on { background: rgba(255, 255, 255, 0.11); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06); }
-  .ico { width: 24px; height: 24px; border-radius: 7px; display: grid; place-items: center; flex: none; color: #fff; background: linear-gradient(160deg, var(--c), color-mix(in srgb, var(--c) 62%, black)); box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.2); }
-  .count { font-size: 12px; color: var(--text-2); font-variant-numeric: tabular-nums; }
-  .acc { min-height: 36px; }
-  .bal { font-size: 12.5px; color: var(--text-2); }
-  .bal.owed { color: #ffb38a; }
-  .bottom { padding-top: 10px; border-top: 1px solid var(--stroke); display: flex; flex-direction: column; gap: 8px; }
+  .ico { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; flex: none; color: #fff; background: linear-gradient(160deg, var(--c), color-mix(in srgb, var(--c) 62%, black)); box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.2); }
+  .bottom { display: flex; flex-direction: column; gap: 10px; padding-top: 10px; border-top: 1px solid var(--stroke); }
   .import { box-shadow: 0 6px 20px rgba(43, 212, 164, 0.25); background: linear-gradient(180deg, #3fe3b4, #20b98d); }
   .who { padding: 0 4px; }
 </style>

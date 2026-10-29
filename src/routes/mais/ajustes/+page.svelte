@@ -7,10 +7,15 @@
   import SubHeader from '$lib/screens/more/SubHeader.svelte';
   import { reapplyAll } from '$lib/features/rules';
   import { enterDemo, exitDemo } from '$lib/data/demoMode';
+  import { prefs } from '$lib/ui/prefs.svelte';
 
   let workspaces = $state(store.workspacesEnabled);
   let months = $state(store.forecastMonths);
   let reapplied = $state<number | null>(null);
+  let advanced = $state(prefs.full);
+  $effect(() => {
+    if (advanced !== prefs.full) prefs.setFull(advanced);
+  });
   let confirmErase = $state(false);
   let copied = $state(false);
   let newPassword = $state('');
@@ -106,6 +111,12 @@
     {:else}
       <button class="form-row plain" onclick={() => store.signOut()}><Icon name="logout" size={16} />Sair deste aparelho</button>
     {/if}
+  </div>
+
+  <SectionTitle title="Painéis avançados" />
+  <div class="form-group">
+    <div class="form-row" use:hint={['Painéis avançados', 'Mostra extras: abas de fixo/variável e pagamento nos Relatórios, gráficos ao lado da lista de lançamentos, etiquetas de conta e de fixo. Vale só neste aparelho.']}>
+      <span class="field-label grow">Mostrar painéis avançados</span><Toggle label="Painéis avançados" bind:checked={advanced} /></div>
   </div>
 
   <SectionTitle title="Demonstração" />

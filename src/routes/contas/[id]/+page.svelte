@@ -71,7 +71,7 @@
     {/if}
     <div class="two">
       <button class="btn primary lg" onclick={() => ui.startImport(account.id)}><Icon name="import" size={18} />Importar extrato</button>
-      <button class="btn lg" onclick={() => { filter.set({ accountId: account.id, period: 'all' }); goto('#/transacoes'); }}><Icon name="list" size={18} />Ver lançamentos</button>
+      <button class="btn lg" onclick={() => { filter.set({ accountId: account.id, period: 'all' }); goto('#/transacoes/todos'); }}><Icon name="list" size={18} />Ver lançamentos</button>
     </div>
     <section class="card stack" use:hint={['Meses com extrato', 'Quais dos últimos 12 meses já têm lançamentos nesta conta.']}>
       <div class="row between"><span class="label">Meses com extrato</span>{#if lastEntryDate(account)}<span class="caption">até {dayMonth(lastEntryDate(account)!)}</span>{/if}</div>

@@ -34,7 +34,10 @@
   const litersValue = $derived(Number(liters.replace(',', '.')) || null);
   const cents = $derived(Math.abs(parseCents(amount) ?? 0));
   const perLiter = $derived(litersValue ? cents / 100 / litersValue : null);
-  const kinds: LogKind[] = ['fuel', 'service', 'insurance', 'tax', 'wash', 'product', 'parking', 'fee', 'other'];
+  // Dois tipos de lançamento: Combustível ou Gasto (e o gasto diz o que foi).
+  const expenseKinds: LogKind[] = ['insurance', 'tax', 'wash', 'service', 'parking', 'other'];
+  const expenseName: Partial<Record<LogKind, string>> = { insurance: 'Seguro', tax: 'Imposto', wash: 'Lavagem', service: 'Manutenção', parking: 'Estacionamento', other: 'Outro' };
+  const kinds = $derived(expenseKinds.includes(kind) || kind === 'fuel' ? expenseKinds : [...expenseKinds, kind]);
   const lastKm = $derived(odometerOf(vehicle));
 
   async function save() {
@@ -54,14 +57,20 @@
   }
 </script>
 
-<Sheet bind:open title={log ? 'Editar registro' : 'Registrar'}>
+<Sheet bind:open title={log ? 'Editar lançamento' : kind === 'fuel' ? 'Combustível' : 'Gasto'}>
   {#snippet actions()}<button class="btn primary" disabled={!cents && kind !== 'service'} onclick={save}>Salvar</button>{/snippet}
-  <div class="kinds">
-    {#each kinds as value (value)}
-      <button class="kind" class:on={kind === value} aria-pressed={kind === value} onclick={() => (kind = value)} use:hint={[logKindShort[value], 'Tipo do registro: separa os gastos do carro no resumo.']}>
-        <Icon name={logKindIcon[value]} size={18} /><span>{logKindShort[value]}</span></button>
-    {/each}
+  <div class="mode">
+    <button class:on={kind === 'fuel'} onclick={() => (kind = 'fuel')}><Icon name="fuelpump" size={17} />Combustível</button>
+    <button class:on={kind !== 'fuel'} onclick={() => { if (kind === 'fuel') kind = 'service'; }}><Icon name="receipt" size={17} />Gasto</button>
   </div>
+  {#if kind !== 'fuel'}
+    <div class="kinds">
+      {#each kinds as value (value)}
+        <button class="kind" class:on={kind === value} aria-pressed={kind === value} onclick={() => (kind = value)}>
+          <Icon name={logKindIcon[value]} size={18} /><span>{expenseName[value] ?? logKindShort[value]}</span></button>
+      {/each}
+    </div>
+  {/if}
   <div class="form-group" style="margin-top: 12px">
     <label class="form-row"><span class="field-label">Data</span><input class="field" type="date" bind:value={date} /></label>
     <label class="form-row"><span class="field-label">Valor</span><input class="field num" inputmode="decimal" placeholder="0,00" bind:value={amount} /></label>
@@ -86,7 +95,10 @@
 </Sheet>
 
 <style>
-  .kinds { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; margin-top: 6px; }
+  .mode { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+  .mode button { display: flex; align-items: center; justify-content: center; gap: 8px; height: 46px; border-radius: 13px; border: 1px solid var(--stroke); background: var(--card-2); font-weight: 600; color: var(--text-2); }
+  .mode button.on { color: #04140e; background: var(--accent); border-color: transparent; }
+  .kinds { margin-top: 10px; display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; margin-top: 6px; }
   .kind { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 10px 4px; border-radius: 12px; border: 1px solid var(--stroke); background: var(--card-2); font-size: 12.5px; font-weight: 600; color: var(--text-2); }
   .kind.on { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
 </style>

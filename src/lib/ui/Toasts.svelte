@@ -19,5 +19,5 @@
   .toast.ok :global(svg) { color: var(--accent); }
   .toast.error :global(svg) { color: var(--negative); }
   .toast.info :global(svg) { color: var(--blue); }
-  @media (min-width: 960px) { .toasts { bottom: 28px; left: calc(50% + 126px); } }
+  @media (min-width: 960px) { .toasts { bottom: 28px; left: calc(50% + 110px); } }
 </style>

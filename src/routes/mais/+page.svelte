@@ -2,32 +2,14 @@
   import { store } from '$lib/data/store.svelte';
   import { organizer } from '$lib/data/organizer.svelte';
   import SectionTitle from '$lib/ui/SectionTitle.svelte';
-  import Toggle from '$lib/ui/Toggle.svelte';
-  import Icon from '$lib/ui/Icon.svelte';
-  import { hint } from '$lib/ui/hint';
-  import { prefs } from '$lib/ui/prefs.svelte';
   import MoreRow from '$lib/screens/more/MoreRow.svelte';
   import { inScopeAccount } from '$lib/features/model';
 
-  /** Ajustes: tudo o que não é do dia a dia num lugar só (estilo Ajustes do Mac). */
-  let full = $state(prefs.full);
-  $effect(() => {
-    if (full !== prefs.full) prefs.setFull(full);
-  });
+  /** Configuração: tudo o que não é do dia a dia num lugar só (estilo Ajustes do Mac). */
 </script>
 
 <div class="page narrow">
-  <h1 class="title">Ajustes</h1>
-
-  <div class="organize">
-    <SectionTitle title="Organizar" />
-    <div class="card flush list">
-      <MoreRow href="#/mais/compras" title="Lista de compras" detail="Lista do mercado para marcar no carrinho." icon="basket" color="#2BD4A4" count={organizer.shopping_lists.filter((l) => !l.done_at).length || null} />
-      <MoreRow href="#/mais/projetos" title="Casa e compras" detail="O que comprar ou contratar para a casa." icon="house" color="#38D9F5" />
-      <MoreRow href="#/mais/carro" title="Carro" detail="Abastecimentos, gastos e revisões." icon="car" color="#FF9F1C" />
-      <MoreRow href="#/relatorios" title="Relatórios" detail="Para onde foi o dinheiro e mês a mês." icon="reports" color="#9085E9" />
-    </div>
-  </div>
+  <h1 class="title">Configuração</h1>
 
   <SectionTitle title="Suas contas" />
   <div class="card flush list">
@@ -45,23 +27,17 @@
 
   <SectionTitle title="Família e conta" />
   <div class="card flush list">
-    <MoreRow href="#/mais/compartilhar" title="Compartilhar" detail="Lista, casa e carro com sua esposa." icon="share" color="#FF8FAB" count={organizer.shared.length || null} />
+    <MoreRow href="#/mais/compartilhar" title="Compartilhar" detail="Notas (listas, desejos, transporte) com sua esposa." icon="share" color="#FF8FAB" count={organizer.shared.length || null} />
     <MoreRow href="#/mais/ajustes" title="Conta e preferências" detail="Senha, convite, previsão e demonstração." icon="settings" color="#8E8E93" />
   </div>
 
-  <SectionTitle title="Visão" />
-  <div class="form-group">
-    <div class="form-row" use:hint={['Visão completa', 'Liga painéis extras: previsão do mês, Mês a mês e calendário de contas no menu, contas no menu e filtros a mais. Vale só neste aparelho.']}>
-      <span class="ico"><Icon name="layers" size={16} color="#fff" /></span>
-      <span class="grow"><span>Visão completa</span><span class="caption block">Mais painéis e gráficos. Desligada, o app mostra só o essencial.</span></span>
-      <Toggle label="Visão completa" bind:checked={full} />
-    </div>
+  <SectionTitle title="Análises" />
+  <div class="card flush list">
+    <MoreRow href="#/relatorios" title="Relatórios" detail="Por categoria, pessoa ou conta, mês a mês." icon="reports" color="#9085E9" />
+    <MoreRow href="#/relatorios/planilha" title="Mês a mês" detail="Todos os meses lado a lado, como planilha." icon="table" color="#38D9F5" />
   </div>
 </div>
 
 <style>
   .title { margin: 6px 4px; font: 700 30px var(--font-display); letter-spacing: -0.02em; }
-  @media (min-width: 960px) { .organize { display: none; } }
-  .ico { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; flex: none; background: linear-gradient(160deg, #7c8cf8, #3b4596); }
-  .block { display: block; }
 </style>

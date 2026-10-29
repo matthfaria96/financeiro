@@ -8,6 +8,7 @@
   import Icon from '$lib/ui/Icon.svelte';
   import Toasts from '$lib/ui/Toasts.svelte';
   import Sidebar from '$lib/ui/Sidebar.svelte';
+  import { sectionOf, sections } from '$lib/ui/nav';
   import { hint } from '$lib/ui/hint';
   import Login from '$lib/screens/Login.svelte';
   import Onboarding from '$lib/screens/Onboarding.svelte';
@@ -21,19 +22,9 @@
 
   let { children }: { children: Snippet } = $props();
 
-  // Celular: as quatro perguntas do dia a dia + Ajustes (o resto fica lá dentro).
-  const tabs = [
-    { href: '#/', id: '/', label: 'Início', icon: 'home' },
-    { href: '#/transacoes', id: '/transacoes', label: 'Lançamentos', icon: 'transactions' },
-    { href: '#/a-pagar', id: '/a-pagar', label: 'A pagar', icon: 'receipt' },
-    { href: '#/mais/compras', id: '/mais/compras', label: 'Compras', icon: 'basket' },
-    { href: '#/mais', id: '/mais', label: 'Ajustes', icon: 'settings' }
-  ];
-  const active = $derived.by(() => {
-    const route = page.route.id ?? '/';
-    if (route === '/') return '/';
-    return tabs.find((tab) => tab.id !== '/' && route.startsWith(tab.id))?.id ?? (route.startsWith('/contas') || route.startsWith('/relatorios') ? '/' : '/mais');
-  });
+  // Celular: os três botões (Lançamentos, Início, Notas). Configuração fica no Início.
+  const tabs = sections;
+  const active = $derived(sectionOf(page.route.id ?? '/'));
 
   let dragging = $state(false);
 
@@ -118,7 +109,7 @@
   .shell > :global(.sidebar) { display: none; }
   .tabbar {
     position: fixed; z-index: 50; left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom));
-    display: grid; grid-template-columns: repeat(5, 1fr); height: 64px; border-radius: 30px; padding: 0 6px;
+    display: grid; grid-template-columns: repeat(3, 1fr); height: 66px; border-radius: 30px; padding: 0 6px;
     background: rgba(28, 36, 33, 0.66); backdrop-filter: blur(24px) saturate(1.8); -webkit-backdrop-filter: blur(24px) saturate(1.8);
     border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
   }
@@ -126,7 +117,7 @@
   .tabbar a.on { color: var(--accent); }
   .tabbar a span { white-space: nowrap; }
   @media (min-width: 960px) {
-    .shell { display: grid; grid-template-columns: 252px minmax(0, 1fr); }
+    .shell { display: grid; grid-template-columns: 220px minmax(0, 1fr); }
     .tabbar { display: none; }
     .shell > :global(.sidebar) { display: flex; }
     main { padding-top: 0; }

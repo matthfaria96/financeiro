@@ -18,6 +18,7 @@
   import { billStatus } from '$lib/features/bills';
   import { accountOf, categoryOf, inScope, inScopeAccount, inScopeBill } from '$lib/features/model';
   import BillEditor from '$lib/screens/bills/BillEditor.svelte';
+  import BillCalendar from '$lib/screens/bills/BillCalendar.svelte';
   import { prefs } from '$lib/ui/prefs.svelte';
   import { monthTitle } from '$lib/core/dates';
   import type { Bill } from '$lib/data/types';
@@ -48,6 +49,7 @@
   const cardsPaid = $derived(thisMonth.filter((g) => isBillPaid(g.account, g.due, g.imported, cash)));
   const pendingTotal = $derived(pendingThisMonth().total);
   const paidTotal = $derived(cardsPaid.reduce((s, g) => s + g.imported, 0) + billsPaid.reduce((s, x) => s + x.bill.amount_cents, 0));
+  const paidKeys = $derived(new Set([...cardsPaid.map((g) => `f:${g.account.id}:${g.due}`), ...billsPaid.map((x) => `b:${x.bill.id}`)]));
   let showPaid = $state(false);
   let editorOpen = $state(false);
   let editing = $state<Bill | null>(null);
@@ -94,7 +96,7 @@
 
 <div class="page">
   <header class="row between top">
-    <h1>A pagar</h1>
+    <span class="row" style="gap: 10px"><a class="icon-btn" href="#/transacoes" aria-label="Voltar"><Icon name="chevron-left" /></a><h1>A pagar</h1></span>
     <button class="btn" onclick={() => editBill(null)} use:hint={['Nova conta fixa', 'Uma conta que se repete todo mês (aluguel, luz, escola, assinatura).']}><Icon name="plus" size={16} />Conta fixa</button>
   </header>
   <WorkspaceBar />
@@ -103,6 +105,9 @@
     <div><span class="caption">Falta pagar em {monthTitle(month).split(' ')[0].toLowerCase()}</span><b class="big" class:warn={pendingTotal > 0}>{money(pendingTotal, { cents: false })}</b></div>
     <div class="right"><span class="caption">Já pago</span><b class="num pos">{money(paidTotal, { cents: false })}</b></div>
   </section>
+
+  <section class="card"><div class="card-head"><h3>{monthTitle(month)}</h3><span class="sub">o que vence em cada dia</span></div>
+    <BillCalendar {month} bills={billStatuses.map((x) => x.bill)} faturas={thisMonth} paid={paidKeys} /></section>
 
   {#if prefs.full && chart.labels.length}
     <section class="card">

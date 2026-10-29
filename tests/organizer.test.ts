@@ -52,9 +52,9 @@ describe('Lista de compras', () => {
     expect(parseItem('pão de forma')).toEqual({ name: 'Pão de forma', quantity: '' });
     expect(parseItem('7 belo')).toEqual({ name: 'Belo', quantity: '7' });
   });
-  it('duplicar desmarca tudo e mantém a ordem', () => {
-    const copy = duplicateItems([{ name: 'B', quantity: '', sort_order: 2, checked: true }, { name: 'A', quantity: '2', sort_order: 1, checked: true }]);
-    expect(copy).toEqual([{ name: 'A', quantity: '2', checked: false, sort_order: 0 }, { name: 'B', quantity: '', checked: false, sort_order: 1 }]);
+  it('duplicar desmarca, mantém a ordem e deixa de fora o que não repete', () => {
+    const copy = duplicateItems([{ name: 'B', quantity: '', sort_order: 2, checked: true }, { name: 'A', quantity: '2', sort_order: 1, checked: true, repeat: true }, { name: 'Pá de lixo', quantity: '', sort_order: 3, repeat: false }]);
+    expect(copy).toEqual([{ name: 'A', quantity: '2', checked: false, repeat: true, sort_order: 0 }, { name: 'B', quantity: '', checked: false, repeat: true, sort_order: 1 }]);
   });
   it('a mais nova primeiro', () => {
     expect(newestFirst([{ created_at: '2026-10-01T10:00' }, { created_at: '2026-10-20T10:00' }]).map((l) => l.created_at)).toEqual(['2026-10-20T10:00', '2026-10-01T10:00']);

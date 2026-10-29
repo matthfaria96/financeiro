@@ -23,7 +23,7 @@
   function openEntries(id: string) {
     const category = grouping === 'category' ? store.categoryByKey.get(id) : undefined;
     filter.set({ month, ...(grouping === 'category' ? { categoryId: category?.id ?? null } : grouping === 'person' ? { personId: id } : grouping === 'account' ? { accountId: id } : {}) });
-    goto('#/transacoes');
+    goto('#/transacoes/todos');
   }
 </script>
 

@@ -131,7 +131,7 @@
       {#each failures as failure}<div class="card small neg">{failure.name}: {failure.message}</div>{/each}
       <p class="caption">Os relatórios já estão atualizados. Para desfazer, use Mais › Importações.</p>
       <div class="row between">
-        {#if uncategorized}<a class="btn" href="#/transacoes?semcategoria=1" onclick={() => (ui.importOpen = false)}>Revisar {uncategorized} sem categoria</a>{:else}<span></span>{/if}
+        {#if uncategorized}<a class="btn" href="#/transacoes/todos?semcategoria=1" onclick={() => (ui.importOpen = false)}>Revisar {uncategorized} sem categoria</a>{:else}<span></span>{/if}
         <button class="btn primary" onclick={() => (ui.importOpen = false)}>Concluir</button>
       </div>
     </div>

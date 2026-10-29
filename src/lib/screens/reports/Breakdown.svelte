@@ -53,7 +53,7 @@
 
   function open(id: string) {
     filter.set({ month, ...(mode === 'cost' ? { cost: id as 'fixed' | 'variable' } : {}) });
-    goto('#/transacoes');
+    goto('#/transacoes/todos');
   }
 </script>
 
