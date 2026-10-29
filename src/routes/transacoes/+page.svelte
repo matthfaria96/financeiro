@@ -2,21 +2,20 @@
   import Select from '$lib/ui/Select.svelte';
   import { goto } from '$app/navigation';
   import { store } from '$lib/data/store.svelte';
-  import { addMonths, dayMonth, monthOf, monthTitle, today, type Month } from '$lib/core/dates';
+  import { addMonths, monthOf, monthTitle, today, type Month } from '$lib/core/dates';
   import { money } from '$lib/core/money';
   import Icon from '$lib/ui/Icon.svelte';
-  import BankCard from '$lib/ui/BankCard.svelte';
-  import Avatar from '$lib/ui/Avatar.svelte';
   import ChartButton from '$lib/ui/ChartButton.svelte';
   import { hint } from '$lib/ui/hint';
   import CategoryDonut from '$lib/screens/money/CategoryDonut.svelte';
   import EntryListCard from '$lib/screens/money/EntryListCard.svelte';
   import CategoryRows from '$lib/screens/money/CategoryRows.svelte';
   import ChartsSheet from '$lib/screens/money/ChartsSheet.svelte';
-  import { merchantForBill } from '$lib/screens/bills/billLook';
   import { filter } from '$lib/screens/transactions/filter.svelte';
   import { inScope, inScopeAccount } from '$lib/features/model';
-  import { analyzeMonth, forecastMonth } from '$lib/features/analytics';
+  import { analyzeMonth } from '$lib/features/analytics';
+  import { forecastSpending } from '$lib/features/spending';
+  import ForecastBreakdown from '$lib/screens/forecast/ForecastBreakdown.svelte';
   import Segmented from '$lib/ui/Segmented.svelte';
   import Tally from '$lib/ui/Tally.svelte';
   import { prefs } from '$lib/ui/prefs.svelte';
@@ -41,7 +40,7 @@
     outView = v;
     try { localStorage.setItem('financeiro.saidas', v); } catch { /* aba privada */ }
   }
-  const forecast = $derived(future ? forecastMonth(month, accounts) : null);
+  const forecast = $derived(future ? forecastSpending([month], entries, accounts)[0] : null);
   let chartsOpen = $state(false);
 
   function search() {
@@ -58,7 +57,7 @@
       <button class="icon-btn" aria-label="Próximo mês" disabled={month >= options[0]} onclick={() => (month = addMonths(month, 1))}><Icon name="chevron-right" /></button>
     </div>
     <div class="row" style="gap: 8px">
-      <ChartButton onclick={() => (chartsOpen = true)} label="Análise" detail="Fixas e variáveis, previsão dos próximos meses e entradas × saídas." />
+      <ChartButton onclick={() => (chartsOpen = true)} label="Análise" detail="Entradas × saídas e saldo nos últimos 12 meses." />
       <ChartButton icon="search" label="Buscar" detail="Todos os lançamentos deste mês, com busca e filtros." onclick={search} />
     </div>
   </header>
@@ -66,16 +65,9 @@
   {#if forecast}
     <section class="card">
       <div class="card-head"><h3>Previsão de {monthTitle(month).split(' ')[0].toLowerCase()}</h3><b class="num warn big">{money(forecast.total, { cents: false })}</b></div>
-      <p class="caption" style="margin: -6px 0 10px">O que já se sabe que vai sair: faturas (compras feitas e parcelas) e contas fixas.</p>
-      <div class="rows">
-        {#each forecast.faturas as f (f.account.id + f.due)}
-          <div class="row item"><BankCard account={f.account} width={38} /><span class="grow">Fatura {f.account.name}<span class="caption"> · vence {dayMonth(f.due)}</span></span><span class="num">{money(f.cents)}</span></div>
-        {/each}
-        {#each forecast.bills as bill (bill.id)}
-          <div class="row item"><Avatar merchant={merchantForBill(bill) ?? null} category={store.categoryById.get(bill.category_id ?? '') ?? null} name={bill.name} size={32} /><span class="grow">{bill.name}<span class="caption"> · dia {bill.day_of_month}</span></span><span class="num">{money(bill.amount_cents)}</span></div>
-        {:else}{#if !forecast.faturas.length}<p class="muted small">Nada previsto ainda para este mês.</p>{/if}{/each}
-      </div>
+      <p class="caption" style="margin: -6px 0 0">Fixas pelo valor cadastrado; variáveis e sazonais pela média dos últimos meses. <a class="link" href="#/previsao" onclick={() => (ui.forecastMonth = month)}>Ver detalhes</a></p>
     </section>
+    <ForecastBreakdown {forecast} />
   {:else}
     <section class="card totals">
       <div><span class="caption">Entradas</span><b class="pos"><Tally cents={analysis.incomeTotal} /></b></div>
@@ -112,7 +104,7 @@
   <ConfigureLink href="#/transacoes/configurar" />
 </div>
 <button class="fab" aria-label="Novo lançamento" onclick={() => { haptic(); ui.newEntryOpen = true; }} use:hint={['Novo lançamento', 'Anote à mão um gasto ou uma entrada (dinheiro, Pix de alguém…).']}><Icon name="plus" size={24} stroke={2.4} /></button>
-<ChartsSheet bind:open={chartsOpen} focus="cost" month={future ? current : month} {entries} {accounts} />
+<ChartsSheet bind:open={chartsOpen} month={future ? current : month} {entries} {accounts} />
 
 <style>
   .top { gap: 10px; flex-wrap: wrap; }
@@ -143,8 +135,5 @@
   .totals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
   .totals > div { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
   .totals b { font: 600 clamp(15px, 4vw, 22px) var(--font-display); white-space: nowrap; }
-  .rows { display: flex; flex-direction: column; }
-  .item { gap: 12px; padding: 9px 0; font-size: 15px; }
-  .item + .item { border-top: 1px solid var(--stroke); }
   .big { font: 600 24px var(--font-display); }
 </style>

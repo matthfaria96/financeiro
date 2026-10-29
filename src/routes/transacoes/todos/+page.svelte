@@ -107,11 +107,11 @@
     {#if prefs.full || moreFilters || filter.personId || filter.cost || filter.uncategorized}
       <Select variant="chip" active={!!filter.personId} label="De quem" display={store.personById.get(filter.personId ?? '')?.name ?? 'De quem'} value={filter.personId ?? ''}
         options={[{ value: '', label: 'Todos' }, ...store.people.map((p) => ({ value: p.id, label: p.name, color: p.color }))]} onchange={(v) => (filter.personId = v || null)} />
-      <Select variant="chip" active={!!filter.cost} label="Fixo ou variável" display={filter.cost === 'fixed' ? 'Fixos' : filter.cost === 'variable' ? 'Variáveis' : 'Fixo/variável'} value={filter.cost ?? ''}
-        options={[{ value: '', label: 'Todos' }, { value: 'fixed', label: 'Só fixos' }, { value: 'variable', label: 'Só variáveis' }]} onchange={(v) => (filter.cost = (v || null) as typeof filter.cost)} />
+      <Select variant="chip" active={!!filter.cost} label="Fixo ou sazonal" display={filter.cost === 'fixed' ? 'Fixos' : filter.cost === 'variable' ? 'Sazonais' : 'Fixo/sazonal'} value={filter.cost ?? ''}
+        options={[{ value: '', label: 'Todos' }, { value: 'fixed', label: 'Só fixos' }, { value: 'variable', label: 'Só sazonais' }]} onchange={(v) => (filter.cost = (v || null) as typeof filter.cost)} />
       <button class="chip" class:active={filter.uncategorized} onclick={() => (filter.uncategorized = !filter.uncategorized)} use:hint={['Sem categoria', 'Só o que o app não soube classificar.']}>Sem categoria</button>
     {:else}
-      <button class="chip" onclick={() => (moreFilters = true)} use:hint={['Mais filtros', 'De quem é, fixo ou variável e sem categoria.']}><Icon name="filter" size={13} />Mais filtros</button>
+      <button class="chip" onclick={() => (moreFilters = true)} use:hint={['Mais filtros', 'De quem é, fixo ou sazonal e sem categoria.']}><Icon name="filter" size={13} />Mais filtros</button>
     {/if}
     {#if filter.active}<button class="btn ghost" onclick={() => filter.reset()}>Limpar</button>{/if}
   </div>

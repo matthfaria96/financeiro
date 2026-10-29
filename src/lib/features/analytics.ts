@@ -1,11 +1,10 @@
 import { UNCATEGORIZED } from '$lib/core/catalog';
 import { addMonths, lastDay, monthOf, today, type Month } from '$lib/core/dates';
+import { averageOfMonthsWithData } from '$lib/core/forecast';
 import { store } from '$lib/data/store.svelte';
 import type { Account, Category, Entry, MonthAdjustment } from '$lib/data/types';
 import { accountOf, balanceOf, billDueOf, categoryOf, kindOf, rootOf } from './model';
 import { prefs } from '$lib/ui/prefs.svelte';
-import { payableGroups } from './payables';
-import { billInMonth, onCard } from './bills';
 
 /**
  * A conta do mês usada no Início e em Lançamentos (sempre a mesma, para os números baterem):
@@ -156,22 +155,10 @@ export function monthEndTotal(month: Month, accounts: Account[]) {
   return accounts.filter((a) => a.kind !== 'creditCard' && !a.archived).reduce((s, a) => s + balanceOf(a, end), 0);
 }
 
-/** Entrada esperada num mês futuro: a média dos últimos 3 meses fechados que tiveram entrada. */
+/** Entrada esperada num mês futuro: a média dos últimos 6 meses fechados, só dos meses que tiveram entrada. */
 export function expectedIncome(entries: Entry[], accounts: Account[]) {
   const now = monthOf(today());
-  const past = [1, 2, 3, 4, 5, 6].map((i) => analyzeMonth(addMonths(now, -i), entries, accounts).incomeTotal).filter((v) => v > 0).slice(0, 3);
-  return past.length ? Math.round(past.reduce((a, b) => a + b, 0) / past.length) : 0;
+  const values = [6, 5, 4, 3, 2, 1].map((i) => analyzeMonth(addMonths(now, -i), entries, accounts).incomeTotal);
+  return averageOfMonthsWithData(values);
 }
 
-/** O que já se sabe que vai sair num mês futuro: faturas (compras feitas + parcelas) e contas fixas fora do cartão. */
-export function forecastMonth(month: Month, accounts: Account[]) {
-  const faturas = payableGroups(accounts.filter((a) => a.kind === 'creditCard'))
-    .filter((g) => monthOf(g.due) === month)
-    .map((g) => ({ account: g.account, due: g.due, cents: g.imported + g.projected }));
-  const scope = new Set(accounts.map((a) => a.id));
-  const bills = store.bills
-    .filter((b) => b.active && billInMonth(b, month) && !onCard(b, store.accountById.get(b.account_id ?? '')?.kind === 'creditCard') && (!b.account_id || scope.has(b.account_id)))
-    .toSorted((a, b) => a.day_of_month - b.day_of_month);
-  const total = faturas.reduce((s, f) => s + f.cents, 0) + bills.reduce((s, b) => s + b.amount_cents, 0);
-  return { faturas, bills, total };
-}

@@ -6,7 +6,7 @@ import { accountOf, billDueOf, categoryOf, costOf, kindOf, rootOf } from '$lib/f
 
 /** Lançamentos do mês em CSV (com BOM para o Excel abrir os acentos certo). */
 export function exportCSV(month: Month, entries: Entry[]) {
-  const rows = [['Data', 'Descrição', 'Valor', 'Categoria', 'Subcategoria', 'Fixo/variável', 'Estabelecimento', 'De quem', 'Conta', 'Fatura', 'Parcela', 'Descrição do banco', 'Comentário']];
+  const rows = [['Data', 'Descrição', 'Valor', 'Categoria', 'Subcategoria', 'Fixo/sazonal', 'Estabelecimento', 'De quem', 'Conta', 'Fatura', 'Parcela', 'Descrição do banco', 'Comentário']];
   for (const e of entries.filter((x) => monthOf(x.date) === month && !x.is_mirror).toSorted((a, b) => a.date.localeCompare(b.date))) {
     const category = categoryOf(e);
     const due = billDueOf(e);

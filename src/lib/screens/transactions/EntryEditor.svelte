@@ -20,7 +20,7 @@
   import MerchantEditor from '../merchants/MerchantEditor.svelte';
   import type { Entry } from '$lib/data/types';
 
-  /** Editar um lançamento: quem é (avatar), categoria, de quem é, fixo/variável, fatura e comentário. */
+  /** Editar um lançamento: quem é (avatar), categoria, de quem é, fixo/sazonal, fatura e comentário. */
   let open = $state(false);
   let draft = $state<Entry | null>(null);
   let original = $state<Entry | null>(null);
@@ -111,8 +111,8 @@
         <label class="form-row" use:hint={['De quem', 'Separa o que é seu, da esposa, da casa ou do filho nos relatórios.']}><span class="field-label">De quem</span>
           <span class="field"><Select bind:value={draft.person_id} label="De quem" options={[{ value: null, label: 'Ninguém' }, ...store.people.map((p) => ({ value: p.id, label: p.name, color: p.color }))]} /></span></label>
         {#if kindOf(draft) === 'expense'}
-          <label class="form-row" use:hint={['Fixo ou variável', 'Fixo: se repete todo mês (aluguel, escola, assinatura). Automático usa o padrão do estabelecimento ou da categoria.']}><span class="field-label">Tipo de gasto</span>
-            <span class="field"><Select bind:value={draft.cost_type} label="Fixo ou variável" options={[{ value: '', label: `Automático (${costName[autoCost].toLowerCase()})` }, { value: 'fixed', label: 'Fixo' }, { value: 'variable', label: 'Variável' }]} /></span></label>
+          <label class="form-row" use:hint={['Fixo ou sazonal', 'Fixo: se repete todo mês (aluguel, escola, assinatura). Sazonal: o resto (mercado, lazer, compras). Pagamento de conta fixa de valor variável (luz, água) conta como variável sozinho. Automático usa o padrão do estabelecimento ou da categoria.']}><span class="field-label">Tipo de gasto</span>
+            <span class="field"><Select bind:value={draft.cost_type} label="Fixo ou sazonal" options={[{ value: '', label: `Automático (${costName[autoCost].toLowerCase()})` }, { value: 'fixed', label: 'Fixo' }, { value: 'variable', label: 'Sazonal' }]} /></span></label>
         {/if}
       </div>
 

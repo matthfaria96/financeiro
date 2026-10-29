@@ -12,14 +12,14 @@
   import BarChart from '$lib/ui/charts/BarChart.svelte';
   import { shortMonth } from '$lib/core/dates';
 
-  /** Fixo × variável (junta conta, dinheiro e cartão) ou meio de pagamento. Consumo pela data da compra. */
+  /** Fixo × sazonal (junta conta, dinheiro e cartão) ou meio de pagamento. Consumo pela data da compra. */
   let { month, entries, mode }: { month: Month; entries: Entry[]; mode: 'cost' | 'payment' } = $props();
 
   type Group = { id: string; title: string; icon: string; color: string; detail: string; test: (e: Entry) => boolean };
   const groups: Record<'cost' | 'payment', Group[]> = {
     cost: [
       { id: 'fixed', title: 'Fixo', icon: 'pin', color: '#3987e5', detail: 'Contas que se repetem, de qualquer conta ou cartão.', test: (e) => costOf(e) === 'fixed' },
-      { id: 'variable', title: 'Variável', icon: 'activity', color: '#d95926', detail: 'Gastos que mudam de um mês para outro.', test: (e) => costOf(e) === 'variable' }
+      { id: 'variable', title: 'Sazonal', icon: 'activity', color: '#d95926', detail: 'Gastos que não se repetem todo mês: mercado, lazer, compras.', test: (e) => costOf(e) === 'variable' }
     ],
     payment: [
       { id: 'checking', title: 'Conta corrente', icon: 'bank', color: '#3987e5', detail: 'Débito, Pix, boletos e transferências para outras pessoas.', test: (e) => accountOf(e)?.kind === 'checking' },
@@ -68,7 +68,7 @@
 
 <section class="card">
   <div class="card-head"><h3>Últimos 6 meses</h3><span class="sub">pela data da compra</span></div>
-  <BarChart labels={months.map((m) => shortMonth(m).slice(0, 3))} current={5} series={trend} height={200} title="{mode === 'cost' ? 'Fixo e variável' : 'Meio de pagamento'} nos últimos 6 meses" />
+  <BarChart labels={months.map((m) => shortMonth(m).slice(0, 3))} current={5} series={trend} height={200} title="{mode === 'cost' ? 'Fixo e sazonal' : 'Meio de pagamento'} nos últimos 6 meses" />
 </section>
 
 <div class="grid-{computed.length === 3 ? '3' : '2'}">

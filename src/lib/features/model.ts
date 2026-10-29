@@ -32,7 +32,7 @@ export function categoryCost(category: Category | undefined): CostType {
   return parent?.cost_type || 'variable';
 }
 
-/** Fixo ou variável: o do lançamento, senão o do estabelecimento, senão o da categoria. */
+/** Fixo ou sazonal ('variable' no banco): o do lançamento, senão o do estabelecimento, senão o da categoria. */
 export function costOf(entry: Entry): CostType {
   if (entry.cost_type) return entry.cost_type;
   const merchant = entry.merchant_id ? store.merchantById.get(entry.merchant_id) : undefined;

@@ -1,62 +1,67 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { money } from '$lib/core/money';
-  import { addMonths, dayMonth, monthOf, monthTitle, today } from '$lib/core/dates';
-  import { store } from '$lib/data/store.svelte';
-  import { ui } from '$lib/ui/ui.svelte';
-  import type { Account } from '$lib/data/types';
+  import { addMonths, monthOf, monthTitle, today } from '$lib/core/dates';
+  import type { Account, Entry } from '$lib/data/types';
   import Icon from '$lib/ui/Icon.svelte';
-  import BankCard from '$lib/ui/BankCard.svelte';
-  import Avatar from '$lib/ui/Avatar.svelte';
-  import ChartButton from '$lib/ui/ChartButton.svelte';
-  import { forecastMonth } from '$lib/features/analytics';
-  import { merchantForBill } from '$lib/screens/bills/billLook';
-  import { slide } from 'svelte/transition';
-  import { cubicOut } from 'svelte/easing';
+  import { hint } from '$lib/ui/hint';
+  import { ui } from '$lib/ui/ui.svelte';
+  import { forecastSpending, spendKindColor, spendKindName, spendKinds, type SpendForecast } from '$lib/features/spending';
 
-  /** Previsão dos próximos meses: faturas já comprometidas (compras e parcelas) + contas fixas. Toque no mês para ver. */
-  let { accounts, oncalendar }: { accounts: Account[]; oncalendar?: () => void } = $props();
+  /** Previsão dos próximos meses: fixas + variáveis + sazonais em cada barra. Toque abre a tela de Previsão. */
+  let { accounts, entries }: { accounts: Account[]; entries: Entry[] } = $props();
   const now = monthOf(today());
-  const months = $derived([1, 2, 3, 4, 5, 6].map((i) => addMonths(now, i)).map((m) => ({ month: m, ...forecastMonth(m, accounts) })));
-  const top = $derived(Math.max(1, ...months.map((n) => n.total)));
-  let open = $state('');
+  const forecasts = $derived(forecastSpending([1, 2, 3, 4, 5, 6].map((i) => addMonths(now, i)), entries, accounts));
+  const top = $derived(Math.max(1, ...forecasts.map((f) => f.total)));
+  const part = (f: SpendForecast, kind: (typeof spendKinds)[number]) => (kind === 'fixed' ? f.fixed.total : kind === 'variable' ? f.variable.total : f.seasonal.cents);
+
+  function open(month: string | null) {
+    ui.forecastMonth = month;
+    void goto('#/previsao');
+  }
 </script>
 
 <section class="card">
-  <div class="card-head"><h3>Previsão dos próximos meses</h3><ChartButton icon="calendar" label="Calendário" detail="Contas fixas do mês ou do ano, e o calendário." onclick={() => (oncalendar ? oncalendar() : goto('#/contas-fixas'))} /></div>
+  <button class="head" onclick={() => open(null)} use:hint={['Previsão', 'Como cada mês foi calculado: fixas, variáveis e sazonais.']}>
+    <h3>Previsão dos próximos meses</h3><span class="more">Detalhes <Icon name="chevron-right" size={14} /></span>
+  </button>
+  <div class="legend">{#each spendKinds as kind (kind)}<span><i style:background={spendKindColor[kind]}></i>{spendKindName[kind]}</span>{/each}</div>
   <div class="months">
-    {#each months as n, k (n.month)}
-      <button class="bar-row" class:open={open === n.month} style:--d="{k * 50}ms" onclick={() => (open = open === n.month ? '' : n.month)} aria-expanded={open === n.month}>
-        <span class="m">{monthTitle(n.month).split(' ')[0]}</span>
-        <span class="track"><span style:width="{Math.max(2, (n.total / top) * 100)}%"></span></span>
-        <b class="num">{money(n.total, { cents: false })}</b>
-        <span class="chev"><Icon name="chevron-down" size={14} /></span>
+    {#each forecasts as f, k (f.month)}
+      <button class="bar-row" style:--d="{k * 50}ms" onclick={() => open(f.month)} aria-label="{monthTitle(f.month)}: {money(f.total, { cents: false })}">
+        <span class="m">{monthTitle(f.month).split(' ')[0]}</span>
+        <span class="track" style:--w="{(f.total / top) * 100}%">
+          {#each spendKinds as kind (kind)}{@const cents = part(f, kind)}{#if cents > 0}<span class="seg" style:flex-grow={cents} style:background={spendKindColor[kind]}></span>{/if}{/each}
+        </span>
+        <b class="num">{money(f.total, { cents: false })}</b>
+        <span class="chev"><Icon name="chevron-right" size={14} /></span>
       </button>
-      {#if open === n.month}
-        <div class="detail" transition:slide={{ duration: 300, easing: cubicOut }}>
-          {#each n.faturas as f (f.account.id + f.due)}<div class="row item"><BankCard account={f.account} width={34} /><span class="grow ellipsis">Fatura {f.account.name}<span class="caption"> · {dayMonth(f.due)}</span></span><span class="num">{money(f.cents, { cents: false })}</span></div>{/each}
-          {#each n.bills as bill (bill.id)}<div class="row item"><Avatar merchant={merchantForBill(bill) ?? null} category={store.categoryById.get(bill.category_id ?? '') ?? null} name={bill.name} size={30} /><span class="grow ellipsis">{bill.name}<span class="caption"> · dia {bill.day_of_month}</span></span><span class="num">{money(bill.amount_cents, { cents: false })}</span></div>{/each}
-          {#if !n.faturas.length && !n.bills.length}<p class="muted small">Nada previsto ainda.</p>{/if}
-        </div>
-      {/if}
     {/each}
   </div>
-  <p class="caption faint note">Faturas já comprometidas (compras e parcelas) + contas fixas.</p>
+  <p class="caption faint note">Fixas pelo valor cadastrado; variáveis e sazonais pela média dos últimos meses (só os que tiveram gasto).</p>
 </section>
 
 <style>
-  .months { display: flex; flex-direction: column; gap: 4px; }
-  .bar-row { display: grid; grid-template-columns: 92px 1fr auto 16px; align-items: center; gap: 12px; padding: 8px 10px; margin: 0 -10px; border-radius: 12px; background: none; border: 0; text-align: left; font-size: 15px; transition: background 0.2s; }
-  .bar-row:hover, .bar-row.open { background: rgba(255, 255, 255, 0.04); }
-  .chev { display: grid; color: var(--text-3); transition: transform 0.35s var(--ease); }
-  .open .chev { transform: rotate(180deg); }
+  .head { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; margin-bottom: 8px; padding: 0; border: 0; background: none; text-align: left; color: inherit; }
+  .head h3 { margin: 0; font: 600 16px var(--font-display); letter-spacing: -0.01em; }
+  .more { display: inline-flex; align-items: center; gap: 2px; color: var(--accent); font-size: 13.5px; font-weight: 600; transition: gap 0.25s var(--ease); }
+  .head:hover .more { gap: 6px; }
+  .legend { display: flex; gap: 14px; margin-bottom: 8px; font-size: 12.5px; color: var(--text-2); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  i { width: 9px; height: 9px; border-radius: 3px; display: inline-block; }
+  .months { display: flex; flex-direction: column; gap: 2px; }
+  .bar-row { display: grid; grid-template-columns: 92px 1fr auto 14px; align-items: center; gap: 12px; padding: 8px 10px; margin: 0 -10px; border-radius: 12px; background: none; border: 0; text-align: left; font-size: 15px; transition: background 0.2s; }
+  .bar-row:hover { background: rgba(255, 255, 255, 0.04); }
+  .bar-row:active { background: rgba(255, 255, 255, 0.07); }
   .m { color: var(--text-2); }
-  .track { height: 12px; border-radius: 6px; background: rgba(255, 255, 255, 0.06); overflow: hidden; }
-  .track span { display: block; height: 100%; border-radius: 6px; background: linear-gradient(90deg, #d95926, #ff9f1c); transform-origin: left;
-    animation: fill 0.9s cubic-bezier(0.22, 1, 0.36, 1) both; animation-delay: var(--d); transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1); }
+  /* A barra ocupa a fração do maior mês (--w); dentro dela, um pedaço por tipo, com 2 px de folga entre eles. */
+  .track { display: flex; gap: 2px; height: 12px; border-radius: 6px; overflow: hidden; background: rgba(255, 255, 255, 0.06);
+    padding-right: calc(100% - var(--w)); transition: padding 0.6s cubic-bezier(0.22, 1, 0.36, 1); }
+  .seg { display: block; height: 100%; min-width: 3px; transform-origin: left; animation: fill 0.9s cubic-bezier(0.22, 1, 0.36, 1) both; animation-delay: var(--d); }
+  .seg:first-child { border-radius: 6px 0 0 6px; }
+  .seg:last-child { border-radius: 0 6px 6px 0; }
+  .seg:only-child { border-radius: 6px; }
   @keyframes fill { from { transform: scaleX(0); } }
-  .detail { overflow: hidden; margin: 0 0 8px; padding: 4px 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.03); }
-  .item { gap: 10px; padding: 7px 0; font-size: 14px; }
-  .item + .item { border-top: 1px solid var(--stroke); }
+  .chev { display: grid; color: var(--text-3); }
   .note { margin: 10px 0 0; }
 </style>

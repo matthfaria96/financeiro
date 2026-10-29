@@ -53,7 +53,7 @@
             <span class="ico"><Icon name={root.symbol} size={20} stroke={2.1} /></span>
             <div class="grow" style="min-width: 0"><b class="ellipsis">{root.name}</b>
               <div class="caption">{s?.count ?? 0} lançamentos{#if kind === 'expense'} · <span class:fixed={categoryCost(root) === 'fixed'}>{costName[categoryCost(root)]}</span>{/if}</div></div>
-            <button class="icon-btn sm" aria-label="Editar {root.name}" onclick={() => edit(root)} use:hint={['Editar', 'Nome, ícone, cor, fixo/variável e palavras-chave.']}><Icon name="pencil" size={14} /></button>
+            <button class="icon-btn sm" aria-label="Editar {root.name}" onclick={() => edit(root)} use:hint={['Editar', 'Nome, ícone, cor, fixo/sazonal e palavras-chave.']}><Icon name="pencil" size={14} /></button>
           </div>
           {#if s && s.months.some((v) => v > 0)}
             <div class="row trend" use:hint={['Últimos 6 meses', 'Quanto entrou nesta categoria em cada mês.']}>
@@ -69,7 +69,7 @@
       {/each}
     </div>
   {/each}
-  <p class="form-footer">Fixo = se repete todo mês com valor parecido; variável = muda. Subcategoria sem tipo próprio usa o da categoria.</p>
+  <p class="form-footer">Fixo = se repete todo mês (aluguel, escola, assinatura); sazonal = o resto (mercado, lazer, compras). Luz, água e outras contas de valor que muda: cadastre em Contas fixas como "Variável". Subcategoria sem tipo próprio usa o da categoria.</p>
 </div>
 <CategoryEditor bind:open category={editing} {parent} />
 

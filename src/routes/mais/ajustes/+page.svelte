@@ -82,7 +82,7 @@
 
   <SectionTitle title="Painéis avançados" />
   <div class="form-group">
-    <div class="form-row" use:hint={['Painéis avançados', 'Mostra extras: abas de fixo/variável e pagamento nos Relatórios, gráficos ao lado da lista de lançamentos, etiquetas de conta e de fixo. Vale só neste aparelho.']}>
+    <div class="form-row" use:hint={['Painéis avançados', 'Mostra extras: abas de fixo/sazonal e pagamento nos Relatórios, gráficos ao lado da lista de lançamentos, etiquetas de conta e de fixo. Vale só neste aparelho.']}>
       <span class="field-label grow">Mostrar painéis avançados</span><Toggle label="Painéis avançados" bind:checked={advanced} /></div>
   </div>
 

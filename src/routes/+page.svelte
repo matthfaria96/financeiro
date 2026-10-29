@@ -52,7 +52,7 @@
     <div class="cards">
       <BalanceCard {analysis} current={month === monthOf(today())} title={month === monthOf(today()) ? 'Saldo financeiro' : month > monthOf(today()) ? 'Saldo hoje' : `Saldo no fim de ${monthTitle(month).split(' ')[0].toLowerCase()}`} hidden={store.household?.settings.home_hidden ?? []} />
       <PanoramaCard {month} {analysis} {entries} {accounts} {stale} />
-      <ForecastCard {accounts} />
+      <ForecastCard {accounts} {entries} />
     </div>
     <InstallCard dismissible />
     <ConfigureLink href="#/configurar" />

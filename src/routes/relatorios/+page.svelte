@@ -40,7 +40,7 @@
     <button class="month" onclick={() => (month = current)} use:hint={['Mês', 'Toque para voltar ao mês atual.']}>{monthTitle(month)}</button>
     <button class="icon-btn" aria-label="Próximo mês" disabled={month >= current} onclick={() => (month = addMonths(month, 1))}><Icon name="chevron-right" /></button>
   </div>
-  {#if prefs.full}<Segmented label="Relatório" bind:value={tab} options={[{ value: 'summary', label: 'Resumo' }, { value: 'categories', label: 'Categorias' }, { value: 'cost', label: 'Fixo e variável' }, { value: 'payment', label: 'Pagamento' }]} />{/if}
+  {#if prefs.full}<Segmented label="Relatório" bind:value={tab} options={[{ value: 'summary', label: 'Resumo' }, { value: 'categories', label: 'Categorias' }, { value: 'cost', label: 'Fixo e sazonal' }, { value: 'payment', label: 'Pagamento' }]} />{/if}
   <div class="print-title">Financeiro · {monthTitle(month)} · {store.household?.name}</div>
   {#if view === 'summary'}
     <MonthSummary {month} {entries} {accounts} />

@@ -1469,7 +1469,8 @@ export const bankCategoryMap: Record<string, string> = {
 };
 
 export const kindName: Record<CategoryKind, string> = { expense: 'Despesa', income: 'Receita', transfer: 'Transferência entre contas' };
-export const costName: Record<CostType, string> = { fixed: 'Fixo', variable: 'Variável' };
+/** No lançamento, categoria e estabelecimento: fixo (se repete) ou sazonal (o resto). "Variável" é só de conta fixa cujo valor muda. */
+export const costName: Record<CostType, string> = { fixed: 'Fixo', variable: 'Sazonal' };
 
 export function seedFor(key: string): CategorySeed | undefined {
   return categorySeeds.find((seed) => seed.key === key);

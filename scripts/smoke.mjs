@@ -52,11 +52,10 @@ await step('Configurar › Categorias', () => click('Categorias'), 'Categorias')
 await step('Voltar → Configurar Lançamentos', () => ev(`document.querySelector('main a.back').click(); 'ok'`), 'Configurar Lançamentos');
 await step('Voltar → Lançamentos', () => ev(`document.querySelector('main a.back').click(); 'ok'`), 'Saídas');
 await closeSheet();
-await step('Lançamentos › análise', () => { ev(`location.hash = '#/transacoes'`); return new Promise((r) => setTimeout(() => r(ev(`document.querySelector('main [aria-label="Análise"]').click(); 'ok'`)), 1200)); }, 'Contas fixas do mês');
-await step('Análise › Previsão', () => ev(`[...document.querySelectorAll('[role=dialog]:not([aria-hidden=true]) [role=radio]')].find((b) => b.textContent.includes('Previsão')).click(); 'ok'`), 'Previsão dos próximos meses');
-await step('Previsão (abrir mês)', () => ev(`document.querySelector('[role=dialog]:not([aria-hidden=true]) .bar-row').click(); 'ok'`), 'Fatura');
-await step('Análise › Entradas × saídas', () => ev(`[...document.querySelectorAll('[role=dialog]:not([aria-hidden=true]) [role=radio]')].find((b) => b.textContent.includes('Entradas')).click(); 'ok'`), 'Saldo nas contas');
-await closeSheet();
+await step('Lançamentos (análise)', go('#/transacoes'), 'Saídas');
+await step('Lançamentos › análise', () => ev(`document.querySelector('main [aria-label="Análise"]').click(); 'ok'`), 'Saldo nas contas');
+await step('Análise › Fixas, variáveis e sazonais', () => click('Fixas, variáveis'), 'Como a previsão é calculada');
+
 await step('Lançamentos (analítico)', go('#/transacoes'), 'Balanço');
 await step('Abrir categoria de saída', () => ev(`document.querySelector('main .slice').click(); 'ok'`), 'R$');
 await step('Saídas em lista', () => ev(`document.querySelector('main [aria-label="Lista"]').click(); 'ok'`), 'Saídas ·');
@@ -95,6 +94,9 @@ await step('Gasto (folha)', () => click('Gasto'), 'Estacionamento');
 await closeSheet();
 await step('Gráfico do carro', () => ev(`document.querySelector('main [aria-label="Ver gráfico"]').click(); 'ok'`), 'Consumo');
 await closeSheet();
+await step('Início (para a previsão)', go('#/'), 'Previsão dos próximos meses');
+await step('Previsão (tela)', () => ev(`document.querySelectorAll('main .bar-row')[1].click(); 'ok'`), 'Como a previsão é calculada');
+await step('Previsão › volta ao Início', () => ev(`document.querySelector('main a.back').click(); 'ok'`), 'Panorama de');
 await step('Início (para o perfil)', go('#/'), 'Panorama de');
 await step('Perfil pelo avatar do Início', () => ev(`document.querySelector('main a.profile').click(); 'ok'`), 'Família');
 await step('Perfil (família)', go('#/mais'), 'Família');

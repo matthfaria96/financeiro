@@ -11,7 +11,8 @@
   import LineChart from '$lib/ui/charts/LineChart.svelte';
   import { seriesColor } from '$lib/ui/charts/scale';
   import { ui } from '$lib/ui/ui.svelte';
-  import { adjustmentReason, analyzeMonth, expectedIncome, forecastMonth, monthEndTotal, type MonthAnalysis } from '$lib/features/analytics';
+  import { adjustmentReason, analyzeMonth, expectedIncome, monthEndTotal, type MonthAnalysis } from '$lib/features/analytics';
+  import { forecastSpending } from '$lib/features/spending';
 
   /**
    * Panorama em três cartões do mesmo tamanho, lado a lado (arraste ou bolinhas):
@@ -25,7 +26,7 @@
   // Mês futuro: entra a média recente, sai o que já está comprometido (faturas e contas fixas).
   const view = $derived.by(() => {
     if (!future) return { income: analysis.incomeTotal, expense: analysis.expenseTotal };
-    return { income: expectedIncome(entries, accounts), expense: forecastMonth(month, accounts).total };
+    return { income: expectedIncome(entries, accounts).cents, expense: forecastSpending([month], entries, accounts)[0].total };
   });
   const balance = $derived(view.income - view.expense);
   const spent = $derived(view.income ? view.expense / view.income : 0);
@@ -48,15 +49,15 @@
             slices={[{ id: 'in', label: 'Sobra', value: Math.max(0, view.income - view.expense), color: seriesColor.income }, { id: 'out', label: 'Saídas', value: view.expense, color: seriesColor.credit }]} />
           <div class="legend">
             <div class="line"><span class="key"><i style:background={seriesColor.income}></i>{future ? 'Deve entrar' : 'Entradas'}</span><b class="pos"><Tally cents={view.income} /></b></div>
-            <div class="line"><span class="key"><i style:background={seriesColor.credit}></i>{future ? 'Já comprometido' : 'Saídas'}</span><b><Tally cents={view.expense} /></b></div>
-            <a class="more" href="#/transacoes">{future ? 'Ver o que vence' : 'Ver lançamentos'} <Icon name="chevron-right" size={13} /></a>
+            <div class="line"><span class="key"><i style:background={seriesColor.credit}></i>{future ? 'Deve sair' : 'Saídas'}</span><b><Tally cents={view.expense} /></b></div>
+            {#if future}<a class="more" href="#/previsao" onclick={() => (ui.forecastMonth = month)}>Ver a previsão <Icon name="chevron-right" size={13} /></a>{:else}<a class="more" href="#/transacoes">Ver lançamentos <Icon name="chevron-right" size={13} /></a>{/if}
           </div>
         </div>
         {#if stale.length}<button class="stale" onclick={() => ui.startImport()}><Icon name="import" size={15} /><span class="grow">Extrato só {stale.join(', ')}. Importe o de {name} para ver as entradas.</span><b>Importar</b></button>{/if}
         {#if analysis.adjustment && !future}<p class="caption adjnote">Inclui ajuste ({adjustmentReason[analysis.adjustment.reason].toLowerCase()}){analysis.adjustment.note ? `: ${analysis.adjustment.note}` : ''}</p>{/if}
         <div class="total">
           <div class="row between"><span class="muted">{future ? 'Deve sobrar' : 'Balanço'}</span><b class:pos={balance >= 0} class:neg={balance < 0}><Tally cents={balance} /></b></div>
-          {#if future}<p class="caption faint">Entrada pela média dos últimos meses; saídas: faturas e contas fixas que já se sabe.</p>{/if}
+          {#if future}<p class="caption faint">Entrada pela média dos últimos meses; saídas: fixas, variáveis (média) e sazonais (média).</p>{/if}
           {#if analysis.adjustment?.closing != null && !future}<div class="row between left"><span class="muted small">Sobrou nas contas no fim do mês</span><b class="small"><Tally cents={analysis.adjustment.closing} /></b></div>{/if}
         </div>
       {:else if i === 1}

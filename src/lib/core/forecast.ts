@@ -49,3 +49,18 @@ export function futureInstallments(items: { title: string; cents: number; instal
   }
   return result.sort((a, b) => a.due.localeCompare(b.due) || a.title.localeCompare(b.title));
 }
+
+/**
+ * Média por mês considerando só os meses que tiveram valor (o mais recente por último).
+ * Ex.: [0, 0, 0, 0, 200, 300] → 250 em 2 meses, e não 83 em 6: mês sem dado não é mês sem gasto.
+ */
+export function averageOfMonthsWithData(values: number[], limit = 6): { cents: number; months: number } {
+  const used = values.slice(-limit).filter((v) => v > 0);
+  if (!used.length) return { cents: 0, months: 0 };
+  return { cents: Math.round(used.reduce((a, b) => a + b, 0) / used.length), months: used.length };
+}
+
+/** Sazonais de um mês futuro: a média, a não ser que o cartão já tenha mais do que isso comprometido (compras e parcelas). */
+export function seasonalForecast(average: { cents: number; months: number }, committed: number): { cents: number; basis: 'average' | 'committed' } {
+  return committed > average.cents ? { cents: committed, basis: 'committed' } : { cents: average.cents, basis: 'average' };
+}

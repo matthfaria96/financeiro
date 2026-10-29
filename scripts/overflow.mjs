@@ -1,7 +1,7 @@
 // Uso: Chrome com --remote-debugging-port=9333, depois `node scripts/overflow.mjs 9333 http://localhost:4317` (acha o que passa da tela em 390 px).
 // Em 390 px, acha elementos que passam da largura da tela (causa de rolagem lateral).
 const [port, base] = process.argv.slice(2);
-const routes = ['/', '/transacoes', '/transacoes/todos', '/notas', '/notas/lista/nb-mercado', '/notas/lista/nb-mercado/historico', '/notas/desejos', '/mais/carro/car-1', '/mais', '/mais/contas', '/mais/categorias', '/mais/estabelecimentos', '/mais/pessoas', '/mais/importacoes', '/mais/compartilhar', '/mais/ajustes', '/mais/projetos', '/mais/projetos/prj-apto', '/relatorios', '/relatorios/planilha', '/contas/x', '/a-pagar'];
+const routes = ['/', '/transacoes', '/transacoes/todos', '/notas', '/notas/lista/nb-mercado', '/notas/lista/nb-mercado/historico', '/notas/desejos', '/mais/carro/car-1', '/mais', '/mais/contas', '/mais/categorias', '/mais/estabelecimentos', '/mais/pessoas', '/mais/importacoes', '/mais/compartilhar', '/mais/ajustes', '/mais/projetos', '/mais/projetos/prj-apto', '/relatorios', '/relatorios/planilha', '/contas/x', '/a-pagar', '/previsao', '/configurar', '/transacoes/configurar', '/notas/configurar', '/contas-fixas'];
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const t = await (await fetch(`http://127.0.0.1:${port}/json/new?about:blank`, { method: 'PUT' })).json();
 const ws = new WebSocket(t.webSocketDebuggerUrl); await new Promise((r) => ws.addEventListener('open', r));

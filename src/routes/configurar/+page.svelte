@@ -49,7 +49,7 @@
 
   <SectionTitle title="Previsão" />
   <div class="form-group">
-    <label class="form-row" use:hint={['Média do variável', 'Quantos meses entram na previsão (o que deve entrar e o variável). Com menos histórico, usa os que houver.']}>
+    <label class="form-row" use:hint={['Média da previsão', 'Quantos meses fechados entram na média do que deve entrar, das contas variáveis e dos sazonais. Só contam os meses que tiveram valor.']}>
       <span class="field-label">Média dos últimos</span><input class="field" type="number" min="2" max="12" bind:value={months} /><span class="muted">meses</span></label>
   </div>
 </div>

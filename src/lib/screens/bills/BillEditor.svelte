@@ -60,6 +60,7 @@
 
   <div class="form-title">Valor</div>
   <Segmented label="Valor" bind:value={variable} options={[{ value: false, label: 'Fixo (sempre igual)' }, { value: true, label: 'Variável (luz, água…)' }]} />
+  <p class="form-footer">{variable ? 'Todo mês tem, mas o valor muda: a previsão usa a média do que foi pago nos últimos meses (só os meses com pagamento).' : 'A previsão usa este valor todo mês.'}</p>
 
   <div class="form-title">Como paga</div>
   <div class="methods">
