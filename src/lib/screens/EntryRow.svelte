@@ -8,8 +8,11 @@
   import { kindIcon } from '$lib/ui/look';
   import { accountOf, categoryOf, costOf, kindOf } from '$lib/features/model';
   import { prefs } from '$lib/ui/prefs.svelte';
+  import { money } from '$lib/core/money';
 
-  let { entry, onclick, selected = null, compact = false, when = '' }: { entry: Entry; onclick?: () => void; selected?: boolean | null; compact?: boolean; /** Data curta ("01 out") à direita, antes do valor. */ when?: string } = $props();
+  let { entry, onclick, selected = null, compact = false, when = '', purchase = false }: { entry: Entry; onclick?: () => void; selected?: boolean | null; compact?: boolean; /** Data curta ("01 out") à direita, antes do valor. */ when?: string;
+    /** Visão "pelo dia da compra": parcelada mostra a compra inteira ("12x de R$ 213,63"); senão, a parcela ("Parcela 7/12"). */ purchase?: boolean } = $props();
+  const whole = $derived(purchase && entry.installment_total > 1);
   const category = $derived(categoryOf(entry));
   const merchant = $derived(entry.merchant_id ? store.merchantById.get(entry.merchant_id) : undefined);
   const person = $derived(entry.person_id ? store.personById.get(entry.person_id) : undefined);
@@ -28,13 +31,13 @@
     <span class="title ellipsis">{entry.title}</span>
     <span class="meta ellipsis">
       {#if category}<span style:color={category.color}>{category.name}</span>{/if}
-      {#if entry.installment_total > 1}<span class="pill tag">{entry.installment_current}/{entry.installment_total}</span>{/if}
+      {#if entry.installment_total > 1}<span class="pill tag" class:whole>{whole ? `${entry.installment_total}x de ${money(-entry.amount_cents)}` : `Parcela ${entry.installment_current}/${entry.installment_total}`}</span>{/if}
       {#if prefs.full && kindOf(entry) === 'expense' && costOf(entry) === 'fixed'}<span class="pill fixed">Fixo</span>{/if}
     </span>
   </span>
   {#if when}<span class="when">{when}</span>{/if}
   <span class="right">
-    <Money cents={entry.amount_cents} muted={transfer} class="amount" />
+    <Money cents={whole ? entry.amount_cents * entry.installment_total : entry.amount_cents} muted={transfer} class="amount" />
     <span class="row" style="gap: 6px">
       {#if transfer}<span class="caption">não conta</span>{/if}
       {#if showPerson && person}<PersonChip {person} />{/if}
@@ -54,6 +57,7 @@
   .meta { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--text-2); }
   .tag { background: rgba(255, 255, 255, 0.08); color: var(--text-2); }
   .fixed { background: var(--accent-soft); color: var(--accent); }
+  .tag.whole { background: rgba(179, 136, 255, 0.14); color: #c9a8ff; }
   .right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex: none; }
   .right :global(.amount) { font-size: 15.5px; font-weight: 600; }
   .check { color: var(--text-3); display: grid; }

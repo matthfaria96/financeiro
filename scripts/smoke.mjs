@@ -47,14 +47,17 @@ await step('Início › Configurar (tela)', () => click('Configurar'), 'Configur
 await step('Esconder uma conta', () => ev(`document.querySelector('main [role=switch]').click(); 'ok'`), 'Esconder não apaga');
 await step('Voltar volta ao Início', () => ev(`document.querySelector('main a.back').click(); 'ok'`), 'Panorama de');
 await step('Lançamentos', go('#/transacoes'), 'Saídas');
-await step('Lançamentos › Configurar (tela)', () => ev(`document.querySelector('main .configure').click(); 'ok'`), 'Contas fixas');
+await step('Lançamentos › Configurar (tela)', () => ev(`document.querySelector('main .configure').click(); 'ok'`), 'Como o mês é mostrado');
+await step('Configurar › (i) explica as visões', () => ev(`document.querySelector('main .info').click(); 'ok'`), 'o que você paga no mês');
+await step('Configurar › ligar "pelo dia da compra"', () => ev(`document.querySelector('main [role=switch]').click(); 'ok'`), 'Ligado: o mês mostra o que você gastou');
+await step('Configurar › desligar de novo', () => ev(`document.querySelector('main [role=switch]').click(); 'ok'`), 'Desligado: o mês mostra o que você paga');
 await step('Configurar › Categorias', () => click('Categorias'), 'Categorias');
 await step('Voltar → Configurar Lançamentos', () => ev(`document.querySelector('main a.back').click(); 'ok'`), 'Configurar Lançamentos');
 await step('Voltar → Lançamentos', () => ev(`document.querySelector('main a.back').click(); 'ok'`), 'Saídas');
 await closeSheet();
-await step('Lançamentos (análise)', go('#/transacoes'), 'Saídas');
-await step('Lançamentos › análise', () => ev(`document.querySelector('main [aria-label="Análise"]').click(); 'ok'`), 'Saldo nas contas');
-await step('Análise › Fixas, variáveis e sazonais', () => click('Fixas, variáveis'), 'Como a previsão é calculada');
+await step('Lançamentos (contas fixas)', go('#/transacoes'), 'O que você paga em');
+await step('Lançamentos › Contas fixas (tela)', () => ev(`document.querySelector('main [aria-label="Contas fixas"]').click(); 'ok'`), 'Total do mês');
+await step('Contas fixas › volta a Lançamentos', () => ev(`document.querySelector('main a.back').click(); 'ok'`), 'Saídas');
 
 await step('Lançamentos (analítico)', go('#/transacoes'), 'Balanço');
 await step('Abrir categoria de saída', () => ev(`document.querySelector('main .slice').click(); 'ok'`), 'R$');

@@ -1,6 +1,7 @@
 import { UNCATEGORIZED } from '$lib/core/catalog';
-import { addMonths, lastDay, monthOf, today, type Month } from '$lib/core/dates';
+import { addMonths, lastDay, monthOf, today, type Day, type Month } from '$lib/core/dates';
 import { averageOfMonthsWithData } from '$lib/core/forecast';
+import { purchaseOf, purchaseRepresentatives, type Parcel } from '$lib/core/installments';
 import { store } from '$lib/data/store.svelte';
 import type { Account, Category, Entry, MonthAdjustment } from '$lib/data/types';
 import { accountOf, balanceOf, billDueOf, categoryOf, kindOf, rootOf } from './model';
@@ -36,14 +37,14 @@ export interface MonthAnalysis {
 
 export const adjustmentReason = { juros: 'Juros', antecipacao: 'Antecipação de fatura', outro: 'Outro' } as const;
 
-function group(entries: Entry[], keyOf: (entry: Entry) => Category | undefined, sign: 1 | -1): { groups: Group[]; total: number } {
+function group(entries: Entry[], keyOf: (entry: Entry) => Category | undefined, sign: 1 | -1, amount: (entry: Entry) => number = (e) => e.amount_cents): { groups: Group[]; total: number } {
   const map = new Map<string, Group>();
   for (const entry of entries) {
     const category = keyOf(entry);
     const known = category && category.key !== UNCATEGORIZED;
     const key = known ? category.id : 'none';
     const row = map.get(key) ?? { key, label: known ? category.name : 'Não categorizados', color: known ? category.color : '#78909C', icon: known ? category.symbol : 'questionmark.circle', cents: 0, share: 0, entries: [] };
-    row.cents += sign * entry.amount_cents;
+    row.cents += sign * amount(entry);
     row.entries.push(entry);
     map.set(key, row);
   }
@@ -51,7 +52,7 @@ function group(entries: Entry[], keyOf: (entry: Entry) => Category | undefined, 
   const total = groups.reduce((s, g) => s + g.cents, 0);
   for (const g of groups) {
     g.share = total ? g.cents / total : 0;
-    g.entries.sort((a, b) => b.date.localeCompare(a.date));
+    g.entries.sort((a, b) => spendDate(b).localeCompare(spendDate(a)));
   }
   // "Não categorizados" sempre por último.
   groups.sort((a, b) => (a.key === 'none' ? 1 : b.key === 'none' ? -1 : b.cents - a.cents));
@@ -86,7 +87,7 @@ function groupIncome(entries: Entry[]): { groups: Group[]; total: number } {
   const total = groups.reduce((s, g) => s + g.cents, 0);
   for (const g of groups) {
     g.share = total ? g.cents / total : 0;
-    g.entries.sort((a, b) => b.date.localeCompare(a.date));
+    g.entries.sort((a, b) => spendDate(b).localeCompare(spendDate(a)));
   }
   return { groups, total };
 }
@@ -96,7 +97,7 @@ export function spendingScale(entries: Entry[], accounts: Account[], count = 6) 
   const now = monthOf(today());
   const months = Array.from({ length: count }, (_, i) => addMonths(now, i - count + 1));
   const values = months.map((m) => analyzeMonth(m, entries, accounts).expenseTotal);
-  const first = entries.filter((e) => !e.is_mirror && kindOf(e) === 'expense').map(spendMonth).sort()[0];
+  const first = entries.filter((e) => !e.is_mirror && kindOf(e) === 'expense').map(payMonth).sort()[0];
   const past = values.slice(0, -1).filter((_, i) => first && months[i] >= first);
   const average = past.length ? Math.round(past.reduce((a, b) => a + b, 0) / past.length) : null;
   return { months, values, average, current: values.at(-1) ?? 0, monthsInAverage: past.length };
@@ -106,19 +107,60 @@ export function spendingScale(entries: Entry[], accounts: Account[], count = 6) 
  * Mês em que um gasto pesa no bolso: no cartão, o mês em que a fatura vence (parcelas já vêm uma por fatura);
  * nas contas e no dinheiro, a data do lançamento. Com a preferência "pela compra", sempre a data da compra.
  */
-export function spendMonth(entry: Entry): Month {
-  if (!prefs.creditByPurchase && accountOf(entry)?.kind === 'creditCard') {
+/** Mês em que o gasto sai do bolso: no cartão, o da fatura em que ele é pago (parcelada: só a parcela). */
+export function payMonth(entry: Entry): Month {
+  if (accountOf(entry)?.kind === 'creditCard') {
     const due = billDueOf(entry);
     if (due) return monthOf(due);
   }
   return monthOf(entry.date);
 }
 
+const parcelOf = (entry: Entry): Parcel | null =>
+  entry.installment_total > 1 && accountOf(entry)?.kind === 'creditCard'
+    ? { id: entry.id, account: entry.account_id, title: entry.original_title || entry.title, date: entry.date, due: billDueOf(entry), cents: entry.amount_cents, current: entry.installment_current, total: entry.installment_total }
+    : null;
+
+// Uma parcela por compra parcelada (recalcula só quando os lançamentos mudam).
+let repsOf: Entry[] | null = null;
+let reps = new Set<string>();
+function representatives(): Set<string> {
+  if (repsOf !== store.entries) {
+    repsOf = store.entries;
+    reps = purchaseRepresentatives(store.entries.map(parcelOf).filter((p): p is Parcel => !!p));
+  }
+  return reps;
+}
+
+/**
+ * Mês do gasto na visão escolhida em Configurar Lançamentos.
+ * Padrão ("o que você paga no mês"): o da fatura (`payMonth`). "Pelo dia da compra": compra à vista no dia dela;
+ * parcelada, inteira no mês em que foi feita — e as outras parcelas da mesma compra não contam de novo (null).
+ */
+export function spendMonth(entry: Entry): Month | null {
+  if (!prefs.creditByPurchase) return payMonth(entry);
+  const parcel = parcelOf(entry);
+  if (!parcel) return monthOf(entry.date);
+  return representatives().has(entry.id) ? purchaseOf(parcel).month : null;
+}
+
+/** Valor na visão escolhida: pelo dia da compra, a parcelada vale a compra inteira (parcela × número de parcelas). */
+export function spendCents(entry: Entry): number {
+  const parcel = prefs.creditByPurchase ? parcelOf(entry) : null;
+  return parcel ? purchaseOf(parcel).cents : entry.amount_cents;
+}
+
+/** Data mostrada na lista: pelo dia da compra, a da compra (mesmo para a parcela 7/12). */
+export function spendDate(entry: Entry): Day {
+  const parcel = prefs.creditByPurchase ? parcelOf(entry) : null;
+  return parcel ? purchaseOf(parcel).date : entry.date;
+}
+
 export function analyzeMonth(month: Month, entries: Entry[], accounts: Account[]): MonthAnalysis {
   const inMonth = entries.filter((e) => !e.is_mirror && monthOf(e.date) === month);
   const incoming = inMonth.filter((e) => kindOf(e) === 'income' && ['checking', 'cash'].includes(accountOf(e)?.kind ?? ''));
   const income = groupIncome(incoming);
-  const expenses = group(entries.filter((e) => !e.is_mirror && kindOf(e) === 'expense' && spendMonth(e) === month), (e) => rootOf(categoryOf(e)), -1);
+  const expenses = group(entries.filter((e) => !e.is_mirror && kindOf(e) === 'expense' && spendMonth(e) === month), (e) => rootOf(categoryOf(e)), -1, spendCents);
   const now = today();
   const end = lastDay(month) < now ? lastDay(month) : now;
   const balances = accounts.filter((a) => a.kind !== 'creditCard' && !a.archived).map((account) => ({ account, cents: balanceOf(account, end), estimated: account.kind !== 'cash' && account.anchor_balance_cents === null }));

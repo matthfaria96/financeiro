@@ -56,7 +56,7 @@
 </script>
 
 <div class="page narrow">
-  <SubHeader title="Contas fixas" back="#/transacoes/configurar">
+  <SubHeader title="Contas fixas" back="#/transacoes">
     <button class="btn primary" onclick={() => edit(null, view === 'year')} use:hint={['Nova conta fixa', 'Algo que se paga sempre: todo mês ou uma vez por ano.']}><Icon name="plus" size={15} /><span class="hide-m">Nova conta</span></button>
   </SubHeader>
   <div class="stack">

@@ -10,13 +10,11 @@
   import CategoryDonut from '$lib/screens/money/CategoryDonut.svelte';
   import EntryListCard from '$lib/screens/money/EntryListCard.svelte';
   import CategoryRows from '$lib/screens/money/CategoryRows.svelte';
-  import ChartsSheet from '$lib/screens/money/ChartsSheet.svelte';
   import { filter } from '$lib/screens/transactions/filter.svelte';
   import { inScope, inScopeAccount } from '$lib/features/model';
   import { analyzeMonth } from '$lib/features/analytics';
   import { forecastSpending } from '$lib/features/spending';
   import ForecastBreakdown from '$lib/screens/forecast/ForecastBreakdown.svelte';
-  import Segmented from '$lib/ui/Segmented.svelte';
   import Tally from '$lib/ui/Tally.svelte';
   import { prefs } from '$lib/ui/prefs.svelte';
   import { ui } from '$lib/ui/ui.svelte';
@@ -41,7 +39,6 @@
     try { localStorage.setItem('financeiro.saidas', v); } catch { /* aba privada */ }
   }
   const forecast = $derived(future ? forecastSpending([month], entries, accounts)[0] : null);
-  let chartsOpen = $state(false);
 
   function search() {
     filter.set({ month });
@@ -57,7 +54,7 @@
       <button class="icon-btn" aria-label="Próximo mês" disabled={month >= options[0]} onclick={() => (month = addMonths(month, 1))}><Icon name="chevron-right" /></button>
     </div>
     <div class="row" style="gap: 8px">
-      <ChartButton onclick={() => (chartsOpen = true)} label="Análise" detail="Entradas × saídas e saldo nos últimos 12 meses." />
+      <ChartButton icon="calendar" label="Contas fixas" detail="Calendário do mês e do ano: aluguel, luz, escola, IPVA…" onclick={() => goto('#/contas-fixas')} />
       <ChartButton icon="search" label="Buscar" detail="Todos os lançamentos deste mês, com busca e filtros." onclick={search} />
     </div>
   </header>
@@ -74,13 +71,12 @@
       <div><span class="caption">Saídas</span><b><Tally cents={analysis.expenseTotal} /></b></div>
       <div><span class="caption">Balanço</span><b class:pos={analysis.balance >= 0} class:neg={analysis.balance < 0}><Tally cents={analysis.balance} /></b></div>
     </section>
-    {#if accounts.some((a) => a.kind === 'creditCard')}
-    <div class="credit-mode">
-      <Segmented label="Compras no cartão" value={prefs.creditByPurchase ? 'purchase' : 'bill'} options={[{ value: 'bill', label: 'Cartão no mês da fatura' }, { value: 'purchase', label: 'No mês da compra' }]}
-        onchange={(v) => prefs.setCreditByPurchase(v === 'purchase')} />
-      <span class="caption">{prefs.creditByPurchase ? 'Compras no cartão contam no dia em que foram feitas.' : 'Compras no cartão contam quando a fatura vence (parceladas: só a parcela do mês).'}</span>
-    </div>
-    {/if}
+    <!-- Qual visão está ativa (muda em Configurar Lançamentos). -->
+    <p class="view-note caption">
+      {#if prefs.creditByPurchase}<b>O que você gastou em {monthTitle(month).split(' ')[0].toLowerCase()}</b>: cada compra no dia em que foi feita, com o valor inteiro — parcelada também (ex.: R$ 10.000 em 5x conta R$ 10.000 aqui).
+      {:else}<b>O que você paga em {monthTitle(month).split(' ')[0].toLowerCase()}</b>: contas, Pix e as faturas que vencem no mês — de compra parcelada, só a parcela deste mês (ex.: R$ 10.000 em 5x conta R$ 2.000).{/if}
+      <a class="link" href="#/transacoes/configurar">Mudar</a>
+    </p>
     <!-- Sempre entradas antes de saídas. A rosca de entradas só aparece com 3 fontes ou mais (com menos, a lista já diz tudo). -->
     <div class="layout" class:single={analysis.income.length < 3}>
       {#if analysis.income.length >= 3}<CategoryDonut title="Entradas" groups={analysis.income} total={analysis.incomeTotal} empty="" />{/if}
@@ -104,7 +100,6 @@
   <ConfigureLink href="#/transacoes/configurar" />
 </div>
 <button class="fab" aria-label="Novo lançamento" onclick={() => { haptic(); ui.newEntryOpen = true; }} use:hint={['Novo lançamento', 'Anote à mão um gasto ou uma entrada (dinheiro, Pix de alguém…).']}><Icon name="plus" size={24} stroke={2.4} /></button>
-<ChartsSheet bind:open={chartsOpen} month={future ? current : month} {entries} {accounts} />
 
 <style>
   .top { gap: 10px; flex-wrap: wrap; }
@@ -130,8 +125,8 @@
   .fab:active { transform: scale(0.92); }
   @keyframes fab-in { from { opacity: 0; transform: scale(0.6) translateY(12px); } }
   @media (min-width: 960px) { .fab { right: 32px; bottom: 32px; width: 60px; height: 60px; } }
-  .credit-mode { display: flex; flex-direction: column; gap: 6px; }
-  .credit-mode :global(.seg) { max-width: 460px; }
+  .view-note { margin: -2px 4px 2px; line-height: 1.45; }
+  .view-note b { color: var(--text); font-weight: 600; }
   .totals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
   .totals > div { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
   .totals b { font: 600 clamp(15px, 4vw, 22px) var(--font-display); white-space: nowrap; }

@@ -38,6 +38,9 @@ export async function seedDemo() {
       [[15, 'Drogasil', 72.4]], [[11, 'Leroy Merlin', 612.8], [22, 'Ifd*Hamburgueria', 98]], [[4, 'Fast Shop', 2199], [17, 'Petz', 230]]
     ] as [number, string, number][][])[i] ?? [];
     for (const [d, t, v] of extras) if (past(m, d)) nubankCard.push(`${day(m, d)},${t},${v.toFixed(2)}`);
+    // Uma compra de R$ 2.199 em 5x (como o Nubank manda: só a 1ª parcela tem o dia da compra; as outras, o início da fatura).
+    const k = i - 4;
+    if (k >= 1 && k <= 5 && past(m, k === 1 ? 18 : 3)) nubankCard.push(`${day(m, k === 1 ? 18 : 3)},Notebook Loja Exemplo - Parcela ${k}/5,439.80`);
     if (past(m, 10)) nubankCard.push(`${day(m, 10)},Pagamento recebido,-${(1450 + i * 60).toFixed(2)}`);
   });
   const interConta = ['Extrato Conta Corrente', 'Conta ;98765432', '', 'Data Lançamento;Histórico;Descrição;Valor;Saldo'];

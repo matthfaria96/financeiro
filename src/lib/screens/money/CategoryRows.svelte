@@ -6,6 +6,8 @@
   import CategoryIcon from '$lib/ui/CategoryIcon.svelte';
   import ChangeBadge from '$lib/ui/ChangeBadge.svelte';
   import EntryRow from '$lib/screens/EntryRow.svelte';
+  import { spendDate } from '$lib/features/analytics';
+  import { prefs } from '$lib/ui/prefs.svelte';
   import type { Group } from '$lib/features/analytics';
   import { slide } from 'svelte/transition';
   import { cubicOut } from 'svelte/easing';
@@ -37,7 +39,7 @@
       {#if expanded}
         <div class="inner entries" transition:slide={{ duration: 320, easing: cubicOut }}>
           {#each g.entries as entry (entry.id)}
-            <EntryRow {entry} compact when={shortDay(entry.date)} onclick={() => ui.editEntry(entry.id)} />
+            <EntryRow {entry} compact when={shortDay(spendDate(entry))} purchase={prefs.creditByPurchase} onclick={() => ui.editEntry(entry.id)} />
           {/each}
         </div>
       {/if}

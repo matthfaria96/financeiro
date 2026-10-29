@@ -5,7 +5,7 @@ import { averageOfMonthsWithData, seasonalForecast } from '$lib/core/forecast';
 import type { Account, Bill, Entry } from '$lib/data/types';
 import { billInMonth } from './bills';
 import { costOf, kindOf } from './model';
-import { spendMonth } from './analytics';
+import { payMonth } from './analytics';
 import { payableGroups } from './payables';
 
 /**
@@ -30,7 +30,8 @@ export const spendKindColor: Record<SpendKind, string> = { fixed: '#3987e5', var
 /** Quantos meses fechados entram na média (Configurar o Início › Previsão; padrão 6). */
 const history = () => store.forecastMonths || 6;
 
-const expensesOf = (month: Month, entries: Entry[]) => entries.filter((e) => !e.is_mirror && kindOf(e) === 'expense' && spendMonth(e) === month);
+// A previsão é sempre do que sai do bolso no mês (fatura que vence nele), seja qual for a visão escolhida em Lançamentos.
+const expensesOf = (month: Month, entries: Entry[]) => entries.filter((e) => !e.is_mirror && kindOf(e) === 'expense' && payMonth(e) === month);
 
 /** Qual conta fixa cada gasto do mês paga (pelo "texto no extrato" da conta, ou pelo nome dela). */
 export function billMatches(month: Month, list: Entry[], bills: Bill[] = store.bills): Map<string, Bill> {
