@@ -7,6 +7,7 @@
   import Donut from '$lib/ui/Donut.svelte';
   import Tally from '$lib/ui/Tally.svelte';
   import CornerButton from '$lib/ui/CornerButton.svelte';
+  import CategoryIcon from '$lib/ui/CategoryIcon.svelte';
   import Carousel from '$lib/ui/Carousel.svelte';
   import BarChart from '$lib/ui/charts/BarChart.svelte';
   import LineChart from '$lib/ui/charts/LineChart.svelte';
@@ -30,8 +31,8 @@
   const view = $derived(forecast ? { income: expectedIncome(entries, accounts).cents, expense: forecast.total } : { income: analysis.incomeTotal, expense: analysis.expenseTotal });
   // Onde mais foi o dinheiro: as 3 maiores categorias (mês futuro: fixas, variáveis e sazonais previstas).
   const highlights = $derived(forecast
-    ? [{ key: 'fixed', label: spendKindName.fixed, color: spendKindColor.fixed, cents: forecast.fixed.total }, { key: 'variable', label: spendKindName.variable, color: spendKindColor.variable, cents: forecast.variable.total }, { key: 'seasonal', label: spendKindName.seasonal, color: spendKindColor.seasonal, cents: forecast.seasonal.cents }]
-    : analysis.expenses.filter((g) => g.key !== 'none').slice(0, 3).map((g) => ({ key: g.key, label: g.label, color: g.color, cents: g.cents })));
+    ? [{ key: 'fixed', label: spendKindName.fixed, color: spendKindColor.fixed, cents: forecast.fixed.total, icon: '' }, { key: 'variable', label: spendKindName.variable, color: spendKindColor.variable, cents: forecast.variable.total, icon: '' }, { key: 'seasonal', label: spendKindName.seasonal, color: spendKindColor.seasonal, cents: forecast.seasonal.cents, icon: '' }]
+    : analysis.expenses.filter((g) => g.key !== 'none').slice(0, 3).map((g) => ({ key: g.key, label: g.label, color: g.color, cents: g.cents, icon: g.icon })));
   const balance = $derived(view.income - view.expense);
   const moved = $derived(view.income + view.expense);
   const context = $derived.by(() => {
@@ -78,7 +79,13 @@
           <div class="tops">
             <span class="caption">{future ? 'O que deve sair' : 'Onde mais gastou'}</span>
             {#each highlights as h (h.key)}
-              <div class="top"><i style:background={h.color}></i><span class="grow ellipsis">{h.label}</span><span class="caption pct">{view.expense ? percent(h.cents / view.expense) : ''}</span><b class="num">{money(h.cents, { cents: false })}</b></div>
+              <div class="top">
+                {#if h.icon}<CategoryIcon symbol={h.icon} color={h.color} size={30} />{:else}<i style:background={h.color}></i>{/if}
+                <span class="lbl ellipsis">{h.label}</span>
+                <span class="caption pct">{view.expense ? percent(h.cents / view.expense) : ''}</span>
+                <span class="bar"><span style:width="{view.expense ? (h.cents / view.expense) * 100 : 0}%" style:background={h.color}></span></span>
+                <b class="num">{money(h.cents, { cents: false })}</b>
+              </div>
             {/each}
           </div>
         {/if}
@@ -128,12 +135,16 @@
   .key { display: flex; align-items: center; gap: 8px; color: var(--text-2); font-size: 14.5px; white-space: nowrap; }
   .pct { font-size: 12px; color: var(--text-3); font-variant-numeric: tabular-nums; }
   .line b { font-size: 16px; font-weight: 600; white-space: nowrap; }
-  .balance { display: flex; flex-direction: column; gap: 1px; margin-top: 4px; padding-top: 10px; border-top: 1px solid var(--stroke); }
+  .balance { display: flex; flex-direction: column; gap: 1px; margin-top: 4px; padding: 10px 12px; border-radius: 14px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--stroke); }
   .balance b { font: 600 24px/1.15 var(--font-display); letter-spacing: -0.015em; }
   i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; flex: none; }
   .tops { display: flex; flex-direction: column; gap: 2px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--stroke); }
   .tops > .caption { margin-bottom: 4px; }
-  .top { display: flex; align-items: center; gap: 10px; padding: 3px 0; font-size: 14px; }
+  .top { display: grid; grid-template-columns: 30px minmax(0, 1fr) 34px minmax(40px, 0.9fr) auto; align-items: center; gap: 10px; padding: 5px 0; font-size: 14px; }
+  .top i { justify-self: center; }
+  .bar { display: block; height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.07); overflow: hidden; }
+  .bar span { display: block; height: 100%; border-radius: 3px; transform-origin: left; animation: fill 0.9s cubic-bezier(0.22, 1, 0.36, 1) both; }
+  @keyframes fill { from { transform: scaleX(0); } }
   .top b { font-weight: 600; min-width: 64px; text-align: right; }
   .pct { min-width: 34px; text-align: right; }
   .stale { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 14px; padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(57, 135, 229, 0.35); background: rgba(57, 135, 229, 0.1); color: #8fc0ff; font-size: 13.5px; text-align: left; }
