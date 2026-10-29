@@ -31,7 +31,7 @@ export async function newList(notebook: Notebook, keep: boolean): Promise<Shoppi
 /** Na primeira vez: cria Mercado, Farmácia e Petshop e põe as listas soltas no Mercado. */
 let ensuring = false;
 export async function ensureNotebooks() {
-  if (ensuring || !organizer.loadedFor || organizer.notebooks.length) return;
+  if (ensuring || !organizer.ready || organizer.notebooks.length) return;
   ensuring = true;
   try {
     const created = await organizer.insert('notebooks', defaultNotebooks.map((n, index) => ({ ...n, sort_order: index })));

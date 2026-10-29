@@ -8,14 +8,15 @@ export interface NoteCard {
   key: string;
   name: string;
   emoji: string;
+  color: string;
   notebookId?: string;
 }
 
 export function allNoteCards(): NoteCard[] {
   const cards: NoteCard[] = [
-    ...notebooks().map((n) => ({ key: `nb:${n.id}`, name: n.name, emoji: n.emoji, notebookId: n.id })),
-    { key: 'desejos', name: 'Lista de desejos', emoji: '⭐' },
-    { key: 'transporte', name: 'Transporte', emoji: '🚗' }
+    ...notebooks().map((n) => ({ key: `nb:${n.id}`, name: n.name, emoji: n.emoji, color: n.color, notebookId: n.id })),
+    { key: 'desejos', name: 'Lista de desejos', emoji: '⭐', color: '#38D9F5' },
+    { key: 'transporte', name: 'Transporte', emoji: '🚗', color: '#FF9F1C' }
   ];
   const order = store.household?.settings.notes_order ?? [];
   const rank = (key: string) => {

@@ -10,14 +10,15 @@
   import NotebookEditor from '$lib/screens/notes/NotebookEditor.svelte';
   import { rememberSystemNotebooks, visibleNoteCards } from '$lib/features/notes';
   import ConfigureLink from '$lib/ui/ConfigureLink.svelte';
+  import NoteIcon from '$lib/ui/NoteIcon.svelte';
   import { currentList, ensureNotebooks, itemsOf, notebooks } from '$lib/features/shopping';
   import { dueText, logsOf, planOf } from '$lib/features/car';
 
   /** Notas: cada coisa da casa vira um cartão (listas, desejos, transporte). Toque para abrir. */
   let creating = $state(false);
   $effect(() => {
-    if (organizer.loadedFor && !organizer.notebooks.length) void ensureNotebooks();
-    else if (organizer.loadedFor) rememberSystemNotebooks();
+    if (organizer.ready && !organizer.notebooks.length) void ensureNotebooks();
+    else if (organizer.ready) rememberSystemNotebooks();
   });
   const cards = $derived(visibleNoteCards());
   const bookById = $derived(new Map(notebooks().map((n) => [n.id, n])));
@@ -43,17 +44,17 @@
       {@const items = list ? itemsOf(list) : []}
       {@const left = items.filter((i) => !i.checked)}
       <a class="card note" href="#/notas/lista/{book.id}" style:--c={book.color}>
-        <div class="row top-row"><span class="emoji">{book.emoji}</span><span class="grow"><b>{book.name}</b><span class="caption block">{left.length ? `Faltam ${left.length} ${left.length === 1 ? 'item' : 'itens'}` : items.length ? 'Tudo pego' : 'Lista vazia'}</span></span><SharedBadge householdId={book.household_id} /><Icon name="chevron-right" size={16} class="faint" /></div>
+        <div class="row top-row"><NoteIcon emoji={book.emoji} color={book.color} /><span class="grow"><b>{book.name}</b><span class="caption block">{left.length ? `Faltam ${left.length} ${left.length === 1 ? 'item' : 'itens'}` : items.length ? 'Tudo pego' : 'Lista vazia'}</span></span><SharedBadge householdId={book.household_id} /><Icon name="chevron-right" size={16} class="faint" /></div>
         <div class="strip">{#each left.slice(0, 9) as item (item.id)}<span>{itemEmoji(item.name)}</span>{/each}{#if left.length > 9}<span class="more">+{left.length - 9}</span>{/if}</div>
       </a>
     {:else if card.key === 'desejos'}
     <a class="card note" href="#/notas/desejos" style:--c="#38D9F5">
-      <div class="row top-row"><span class="emoji">⭐</span><span class="grow"><b>Lista de desejos</b><span class="caption block">{wishes.length ? `${wishes.length} ${wishes.length === 1 ? 'desejo' : 'desejos'} · ${money(wishTotal, { cents: false })}` : 'O que quer comprar ou fazer'}</span></span><Icon name="chevron-right" size={16} class="faint" /></div>
+      <div class="row top-row"><NoteIcon emoji="⭐" color="#38D9F5" /><span class="grow"><b>Lista de desejos</b><span class="caption block">{wishes.length ? `${wishes.length} ${wishes.length === 1 ? 'desejo' : 'desejos'} · ${money(wishTotal, { cents: false })}` : 'O que quer comprar ou fazer'}</span></span><Icon name="chevron-right" size={16} class="faint" /></div>
       <div class="wish">{#each wishes.slice(0, 3) as w (w.id)}<span class="ellipsis">{w.description}</span>{/each}</div>
     </a>
     {:else if card.key === 'transporte'}
     <a class="card note" href="#/notas/transporte" style:--c="#FF9F1C">
-      <div class="row top-row"><span class="emoji">🚗</span><span class="grow"><b>Transporte</b><span class="caption block">{vehicles.length ? `${vehicles.length === 1 ? vehicles[0].name : `${vehicles.length} veículos`} · ${money(carMonth, { cents: false })} este mês` : 'Combustível, gastos e revisões'}</span></span><Icon name="chevron-right" size={16} class="faint" /></div>
+      <div class="row top-row"><NoteIcon emoji="🚗" color="#FF9F1C" /><span class="grow"><b>Transporte</b><span class="caption block">{vehicles.length ? `${vehicles.length === 1 ? vehicles[0].name : `${vehicles.length} veículos`} · ${money(carMonth, { cents: false })} este mês` : 'Combustível, gastos e revisões'}</span></span><Icon name="chevron-right" size={16} class="faint" /></div>
       {#if alert}<div class="alert"><Icon name="wrench.and.screwdriver" size={14} />{alert.item.name} · {dueText(alert.due)}</div>{/if}
     </a>
     {/if}
@@ -70,7 +71,6 @@
   .note::before { content: ''; position: absolute; inset: -50% -20% auto auto; width: 60%; height: 140%; background: radial-gradient(closest-side, color-mix(in srgb, var(--c) 18%, transparent), transparent); pointer-events: none; }
   .note:hover { transform: translateY(-2px); }
   .top-row { gap: 12px; position: relative; }
-  .emoji { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; font-size: 26px; flex: none; background: radial-gradient(circle at 30% 25%, color-mix(in srgb, var(--c) 40%, transparent), color-mix(in srgb, var(--c) 10%, transparent)); }
   .note b { font-size: 17px; }
   .block { display: block; margin-top: 2px; }
   .strip { display: flex; flex-wrap: wrap; gap: 4px; position: relative; }

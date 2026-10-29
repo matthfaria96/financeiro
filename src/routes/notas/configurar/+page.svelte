@@ -1,5 +1,6 @@
 <script lang="ts">
   import SubHeader from '$lib/screens/more/SubHeader.svelte';
+  import NoteIcon from '$lib/ui/NoteIcon.svelte';
   import Toggle from '$lib/ui/Toggle.svelte';
   import Icon from '$lib/ui/Icon.svelte';
   import { slide } from 'svelte/transition';
@@ -31,7 +32,7 @@
     {#each cards as card, index (card.key)}
       <div class="item">
       <div class="form-row" class:off={hidden.includes(card.key)}>
-        <span class="emoji">{card.emoji}</span>
+        <span class="emoji"><NoteIcon emoji={card.emoji} color={card.color} size={32} /></span>
         <span class="grow">{card.name}{#if isSystemCard(card)}<span class="caption block">Do app</span>{/if}</span>
         {#if !isSystemCard(card)}<button class="icon-btn mini trash" class:on={confirming === card.key} aria-label="Apagar {card.name}" onclick={() => (confirming = confirming === card.key ? null : card.key)}><Icon name="trash" size={14} /></button>{/if}
         <button class="icon-btn mini" aria-label="Subir {card.name}" disabled={index === 0} onclick={() => moveNote(card.key, -1)}><Icon name="chevron-up" size={15} /></button>
@@ -52,7 +53,7 @@
 
 <style>
   .intro { margin: 12px 4px; }
-  .emoji { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; font-size: 18px; background: rgba(255, 255, 255, 0.05); flex: none; }
+  .emoji { display: grid; flex: none; }
   .off .grow, .off .emoji { opacity: 0.4; }
   .mini { width: 30px; height: 30px; }
   .mini:disabled { opacity: 0.25; }

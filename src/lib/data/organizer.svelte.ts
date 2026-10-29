@@ -16,6 +16,8 @@ const PAGE = 1000;
  */
 class Organizer {
   loadedFor = $state('');
+  /** Dados do servidor (ou da demonstração) já chegaram. Antes disso a lista vazia NÃO quer dizer "sem cadernos". */
+  ready = $state(false);
   spaces = $state<Space[]>([]);
   members = $state<SpaceMember[]>([]);
   vehicles = $state<OrgTables['vehicles'][]>([]);
@@ -51,12 +53,16 @@ class Organizer {
       const demo = stressDemo ? (await import('./organizerStress')).buildOrganizerStress(this.personalId) : buildOrganizerDemo(this.personalId);
       // Na demonstração, "Você" é o próprio usuário (para não aparecer duas vezes na família).
       demo.members = demo.members.map((m) => (m.display_name === 'Você' ? { ...m, user_id: store.userId || m.user_id } : m));
-      return this.apply(demo);
+      this.apply(demo);
+      this.ready = true;
+      return;
     }
     const cached = await readKey<OrgSnapshot>(this.cacheKey);
     if (cached) this.apply(cached);
     try {
       this.apply(await this.load());
+      this.ready = true;
+      await this.removeDuplicateNotebooks();
       this.persist();
       this.subscribe();
     } catch (error) {
@@ -64,10 +70,29 @@ class Organizer {
     }
   }
 
+  /**
+   * Conserta o defeito antigo que recriava Mercado, Farmácia e Petshop a cada recarga: dos cadernos com o mesmo nome
+   * padrão no mesmo espaço, fica o que tem itens (ou o mais antigo); os outros só saem se estiverem vazios.
+   */
+  private async removeDuplicateNotebooks() {
+    const defaults = new Set(['Mercado', 'Farmácia', 'Petshop']);
+    const itemsOf = (id: string) => this.shopping_lists.filter((l) => l.notebook_id === id).reduce((n, l) => n + this.shopping_items.filter((i) => i.list_id === l.id).length, 0);
+    const groups = new Map<string, typeof this.notebooks>();
+    for (const nb of this.notebooks) if (defaults.has(nb.name)) groups.set(`${nb.household_id}|${nb.name}`, [...(groups.get(`${nb.household_id}|${nb.name}`) ?? []), nb]);
+    const drop: string[] = [];
+    for (const list of groups.values()) {
+      if (list.length < 2) continue;
+      const keep = list.toSorted((a, b) => itemsOf(b.id) - itemsOf(a.id) || a.created_at.localeCompare(b.created_at))[0];
+      drop.push(...list.filter((nb) => nb.id !== keep.id && itemsOf(nb.id) === 0).map((nb) => nb.id));
+    }
+    if (drop.length) await this.remove('notebooks', drop).catch(() => {});
+  }
+
   reset() {
     if (this.channel) void supabase().removeChannel(this.channel);
     this.channel = null;
     this.loadedFor = '';
+    this.ready = false;
     this.spaces = [];
     this.members = [];
     for (const table of orgTables) this.setList(table, []);
