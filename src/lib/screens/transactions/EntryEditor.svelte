@@ -12,7 +12,7 @@
   import Toggle from '$lib/ui/Toggle.svelte';
   import CategorySelect from '$lib/ui/CategorySelect.svelte';
   import { hint } from '$lib/ui/hint';
-  import { accountOf, billDueOf, categoryCost, categoryOf, fullName, kindOf } from '$lib/features/model';
+  import { accountOf, billDueOf, categoryCost, categoryOf, kindOf } from '$lib/features/model';
   import { learn, suggestedPattern } from '$lib/features/rules';
   import { reconcileMirrors } from '$lib/features/mirrors';
   import MerchantPicker from './MerchantPicker.svelte';
@@ -89,7 +89,12 @@
       <div class="grow stack-sm" style="gap: 2px">
         <Money cents={draft.amount_cents} class="value-lg" />
         <span class="caption">{dayHeader(draft.date)} · {account?.name ?? ''}</span>
-        {#if category}<span class="small" style:color={category.color}>{fullName(category)}</span>{/if}
+        {#if !draft.is_mirror}
+          <span class="row who">
+            <button class="link" onclick={() => (picking = true)} use:hint={['Quem é', 'Escolha ou crie o estabelecimento (iFood, mercado…) para usar o logo dele.']}>{merchant?.name ?? 'Escolher estabelecimento'}</button>
+            {#if merchant}<button class="link faint" onclick={() => (editingMerchant = true)} use:hint={['Editar estabelecimento', 'Nome, logo e categoria padrão desta loja.']}>Editar</button>{/if}
+          </span>
+        {/if}
       </div>
     </div>
 
@@ -99,16 +104,6 @@
         <span class="muted">Para mudar ou apagar, abra o lançamento original na conta corrente. Para corrigir o rendimento, informe o saldo de hoje na conta do investimento.</span>
       </div>
     {:else}
-      <div class="form-title">Quem é</div>
-      <div class="form-group">
-        {#if merchant}
-          <div class="form-row"><Avatar {merchant} {category} size={34} /><span class="grow">{merchant.name}</span>
-            <button class="btn" onclick={() => (picking = true)}>Trocar</button><button class="btn" onclick={() => (editingMerchant = true)}>Editar</button></div>
-        {:else}
-          <button class="form-row plain accent" onclick={() => (picking = true)}><Icon name="store" size={18} />Escolher ou criar estabelecimento</button>
-        {/if}
-      </div>
-
       <div class="form-title">Classificação</div>
       <div class="form-group">
         <label class="form-row" use:hint={['Categoria', 'Categoria e subcategoria (ex.: Carro › Combustível). Transferências entre contas não entram nos gastos.']}><span class="field-label">Categoria</span>
@@ -135,14 +130,14 @@
           <label class="form-row" use:hint={['Fatura', 'Mês em que esta compra é paga. Mude se o fechamento foi diferente neste mês.']}><span class="field-label">Fatura</span>
             <span class="field"><Select value={due} label="Fatura" options={dueOptions(due).map((option) => ({ value: option, label: `Vence ${shortDate(option)}` }))} onchange={(v) => (draft!.bill_due_date = v)} /></span></label>
         </div>
-        <p class="form-footer">A compra entra no informativo do mês em que foi feita e no "a pagar" do mês da fatura.</p>
+        <p class="form-footer">Nos totais do mês, a compra conta quando esta fatura vence.</p>
       {/if}
 
       <div class="form-title">Detalhes</div>
       <div class="form-group">
-        <label class="form-row"><span class="field-label">Nome</span><input class="field" bind:value={draft.title} /></label>
+        <label class="form-row"><span class="field-label">Nome no app</span><input class="field" bind:value={draft.title} /></label>
         <label class="form-row" style="align-items: flex-start"><span class="field-label">Comentário</span><textarea class="field" rows="2" bind:value={draft.notes} placeholder="opcional"></textarea></label>
-        <div class="form-row"><span class="field-label">Descrição do banco</span><span class="field caption">{draft.original_title}</span></div>
+        <div class="form-row"><span class="field-label">Como veio do banco</span><span class="field caption bank">{draft.original_title}</span></div>
         {#if draft.installment_total > 1}<div class="form-row"><span class="field-label">Parcela</span><span class="field">{draft.installment_current}/{draft.installment_total}</span></div>{/if}
       </div>
 
@@ -172,5 +167,8 @@
   .head { gap: 14px; padding: 10px 2px 4px; }
   .avatar-btn { border: 0; background: none; padding: 0; border-radius: 50%; }
   .plain { background: none; border: 0; width: 100%; text-align: left; }
-  .accent { color: var(--accent); }
+  .who { gap: 12px; margin-top: 2px; }
+  .link { border: 0; background: none; padding: 0; color: var(--accent); font: inherit; font-size: 14px; font-weight: 600; }
+  .link.faint { color: var(--text-3); font-weight: 500; }
+  .bank { text-transform: none; }
 </style>

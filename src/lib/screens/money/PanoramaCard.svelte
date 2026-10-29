@@ -1,6 +1,6 @@
 <script lang="ts">
   import { money, percent } from '$lib/core/money';
-  import { addMonths, lastDay, monthTitle, shortMonth, today, type Month } from '$lib/core/dates';
+  import { addMonths, monthTitle, shortMonth, type Month } from '$lib/core/dates';
   import type { Account, Entry } from '$lib/data/types';
   import AdjustSheet from './AdjustSheet.svelte';
   import Donut from '$lib/ui/Donut.svelte';
@@ -9,8 +9,7 @@
   import LineChart from '$lib/ui/charts/LineChart.svelte';
   import { seriesColor } from '$lib/ui/charts/scale';
   import { ui } from '$lib/ui/ui.svelte';
-  import { adjustmentReason, analyzeMonth, type MonthAnalysis } from '$lib/features/analytics';
-  import { balanceOf } from '$lib/features/model';
+  import { adjustmentReason, analyzeMonth, monthEndTotal, type MonthAnalysis } from '$lib/features/analytics';
 
   /** Panorama mensal: o mês (entradas × saídas), os últimos 6 meses lado a lado e o saldo na conta no tempo. */
   let { month, analysis, entries, accounts, stale = [] }: { month: Month; analysis: MonthAnalysis; entries: Entry[]; accounts: Account[]; stale?: string[] } = $props();
@@ -26,8 +25,7 @@
   const per = $derived( months.map((m) => analyzeMonth(m, entries, accounts)));
   const past = $derived(per.slice(0, -1).map((p) => p.expenseTotal).filter((v) => v > 0));
   const average = $derived(past.length ? Math.round(past.reduce((a, b) => a + b, 0) / past.length) : null);
-  const now = today();
-  const balances = $derived(months.map((m) => accounts.filter((a) => a.kind !== 'creditCard' && !a.archived).reduce((s, a) => s + balanceOf(a, lastDay(m) < now ? lastDay(m) : now), 0)));
+  const balances = $derived(months.map((m) => monthEndTotal(m, accounts)));
   const spent = $derived(analysis.incomeTotal ? analysis.expenseTotal / analysis.incomeTotal : 0);
 </script>
 
@@ -47,6 +45,7 @@
       {#if stale.length}<button class="stale" onclick={() => ui.startImport()}><Icon name="import" size={15} /><span class="grow">Extrato só {stale.join(', ')}. Importe o de {monthTitle(month).split(' ')[0].toLowerCase()} para ver as entradas.</span><b>Importar</b></button>{/if}
       {#if analysis.adjustment}<p class="caption adjnote">Inclui ajuste ({adjustmentReason[analysis.adjustment.reason].toLowerCase()}){analysis.adjustment.note ? `: ${analysis.adjustment.note}` : ''}</p>{/if}
       <div class="row between total"><span class="muted">Balanço</span><b class="num" class:pos={analysis.balance >= 0} class:neg={analysis.balance < 0}>{money(analysis.balance)}</b></div>
+      {#if analysis.adjustment?.closing != null}<div class="row between left"><span class="muted small">Sobrou nas contas no fim do mês</span><b class="num">{money(analysis.adjustment.closing)}</b></div>{/if}
     </div>
     <div class="slide">
       <BarChart {labels} current={5} height={190} title="Entradas e saídas por mês"
@@ -71,7 +70,9 @@
   .dots button.on { width: 22px; border-radius: 4px; background: var(--accent); }
   .adj { height: 30px; padding: 0 10px; font-size: 13px; }
   .adjnote { margin: 10px 0 0; }
-  .month { display: flex; align-items: center; gap: 18px; }
+  /* O carrossel tem a altura do slide mais alto: no do mês, a sobra vai em volta da rosca, não embaixo do balanço. */
+  .slide:first-child { display: flex; flex-direction: column; }
+  .month { flex: 1; display: flex; align-items: center; gap: 18px; }
   .legend { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; font-size: 15px; }
   .line { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
   .line b { font-size: 16px; white-space: nowrap; }
@@ -82,4 +83,5 @@
   .total { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--stroke-strong); }
   .total b { font: 600 22px var(--font-display); }
   .note { margin: 8px 0 0; }
+  .left { margin-top: 6px; }
 </style>

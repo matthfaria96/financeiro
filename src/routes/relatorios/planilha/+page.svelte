@@ -97,7 +97,7 @@
 {/snippet}
 
 <div class="page wide">
-  <SubHeader title="Mês a mês" back="#/relatorios">
+  <SubHeader title="Mês a mês" back="#/transacoes">
     <button class="icon-btn" aria-label="Baixar planilha" onclick={download} use:hint={['Baixar planilha', 'Salva esta tabela em CSV para abrir no Excel, Numbers ou Google Planilhas.']}><Icon name="export" /></button>
   </SubHeader>
   <div class="controls">

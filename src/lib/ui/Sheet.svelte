@@ -1,9 +1,18 @@
+<script module lang="ts">
+  /** Janelas abertas, da de baixo para a de cima: só a de cima aparece (uma janela por vez). */
+  let stack = $state<symbol[]>([]);
+</script>
+
 <script lang="ts">
-  import type { Snippet } from 'svelte';
+  import { untrack, type Snippet } from 'svelte';
+  import Icon from './Icon.svelte';
   import { fade, fly } from 'svelte/transition';
   import { cubicOut } from 'svelte/easing';
 
-  /** Folha: sobe de baixo no celular e abre centralizada no computador. Esc ou toque fora fecham. */
+  /**
+   * Folha: sobe de baixo no celular e abre centralizada no computador. Esc ou toque fora fecham.
+   * Uma folha aberta de dentro de outra toma o lugar dela (com "Voltar"); ao fechar, a de baixo volta.
+   */
   let { open = $bindable(), title, onclose, actions, children, wide = false }: {
     open: boolean;
     title: string;
@@ -18,8 +27,24 @@
     onclose?.();
   }
 
+  const id = Symbol();
+  $effect(() => {
+    if (!open) return;
+    // untrack: ler a pilha aqui faria o efeito rodar de novo a cada janela aberta.
+    untrack(() => (stack = [...stack, id]));
+    return () => untrack(() => (stack = stack.filter((s) => s !== id)));
+  });
+  const depth = $derived(stack.indexOf(id));
+  const under = $derived(depth >= 0 && depth < stack.length - 1);
+
   function keydown(event: KeyboardEvent) {
-    if (event.key === 'Escape' && open) close();
+    if (event.key === 'Escape' && open && !under) close();
+  }
+
+  /** Leva a folha para o <body>: dentro de outra folha ela ficaria presa à de baixo. */
+  function portal(node: HTMLElement) {
+    document.body.appendChild(node);
+    return { destroy: () => node.remove() };
   }
 
   const isMobile = () => typeof matchMedia !== 'undefined' && matchMedia('(max-width: 720px)').matches;
@@ -28,16 +53,18 @@
 <svelte:window onkeydown={keydown} />
 
 {#if open}
-  <div class="backdrop" transition:fade={{ duration: 180 }} onclick={close} role="presentation"></div>
-  <div class="sheet" class:wide role="dialog" aria-modal="true" aria-label={title}
+  <div use:portal>
+  <div class="backdrop" class:nested={depth > 0} transition:fade={{ duration: depth > 0 ? 0 : 180 }} onclick={close} role="presentation"></div>
+  <div class="sheet" class:wide class:under role="dialog" aria-hidden={under} aria-modal="true" aria-label={title}
     transition:fly={{ y: isMobile() ? 600 : 24, duration: 320, easing: cubicOut, opacity: isMobile() ? 1 : 0 }}>
     <div class="grabber" aria-hidden="true"></div>
     <header>
-      <button class="btn ghost" onclick={close}>Fechar</button>
+      <button class="btn ghost" onclick={close}>{#if depth > 0}<Icon name="chevron-left" size={16} />Voltar{:else}Fechar{/if}</button>
       <h3>{title}</h3>
       <div class="actions">{#if actions}{@render actions()}{/if}</div>
     </header>
     <div class="body">{@render children()}</div>
+  </div>
   </div>
 {/if}
 
@@ -49,6 +76,9 @@
     background: rgba(20, 28, 25, 0.86); backdrop-filter: blur(30px) saturate(1.6); -webkit-backdrop-filter: blur(30px) saturate(1.6);
     border: 1px solid var(--stroke-strong); border-radius: 24px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 30px 80px rgba(0, 0, 0, 0.6);
   }
+  .backdrop.nested { background: transparent; backdrop-filter: none; }
+  .sheet.under { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.15s, visibility 0s 0.15s; }
+  header .btn.ghost :global(svg) { margin-left: -4px; }
   .sheet.wide { width: min(820px, calc(100vw - 32px)); }
   header { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; padding: 10px 10px 8px; border-bottom: 1px solid var(--stroke); }
   header h3 { margin: 0; font-size: 16px; font-weight: 600; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

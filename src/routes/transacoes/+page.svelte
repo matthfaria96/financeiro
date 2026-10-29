@@ -85,9 +85,10 @@
       <span class="caption">{prefs.creditByPurchase ? 'Compras no cartão contam no dia em que foram feitas.' : 'Compras no cartão contam quando a fatura vence (parceladas: só a parcela do mês).'}</span>
     </div>
     {/if}
-    <div class="layout">
+    <!-- Sempre entradas antes de saídas. A rosca de entradas só aparece com 3 fontes ou mais (com menos, a lista já diz tudo). -->
+    <div class="layout" class:single={analysis.income.length < 3}>
+      {#if analysis.income.length >= 3}<CategoryDonut title="Entradas" groups={analysis.income} total={analysis.incomeTotal} empty="" />{/if}
       <CategoryDonut title="Saídas" groups={analysis.expenses} total={analysis.expenseTotal} empty="Nenhuma saída neste mês." />
-      <CategoryDonut title="Entradas" groups={analysis.income} total={analysis.incomeTotal} tone="pos" empty="Nenhuma entrada neste mês. Importe o extrato da conta." />
     </div>
     <EntryListCard title="Entradas" entries={analysis.income.flatMap((g) => g.entries)} total={analysis.incomeTotal} tone="pos" />
     <section class="out">
@@ -109,7 +110,7 @@
   .month { display: flex; align-items: center; gap: 8px; }
   .icon-btn:disabled { opacity: 0.3; }
   .layout { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); align-items: stretch; }
-  @media (min-width: 1000px) { .layout { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (min-width: 1000px) { .layout:not(.single) { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   .out { display: flex; flex-direction: column; gap: 10px; }
   .out-head h3 { margin: 6px 4px 0; font: 600 18px var(--font-display); }
   .mode { display: flex; gap: 2px; padding: 3px; border-radius: 10px; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--stroke); }

@@ -34,5 +34,6 @@
   .due { display: block; font-size: 10px; color: #b388ff; white-space: nowrap; }
   .day { width: 64px; flex: none; text-align: right; padding-right: 0; font-variant-numeric: tabular-nums; }
   .dated :global(.entry) { flex: 1; min-width: 0; padding-left: 12px; }
+  @media (max-width: 600px) { .day { width: 44px; } .dated :global(.entry) { padding-left: 8px; } }
   .more { margin: 6px 16px 16px; width: calc(100% - 32px); }
 </style>

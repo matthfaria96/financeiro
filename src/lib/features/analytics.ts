@@ -138,13 +138,22 @@ export function analyzeMonth(month: Month, entries: Entry[], accounts: Account[]
   return {
     adjustment,
     balances,
-    balanceTotal: balances.reduce((s, b) => s + b.cents, 0),
+    balanceTotal: adjustment?.closing ?? balances.reduce((s, b) => s + b.cents, 0),
     income: incomeGroups,
     incomeTotal,
     expenses: expenseGroups,
     expenseTotal,
     balance: incomeTotal - expenseTotal
   };
+}
+
+/** Dinheiro nas contas (fora cartões) no fim do mês; o valor informado no ajuste manda. */
+export function monthEndTotal(month: Month, accounts: Account[]) {
+  const closing = store.household?.settings.adjustments?.[month]?.closing;
+  if (closing != null) return closing;
+  const now = today();
+  const end = lastDay(month) < now ? lastDay(month) : now;
+  return accounts.filter((a) => a.kind !== 'creditCard' && !a.archived).reduce((s, a) => s + balanceOf(a, end), 0);
 }
 
 /** O que já se sabe que vai sair num mês futuro: faturas (compras feitas + parcelas) e contas fixas fora do cartão. */

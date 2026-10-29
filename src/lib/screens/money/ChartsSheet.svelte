@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { addMonths, lastDay, monthOf, shortMonth, today, type Month } from '$lib/core/dates';
+  import { addMonths, monthOf, shortMonth, today, type Month } from '$lib/core/dates';
   import { money, percent } from '$lib/core/money';
   import { store } from '$lib/data/store.svelte';
   import type { Account, Entry } from '$lib/data/types';
@@ -12,8 +12,8 @@
   import { seriesColor } from '$lib/ui/charts/scale';
   import BillRow from '$lib/screens/bills/BillRow.svelte';
   import ForecastCard from './ForecastCard.svelte';
-  import { analyzeMonth, spendMonth } from '$lib/features/analytics';
-  import { balanceOf, costOf, kindOf, inScopeBill } from '$lib/features/model';
+  import { analyzeMonth, monthEndTotal, spendMonth } from '$lib/features/analytics';
+  import { costOf, kindOf, inScopeBill } from '$lib/features/model';
   import { billInMonth, billStatus } from '$lib/features/bills';
 
   /** Análise: fixas × variáveis (com as contas fixas), previsão dos próximos meses e entradas × saídas. */
@@ -40,8 +40,7 @@
 
   const months12 = $derived(Array.from({ length: 12 }, (_, i) => addMonths(month, i - 11)));
   const per = $derived(open && tab === 'flow' ? months12.map((m) => analyzeMonth(m, entries, accounts)) : []);
-  const now = today();
-  const balances = $derived(open && tab === 'flow' ? months12.map((m) => accounts.filter((a) => a.kind !== 'creditCard' && !a.archived).reduce((s, a) => s + balanceOf(a, lastDay(m) < now ? lastDay(m) : now), 0)) : []);
+  const balances = $derived(open && tab === 'flow' ? months12.map((m) => monthEndTotal(m, accounts)) : []);
 
   function manage() {
     open = false;

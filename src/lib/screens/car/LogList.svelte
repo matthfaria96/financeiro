@@ -9,7 +9,7 @@
   let { vehicle, onedit }: { vehicle: Vehicle; onedit: (log: VehicleLog) => void } = $props();
   let filter = $state<LogKind | ''>('');
   const logs = $derived(logsOf(vehicle));
-  const kinds = $derived([...new Set(logs.map((l) => normalizeKind(l.kind)))]);
+  const kinds = $derived([...new Set(logs.map((l) => normalizeKind(l.kind)))].toSorted((a, b) => logKindShort[a].localeCompare(logKindShort[b], 'pt-BR')));
   const filtered = $derived(filter ? logs.filter((l) => normalizeKind(l.kind) === filter) : logs);
   let limit = $state(15);
   const shown = $derived(filtered.slice(0, limit));

@@ -43,12 +43,6 @@
     <MoreRow href="#/mais/pessoas" title="De quem é cada gasto" detail="Eu, esposa, casa, filho… (etiquetas nos lançamentos)." icon="users" color="#FF8FAB" />
   </div>
 
-  <SectionTitle title="Análises" />
-  <div class="card flush list">
-    <MoreRow href="#/relatorios" title="Relatórios" detail="Por categoria, pessoa ou conta, mês a mês." icon="reports" color="#9085E9" />
-    <MoreRow href="#/relatorios/planilha" title="Mês a mês" detail="Todos os meses lado a lado, como planilha." icon="table" color="#38D9F5" />
-  </div>
-
   <SectionTitle title="Conta" />
   <div class="card flush list">
     <MoreRow href="#/mais/ajustes" title="Conta e preferências" detail="Senha, previsão, painéis avançados e demonstração." icon="settings" color="#8E8E93" />

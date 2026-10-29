@@ -24,7 +24,7 @@
     <button class="btn primary block import" onclick={() => ui.startImport()} use:hint={['Importar extrato', 'Escolha a conta e o arquivo do banco (OFX, CSV ou PDF). Também dá para arrastar o arquivo para a janela.']}>
       <Icon name="import" size={17} />Importar extrato
     </button>
-    <div class="who caption ellipsis">{store.demo ? 'Demonstração (dados fictícios)' : store.userEmail}</div>
+    <div class="who caption ellipsis">{store.demo ? '' : store.userEmail}</div>
   </div>
 </nav>
 
