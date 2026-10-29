@@ -98,7 +98,7 @@ await closeSheet();
 await step('Gráfico do carro', () => ev(`document.querySelector('main [aria-label="Ver gráfico"]').click(); 'ok'`), 'Consumo');
 await closeSheet();
 await step('Início (para a previsão)', go('#/'), 'Previsão dos próximos meses');
-await step('Previsão (tela)', () => ev(`document.querySelectorAll('main .bar-row')[1].click(); 'ok'`), 'Como a previsão é calculada');
+await step('Previsão (tela)', () => ev(`document.querySelectorAll('main .bar-row')[1].click(); 'ok'`), 'Deve sair em');
 await step('Previsão › volta ao Início', () => ev(`document.querySelector('main a.back').click(); 'ok'`), 'Panorama de');
 await step('Início (para o perfil)', go('#/'), 'Panorama de');
 await step('Perfil pelo avatar do Início', () => ev(`document.querySelector('main a.profile').click(); 'ok'`), 'Família');

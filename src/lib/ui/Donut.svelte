@@ -75,7 +75,7 @@
       <path d={arc.path} fill={arc.color} fill-rule="evenodd" opacity={hovered && hovered !== arc.id ? 0.35 : 1}
         transform={hovered === arc.id ? `translate(${((arc.labelAt[0] - 50) * 0.05).toFixed(2)} ${((arc.labelAt[1] - 50) * 0.05).toFixed(2)})` : ''}
         role="button" tabindex="0" aria-label="{arc.label ?? arc.id}: {format(arc.value)} ({percent(arc.share)})"
-        onpointerenter={() => (hovered = arc.id)} onfocus={() => (hovered = arc.id)} onblur={() => (hovered = null)} />
+        onpointerenter={(e) => { if (e.pointerType === 'mouse') hovered = arc.id; }} onfocus={() => (hovered = arc.id)} onblur={() => (hovered = null)} />
       {#if labels && arc.share >= 0.08 && !hovered}
         <text x={arc.labelAt[0]} y={arc.labelAt[1]} text-anchor="middle" dominant-baseline="central" font-size="5" font-weight="700" fill="#fff" pointer-events="none">{percent(arc.share)}</text>
       {/if}

@@ -4,6 +4,7 @@
   import type { Account, Entry } from '$lib/data/types';
   import AdjustSheet from './AdjustSheet.svelte';
   import Icon from '$lib/ui/Icon.svelte';
+  import Donut from '$lib/ui/Donut.svelte';
   import Tally from '$lib/ui/Tally.svelte';
   import CornerButton from '$lib/ui/CornerButton.svelte';
   import Carousel from '$lib/ui/Carousel.svelte';
@@ -32,7 +33,7 @@
     ? [{ key: 'fixed', label: spendKindName.fixed, color: spendKindColor.fixed, cents: forecast.fixed.total }, { key: 'variable', label: spendKindName.variable, color: spendKindColor.variable, cents: forecast.variable.total }, { key: 'seasonal', label: spendKindName.seasonal, color: spendKindColor.seasonal, cents: forecast.seasonal.cents }]
     : analysis.expenses.filter((g) => g.key !== 'none').slice(0, 3).map((g) => ({ key: g.key, label: g.label, color: g.color, cents: g.cents })));
   const balance = $derived(view.income - view.expense);
-  const top = $derived(Math.max(1, view.income, view.expense));
+  const moved = $derived(view.income + view.expense);
   const context = $derived.by(() => {
     if (!view.income) return view.expense ? 'Sem entradas registradas neste mês.' : 'Nada registrado neste mês ainda.';
     const share = Math.abs(balance) / view.income;
@@ -59,19 +60,18 @@
     <section class="card panel">
       {#if i === 0}
         <div class="card-head"><h3>{titles[0]}</h3>{#if !future}<CornerButton label="Ajustar o mês" detail="Se não bate com o banco: quanto ganhou, quanto gastou e quanto sobrou, com o motivo (juros, antecipação…)." onclick={() => (adjustOpen = true)} />{:else}<span class="pill soon">previsão</span>{/if}</div>
-        <div class="lead">
-          <span class="caption">{future ? 'Deve sobrar' : 'Balanço do mês'}</span>
-          <b class="big" class:pos={balance >= 0} class:neg={balance < 0}><Tally cents={balance} /></b>
-          <span class="caption">{context}</span>
-        </div>
-        <div class="bars">
-          <div class="bar-line">
-            <div class="row between"><span class="key"><i style:background={seriesColor.income}></i>{future ? 'Deve entrar' : 'Entradas'}</span><b class="num pos"><Tally cents={view.income} /></b></div>
-            <span class="track"><span style:width="{(view.income / top) * 100}%" style:background={seriesColor.income}></span></span>
-          </div>
-          <div class="bar-line">
-            <div class="row between"><span class="key"><i style:background={seriesColor.credit}></i>{future ? 'Deve sair' : 'Saídas'}</span><b class="num"><Tally cents={view.expense} /></b></div>
-            <span class="track"><span style:width="{(view.expense / top) * 100}%" style:background={seriesColor.credit}></span></span>
+        <!-- 100% = tudo o que passou pelo mês (entradas + saídas); cada fatia mostra quanto foi de cada lado. -->
+        <div class="month">
+          <Donut size={132} thickness={0.26} center={money(moved, { cents: false })} caption={future ? 'previsto' : 'movimentado'} format={(v) => `${money(v, { cents: false })} · ${percent(v / (moved || 1))}`}
+            slices={[{ id: 'in', label: future ? 'Deve entrar' : 'Entradas', value: view.income, color: seriesColor.income }, { id: 'out', label: future ? 'Deve sair' : 'Saídas', value: view.expense, color: seriesColor.credit }]} />
+          <div class="legend">
+            <div class="line"><span class="key"><i style:background={seriesColor.income}></i>{future ? 'Deve entrar' : 'Entradas'}<span class="pct">{percent(view.income / (moved || 1))}</span></span><b class="num pos"><Tally cents={view.income} showCents={false} /></b></div>
+            <div class="line"><span class="key"><i style:background={seriesColor.credit}></i>{future ? 'Deve sair' : 'Saídas'}<span class="pct">{percent(view.expense / (moved || 1))}</span></span><b class="num"><Tally cents={view.expense} showCents={false} /></b></div>
+            <div class="balance">
+              <span class="caption">{future ? 'Deve sobrar' : 'Balanço'}</span>
+              <b class="num" class:pos={balance >= 0} class:neg={balance < 0}><Tally cents={balance} /></b>
+              <span class="caption">{context}</span>
+            </div>
           </div>
         </div>
         {#if highlights.some((h) => h.cents > 0)}
@@ -95,7 +95,7 @@
           <b class="big"><Tally cents={lastOut} showCents={false} /></b>
           <span class="caption">{vsAverage === null ? 'Ainda sem meses anteriores para comparar.' : Math.abs(vsAverage) < 0.03 ? 'na média dos meses anteriores' : `${percent(Math.abs(vsAverage))} ${vsAverage > 0 ? 'acima' : 'abaixo'} da média (${money(average!, { cents: false })})`}</span>
         </div>
-        <div class="chart"><BarChart {labels} current={5} height={150} title="Entradas e saídas por mês"
+        <div class="chart"><BarChart {labels} current={5} height={200} title="Entradas e saídas por mês"
           series={[{ id: 'in', name: 'Entradas', color: seriesColor.income, values: per.map((p) => p.incomeTotal) }, { id: 'out', name: 'Saídas', color: seriesColor.credit, values: per.map((p) => p.expenseTotal) }]}
           reference={average ? { value: average, label: '' } : null} /></div>
         {#if average}<p class="caption faint note"><span class="dash"></span>média das saídas</p>{/if}
@@ -106,7 +106,7 @@
           <b class="big"><Tally cents={balances.at(-1) ?? 0} showCents={false} /></b>
           <span class="caption">{growth === 0 ? 'igual a 6 meses atrás' : `${growth > 0 ? '+' : '−'}${money(Math.abs(growth), { cents: false })} em 6 meses`}</span>
         </div>
-        <div class="chart"><LineChart {labels} height={150} title="Saldo nas contas no fim de cada mês" series={[{ id: 'bal', name: 'Saldo', color: '#2bd4a4', values: balances }]} /></div>
+        <div class="chart"><LineChart {labels} height={200} title="Saldo nas contas no fim de cada mês" series={[{ id: 'bal', name: 'Saldo', color: '#2bd4a4', values: balances }]} /></div>
         <p class="caption faint note">Contas, caixinhas e dinheiro somados.</p>
       {/if}
     </section>
@@ -121,16 +121,16 @@
   .soon { color: #8fc0ff; background: rgba(57, 135, 229, 0.14); }
   .lead { display: flex; flex-direction: column; gap: 2px; margin-bottom: 14px; }
   .big { font: 600 32px/1.1 var(--font-display); letter-spacing: -0.02em; margin: 2px 0; }
-  .bars { display: flex; flex-direction: column; gap: 14px; }
-  .bar-line { display: flex; flex-direction: column; gap: 7px; }
-  .key { display: flex; align-items: center; gap: 8px; color: var(--text-2); font-size: 14.5px; }
-  .bar-line b { font-size: 15.5px; font-weight: 600; }
+  .panel { container-type: inline-size; }
+  .month { display: flex; align-items: center; gap: 22px; }
+  .legend { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 9px; }
+  .line { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .key { display: flex; align-items: center; gap: 8px; color: var(--text-2); font-size: 14.5px; white-space: nowrap; }
+  .pct { font-size: 12px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+  .line b { font-size: 16px; font-weight: 600; white-space: nowrap; }
+  .balance { display: flex; flex-direction: column; gap: 1px; margin-top: 4px; padding-top: 10px; border-top: 1px solid var(--stroke); }
+  .balance b { font: 600 24px/1.15 var(--font-display); letter-spacing: -0.015em; }
   i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; flex: none; }
-  .track { display: block; height: 10px; border-radius: 5px; background: rgba(255, 255, 255, 0.06); overflow: hidden; }
-  .track span { display: block; height: 100%; border-radius: 5px; transform-origin: left; animation: fill 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
-    transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1); }
-  .bar-line + .bar-line .track span { animation-delay: 90ms; }
-  @keyframes fill { from { transform: scaleX(0); } }
   .tops { display: flex; flex-direction: column; gap: 2px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--stroke); }
   .tops > .caption { margin-bottom: 4px; }
   .top { display: flex; align-items: center; gap: 10px; padding: 3px 0; font-size: 14px; }
@@ -144,4 +144,11 @@
   .more:hover { gap: 7px; }
   .chart { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; }
   .dash { display: inline-block; width: 16px; border-top: 1.5px dashed rgba(255, 255, 255, 0.5); vertical-align: middle; margin-right: 6px; }
+  /* Cartão estreito (celular): nome em cima, valor embaixo, para nada passar da borda. */
+  @container (max-width: 440px) {
+    .month { gap: 16px; }
+    .line { flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 0; }
+    .line b { align-self: flex-start; text-align: left; }
+    .balance b { font-size: 21px; }
+  }
 </style>

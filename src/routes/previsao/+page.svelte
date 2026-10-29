@@ -7,6 +7,8 @@
   import BarChart from '$lib/ui/charts/BarChart.svelte';
   import SubHeader from '$lib/screens/more/SubHeader.svelte';
   import ForecastBreakdown from '$lib/screens/forecast/ForecastBreakdown.svelte';
+  import ForecastInfo from '$lib/screens/forecast/ForecastInfo.svelte';
+  import Icon from '$lib/ui/Icon.svelte';
   import { inScope, inScopeAccount } from '$lib/features/model';
   import { expectedIncome } from '$lib/features/analytics';
   import { closedMonths, forecastSpending, monthSpend, spendKindColor, spendKindName, spendKinds } from '$lib/features/spending';
@@ -22,6 +24,7 @@
   const income = $derived(expectedIncome(entries, accounts));
   const left = $derived(income.cents - current.total);
   const parts = $derived([current.fixed.total, current.variable.total, current.seasonal.cents]);
+  let info = $state(false);
 
   // Histórico real (meses fechados): o mesmo critério da previsão, para comparar.
   const past = $derived(closedMonths());
@@ -37,8 +40,11 @@
   </div>
 
   <section class="card summary">
-    <span class="caption">Deve sair em {monthTitle(month).split(' ')[0].toLowerCase()}</span>
+    <div class="row between"><span class="caption">Deve sair em {monthTitle(month).split(' ')[0].toLowerCase()}</span>
+      <button class="icon-btn info" class:on={info} aria-label="Como a previsão é calculada" aria-expanded={info} onclick={() => (info = !info)}><Icon name="info" size={15} /></button></div>
     <b class="big"><Tally cents={current.total} showCents={false} /></b>
+    <span class="caption">base {money(current.base, { cents: false })}{#each current.extras as x (x.label)}{' '}<span class="extra">+ {x.kind === 'yearly' ? x.label : 'fatura acima da média'} {money(x.cents, { cents: false })}</span>{/each}</span>
+    <ForecastInfo open={info} base={current.base} />
     <div class="stack-bar" aria-hidden="true">
       {#each spendKinds as kind, i (kind)}{#if parts[i] > 0}<span style:flex-grow={parts[i]} style:background={spendKindColor[kind]}></span>{/if}{/each}
     </div>
@@ -61,12 +67,6 @@
       series={spendKinds.map((kind) => ({ id: kind, name: spendKindName[kind], color: spendKindColor[kind], stack: 'all', values: spent.map((s) => s[kind]) }))} />
   </section>
 
-  <section class="card how">
-    <h3>Como a previsão é calculada</h3>
-    <p><i style:background={spendKindColor.fixed}></i><span><b>Fixas</b>: o valor de cada conta fixa de valor igual (aluguel, escola, assinaturas). Gastos marcados como fixos sem conta cadastrada entram pela média.</span></p>
-    <p><i style:background={spendKindColor.variable}></i><span><b>Variáveis</b>: também todo mês, mas o valor muda (luz, água). Vale a média do que foi pago nos últimos {store.forecastMonths} meses, contando só os meses em que houve pagamento.</span></p>
-    <p><i style:background={spendKindColor.seasonal}></i><span><b>Sazonais</b>: todo o resto (mercado, lazer, compras). Média dos últimos {store.forecastMonths} meses, só dos que tiveram gasto: 2 meses de histórico dividem por 2, não por {store.forecastMonths}. Se o cartão já tiver mais que isso na fatura, vale o da fatura.</span></p>
-  </section>
 </div>
 
 <style>
@@ -83,8 +83,7 @@
   .flow > div { display: flex; flex-direction: column; gap: 2px; }
   .flow b { font: 600 20px var(--font-display); }
   .right { text-align: right; }
-  .how h3 { margin: 0 0 10px; font: 600 16px var(--font-display); }
-  .how p { display: flex; gap: 10px; margin: 8px 0 0; font-size: 14px; line-height: 1.45; color: var(--text-2); }
-  .how p i { margin-top: 5px; }
-  .how b { color: var(--text); }
+  .info { width: 30px; height: 30px; color: var(--text-2); }
+  .info.on { color: var(--accent); border-color: rgba(43, 212, 164, 0.4); background: var(--accent-soft); }
+  .extra { color: #f2a35e; white-space: nowrap; }
 </style>

@@ -38,7 +38,7 @@
         {#each section.lines as line (line.bill.id)}
           <div class="line">
             <Avatar merchant={merchantForBill(line.bill) ?? null} category={store.categoryById.get(line.bill.category_id ?? '') ?? null} name={line.bill.name} size={30} />
-            <span class="grow ellipsis">{line.bill.name}<span class="caption block">dia {line.bill.day_of_month}{section.kind === 'variable' ? (line.months ? ` · média de ${months(line.months)}` : ' · sem histórico: valor cadastrado') : ''}</span></span>
+            <span class="grow ellipsis">{line.bill.name}<span class="caption block">{line.bill.frequency === 'yearly' ? 'anual · ' : ''}dia {line.bill.day_of_month}{section.kind === 'variable' ? (line.months ? ` · média de ${months(line.months)}` : ' · sem histórico: valor cadastrado') : ''}</span></span>
             <span class="num">{money(line.cents, { cents: false })}</span>
           </div>
         {/each}

@@ -85,6 +85,10 @@ export interface SpendForecast {
   variable: { bills: ForecastLine[]; total: number };
   seasonal: { average: { cents: number; months: number }; committed: number; cents: number; basis: 'average' | 'committed' };
   total: number;
+  /** O que todo mês tem igual: contas mensais + média das variáveis + média dos sazonais (+ fixos sem conta). */
+  base: number;
+  /** Por que este mês foge da base: contas anuais que vencem nele e fatura já acima da média. */
+  extras: { label: string; cents: number; kind: 'yearly' | 'committed' }[];
 }
 
 /** Previsão de gastos para vários meses de uma vez (o histórico é calculado uma vez só). */
@@ -111,12 +115,19 @@ export function forecastSpending(months: Month[], entries: Entry[], accounts: Ac
     const seasonal = seasonalForecast(seasonalAverage, committed);
     const fixedTotal = fixedBills.reduce((s, x) => s + x.cents, 0) + looseAverage.cents;
     const variableTotal = variableBills.reduce((s, x) => s + x.cents, 0);
+    const total = fixedTotal + variableTotal + seasonal.cents;
+    const extras = [
+      ...[...fixedBills, ...variableBills].filter((x) => x.bill.frequency === 'yearly').map((x) => ({ label: x.bill.name, cents: x.cents, kind: 'yearly' as const })),
+      ...(seasonal.basis === 'committed' && seasonal.cents > seasonalAverage.cents ? [{ label: 'Fatura acima da média', cents: seasonal.cents - seasonalAverage.cents, kind: 'committed' as const }] : [])
+    ];
     return {
       month,
       fixed: { bills: fixedBills, loose: looseAverage, total: fixedTotal },
       variable: { bills: variableBills, total: variableTotal },
       seasonal: { average: seasonalAverage, committed, ...seasonal },
-      total: fixedTotal + variableTotal + seasonal.cents
+      total,
+      base: total - extras.reduce((s, x) => s + x.cents, 0),
+      extras
     };
   });
 }
