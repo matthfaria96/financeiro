@@ -24,7 +24,7 @@
     faded?: (index: number) => boolean;
     onselect?: (index: number) => void;
     title?: string;
-    /** Linha de referência (ex.: média), com rótulo à direita. */
+    /** Linha de referência tracejada (ex.: média). Rótulo vazio: a legenda fica fora do gráfico, sem cobrir as barras. */
     reference?: { value: number; label: string } | null;
   } = $props();
 
@@ -81,8 +81,8 @@
         <path class="bar" style:--i={bar.i} d={bar.d} fill={bar.color} opacity={faded(bar.i) ? 0.38 : hovered === null || hovered === bar.i ? 1 : 0.55} />
       {/each}
       {#if reference}
-        <line x1={pad.l} x2={width - pad.r} y1={y(reference.value)} y2={y(reference.value)} stroke="rgba(255,255,255,0.55)" stroke-width="1.5" />
-        <text x={width - pad.r} y={y(reference.value) - 6} text-anchor="end" class="ref">{reference.label}</text>
+        <line x1={pad.l} x2={width - pad.r} y1={y(reference.value)} y2={y(reference.value)} stroke="rgba(255,255,255,0.5)" stroke-width="1.25" stroke-dasharray="4 4" />
+        {#if reference.label}<text x={width - pad.r} y={y(reference.value) - 6} text-anchor="end" class="ref">{reference.label}</text>{/if}
       {/if}
       {#each labels as label, i (i)}
         {#if i === current || (i % every === 0 && Math.abs(i - current) >= every * 0.6) || (current < 0 && i % every === 0)}

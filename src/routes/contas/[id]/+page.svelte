@@ -45,7 +45,7 @@
       <span class="row" style="gap: 10px; min-width: 0"><button class="icon-btn" aria-label="Voltar" onclick={() => history.back()}><Icon name="chevron-left" /></button><h1 class="ellipsis">{account.name}</h1></span>
       <button class="icon-btn" aria-label="Editar conta" onclick={() => (editing = true)} use:hint={['Editar conta', 'Nome, banco, tipo, de quem é, área e saldo.']}><Icon name="pencil" /></button>
     </header>
-    <section class="card row hero">
+    <section class="card row summary">
       <BankCard {account} width={140} />
       <div class="grow stack-sm" style="gap: 4px">
         <span class="caption">{kindName[account.kind]}</span>
@@ -102,7 +102,7 @@
 
 <style>
   .top h1 { margin: 6px 0; font: 700 26px var(--font-display); letter-spacing: -0.02em; }
-  .hero { gap: 18px; }
+  .summary { gap: 18px; }
   .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .months { display: grid; grid-template-columns: repeat(12, 1fr); gap: 5px; }
   .mo { display: flex; flex-direction: column; align-items: center; gap: 4px; }
