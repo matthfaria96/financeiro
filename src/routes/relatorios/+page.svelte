@@ -13,9 +13,12 @@
   import { exportCSV } from '$lib/screens/reports/exportCsv';
   import FlowCard from '$lib/screens/home/FlowCard.svelte';
   import { flowHistory } from '$lib/features/month';
+  import { prefs } from '$lib/ui/prefs.svelte';
 
   type Tab = 'summary' | 'categories' | 'cost' | 'payment';
   let tab = $state<Tab>('summary');
+  // Visão simples: só "para onde foi" (categorias, pessoas, contas); o resto fica na completa.
+  const view = $derived<Tab>(prefs.full ? tab : 'categories');
   let month = $state(monthOf(today()));
   const entries = $derived(store.entries.filter(inScope));
   const accounts = $derived(store.accounts.filter(inScopeAccount));
@@ -33,20 +36,20 @@
     </div>
   </header>
   <WorkspaceBar />
-  <div class="no-print"><FlowCard {history} selected={month} title="Últimos 12 meses" onselect={(m) => (month = m)} /></div>
+  {#if prefs.full}<div class="no-print"><FlowCard {history} selected={month} title="Últimos 12 meses" onselect={(m) => (month = m)} /></div>{/if}
   <div class="row between monthbar">
     <button class="icon-btn" aria-label="Mês anterior" onclick={() => (month = addMonths(month, -1))}><Icon name="chevron-left" /></button>
     <button class="month" onclick={() => (month = current)} use:hint={['Mês', 'Toque para voltar ao mês atual.']}>{monthTitle(month)}</button>
     <button class="icon-btn" aria-label="Próximo mês" disabled={month >= current} onclick={() => (month = addMonths(month, 1))}><Icon name="chevron-right" /></button>
   </div>
-  <Segmented label="Relatório" bind:value={tab} options={[{ value: 'summary', label: 'Resumo' }, { value: 'categories', label: 'Categorias' }, { value: 'cost', label: 'Fixo e variável' }, { value: 'payment', label: 'Pagamento' }]} />
+  {#if prefs.full}<Segmented label="Relatório" bind:value={tab} options={[{ value: 'summary', label: 'Resumo' }, { value: 'categories', label: 'Categorias' }, { value: 'cost', label: 'Fixo e variável' }, { value: 'payment', label: 'Pagamento' }]} />{/if}
   <div class="print-title">Financeiro · {monthTitle(month)} · {store.household?.name}</div>
-  {#if tab === 'summary'}
+  {#if view === 'summary'}
     <MonthSummary {month} {entries} {accounts} />
-  {:else if tab === 'categories'}
+  {:else if view === 'categories'}
     <CategoryReport {month} {entries} />
   {:else}
-    <Breakdown {month} {entries} mode={tab} />
+    <Breakdown {month} {entries} mode={view === 'payment' ? 'payment' : 'cost'} />
   {/if}
 </div>
 

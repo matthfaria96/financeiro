@@ -53,7 +53,7 @@
 </script>
 
 <div class="page narrow">
-  <SubHeader title="Ajustes" />
+  <SubHeader title="Conta e preferências" />
 
   <SectionTitle title="Casa" />
   <div class="form-group">

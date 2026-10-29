@@ -12,7 +12,7 @@
   const card = $derived(store.accountById.get(bill.account_id ?? '')?.kind === 'creditCard');
 </script>
 
-<div class="row">
+<div class="row" style="width: 100%">
   <Avatar merchant={merchant ?? null} {category} name={bill.name} size={46} />
   <span class="grow stack-sm" style="gap: 2px">
     <span class="ellipsis" style="font-size: 17px">{bill.name}</span>

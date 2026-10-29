@@ -30,7 +30,7 @@
 </script>
 
 <div class="page">
-  <SubHeader title="Lista de compras">
+  <SubHeader top title="Lista de compras">
     <button class="icon-btn" aria-label="Lista vazia" onclick={fresh} use:hint={['Lista vazia', 'Começa uma lista nova sem itens.']}><Icon name="plus" /></button>
   </SubHeader>
   {#if latest}

@@ -17,7 +17,7 @@
   import CarCharts from '$lib/screens/car/CarCharts.svelte';
   import { dueColor, dueText, planOf } from '$lib/features/car';
 
-  type Tab = 'history' | 'fuel' | 'plan';
+  type Tab = 'history' | 'fuel' | 'plan' | 'charts';
   const vehicle = $derived(organizer.vehicles.find((v) => v.id === page.params.id));
   let tab = $state<Tab>('history');
   let editingCar = $state(false);
@@ -52,18 +52,19 @@
       <button class="btn primary" onclick={() => addLog('fuel')} use:hint={['Abasteci', 'Anote valor, km e litros: o app calcula km/L e R$/L.']}><Icon name="fuelpump" size={16} />Abasteci</button>
       <button class="btn" onclick={() => addLog('service')} use:hint={['Registrar gasto', 'Serviço, seguro, IPVA, lavagem, peças, estacionamento…']}><Icon name="plus" size={16} />Outro gasto</button>
     </div>
-    {#each alerts as { item: a, due } (a.id)}
-      <button class="alert" style:--c={dueColor[due.state]} onclick={() => (tab = 'plan')}><Icon name="wrench.and.screwdriver" size={15} /><span class="grow small"><b>{a.name}</b> · {dueText(due)}</span><Icon name="chevron-right" size={14} /></button>
+    {#each alerts.slice(0, 1) as { item: a, due } (a.id)}
+      <button class="alert" style:--c={dueColor[due.state]} onclick={() => (tab = 'plan')}><Icon name="wrench.and.screwdriver" size={15} /><span class="grow small"><b>{a.name}</b> · {dueText(due)}{alerts.length > 1 ? ` · e mais ${alerts.length - 1}` : ''}</span><Icon name="chevron-right" size={14} /></button>
     {/each}
     <CarSummary {vehicle} />
-    <CarCharts {vehicle} />
-    <Segmented label="Ver" bind:value={tab} options={[{ value: 'history', label: 'Histórico' }, { value: 'fuel', label: 'Abastecimentos' }, { value: 'plan', label: 'Revisões' }]} />
+    <Segmented label="Ver" bind:value={tab} options={[{ value: 'history', label: 'Histórico' }, { value: 'fuel', label: 'Abastecimentos' }, { value: 'plan', label: 'Revisões' }, { value: 'charts', label: 'Gráficos' }]} />
     {#if tab === 'history'}
       <LogList {vehicle} onedit={(l) => { log = l; logOpen = true; }} />
     {:else if tab === 'fuel'}
       <FuelTable {vehicle} onedit={(l) => { log = l; logOpen = true; }} />
-    {:else}
+    {:else if tab === 'plan'}
       <MaintenanceList {vehicle} onedit={(i) => { item = i; itemOpen = true; }} />
+    {:else}
+      <CarCharts {vehicle} />
     {/if}
     <VehicleEditor bind:open={editingCar} {vehicle} />
     <LogEditor bind:open={logOpen} {vehicle} {log} kind={newKind} />

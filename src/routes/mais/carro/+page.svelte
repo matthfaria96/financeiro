@@ -15,7 +15,7 @@
 </script>
 
 <div class="page">
-  <SubHeader title="Carro"><button class="icon-btn" aria-label="Cadastrar carro" onclick={() => (creating = true)} use:hint={['Cadastrar carro', 'Abastecimentos, gastos e plano de revisões de um carro.']}><Icon name="plus" /></button></SubHeader>
+  <SubHeader top title="Carro"><button class="icon-btn" aria-label="Cadastrar carro" onclick={() => (creating = true)} use:hint={['Cadastrar carro', 'Abastecimentos, gastos e plano de revisões de um carro.']}><Icon name="plus" /></button></SubHeader>
   {#each vehicles as vehicle (vehicle.id)}
     {@const next = planOf(vehicle)[0]}
     {@const spent = spendByKind(vehicle, yearStart).reduce((s, k) => s + k.cents, 0)}

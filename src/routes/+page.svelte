@@ -12,8 +12,12 @@
   import FlowCard from '$lib/screens/home/FlowCard.svelte';
   import SpendingCard from '$lib/screens/home/SpendingCard.svelte';
   import WalletCard from '$lib/screens/home/WalletCard.svelte';
+  import MonthSimple from '$lib/screens/home/MonthSimple.svelte';
+  import Welcome from '$lib/screens/home/Welcome.svelte';
+  import PendingCard from '$lib/screens/home/PendingCard.svelte';
+  import RecentCard from '$lib/screens/home/RecentCard.svelte';
+  import { prefs } from '$lib/ui/prefs.svelte';
   import BillRow from '$lib/screens/bills/BillRow.svelte';
-  import ExportGuide from '$lib/screens/import/ExportGuide.svelte';
   import { balanceOf, categoryOf, inScope, inScopeAccount, inScopeBill, kindOf, rootOf } from '$lib/features/model';
   import { flowHistory, outlook } from '$lib/features/month';
   import { billStatus } from '$lib/features/bills';
@@ -50,21 +54,20 @@
   </header>
   <WorkspaceBar />
 
-  {#if !store.accounts.length || !store.entries.length}
-    <section class="card stack welcome rise">
-      <h2>Vamos começar</h2>
-      <p class="muted">O Financeiro lê os extratos do banco, separa por categoria e monta os relatórios e gráficos sozinho.</p>
-      <div class="step"><span class="n" class:done={store.accounts.length > 0}>{#if store.accounts.length}<Icon name="check" size={15} stroke={3} />{:else}1{/if}</span>
-        <div class="grow"><b>Cadastre suas contas</b><p class="muted small">Cada conta e cartão (seus, da esposa, da casa), com o banco e de quem é.</p>
-          {#if !store.accounts.length}<button class="btn primary" onclick={() => (ui.newAccountOpen = true)}>Cadastrar conta</button>{/if}</div></div>
-      <div class="step"><span class="n">2</span>
-        <div class="grow"><b>Importe o extrato de cada uma</b><p class="muted small">No app do banco, exporte o extrato ou a fatura e escolha a conta aqui — ou arraste o arquivo para esta janela.</p>
-          <button class="btn" disabled={!store.accounts.length} onclick={() => ui.startImport()}>Importar extrato</button></div></div>
-      <details><summary class="muted small">Qual arquivo exportar de cada banco</summary><ExportGuide /></details>
-    </section>
-  {/if}
+  {#if !store.accounts.length || !store.entries.length}<Welcome />{/if}
 
-  {#if look}
+  {#if look && !prefs.full}
+    <div class="simple">
+      <div class="col">
+        <MonthSimple outlook={look} />
+        {#if spending.slices.length}<SpendingCard report={spending} />{/if}
+      </div>
+      <div class="col">
+        <PendingCard />
+        <RecentCard {entries} />
+      </div>
+    </div>
+  {:else if look}
     <div class="grid-main stretch">
       <NetWorthCard outlook={look} history={worth} />
       <div class="side">
@@ -78,7 +81,7 @@
     </div>
   {/if}
 
-  {#if accounts.length}
+  {#if accounts.length && prefs.full}
     <div class="grid-main">
       <WalletCard {accounts} />
       {#if pendingBills.length}
@@ -95,12 +98,8 @@
   .top h1 { margin: 6px 4px 2px; font: 700 30px var(--font-display); letter-spacing: -0.02em; }
   .top .small { margin-left: 4px; }
   .side { display: flex; flex-direction: column; gap: 16px; }
-  .welcome h2 { margin: 0; font: 700 22px var(--font-display); }
-  .welcome p { margin: 0; }
-  .step { display: flex; gap: 14px; align-items: flex-start; }
-  .step p { margin: 4px 0 8px; }
-  .n { width: 30px; height: 30px; border-radius: 50%; flex: none; display: grid; place-items: center; font-weight: 700; background: rgba(255, 255, 255, 0.08); }
-  .n.done { background: var(--accent); color: #04140e; }
-  details summary { cursor: pointer; margin-bottom: 10px; }
+  .simple { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); align-items: start; }
+  .col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+  @media (min-width: 1000px) { .simple { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); } }
   .link { color: var(--accent); font-weight: 600; }
 </style>

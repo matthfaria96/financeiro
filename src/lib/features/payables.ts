@@ -1,8 +1,10 @@
 import { futureInstallments, type FutureInstallment } from '$lib/core/forecast';
-import type { Day } from '$lib/core/dates';
+import { monthOf, today, type Day } from '$lib/core/dates';
 import { store } from '$lib/data/store.svelte';
 import type { Account, Entry } from '$lib/data/types';
-import { billDueOf, kindOf } from './model';
+import { accountOf, billDueOf, inScope, inScopeAccount, inScopeBill, kindOf } from './model';
+import { isBillPaid } from './month';
+import { billStatus } from './bills';
 
 /** Uma fatura (cartão + vencimento): compras importadas e parcelas previstas. */
 export interface PayableGroup {
@@ -42,4 +44,23 @@ export function payableGroups(cards: Account[]): PayableGroup[] {
     groups.push(...map.values());
   }
   return groups.sort((a, b) => a.due.localeCompare(b.due) || a.account.name.localeCompare(b.account.name));
+}
+
+/**
+ * O que falta pagar neste mês, com a mesma conta em todas as telas (Início, A pagar, menu):
+ * faturas que vencem no mês e ainda não foram pagas (inclusive as vencidas) + contas fixas fora do cartão.
+ */
+export function pendingThisMonth() {
+  const month = monthOf(today());
+  const cards = store.accounts.filter((a) => a.kind === 'creditCard' && inScopeAccount(a));
+  const cash = store.entries.filter((e) => inScope(e) && ['checking', 'cash'].includes(accountOf(e)?.kind ?? ''));
+  const scoped = store.entries.filter(inScope);
+  const faturas = payableGroups(cards).filter((g) => monthOf(g.due) === month && !isBillPaid(g.account, g.due, g.imported, cash));
+  const bills = store.bills
+    .filter((b) => b.active && inScopeBill(b) && store.accountById.get(b.account_id ?? '')?.kind !== 'creditCard')
+    .map((bill) => ({ bill, status: billStatus(bill, month, scoped) }))
+    .filter((x) => x.status.type !== 'paid')
+    .toSorted((a, b) => a.bill.day_of_month - b.bill.day_of_month);
+  const total = faturas.reduce((s, g) => s + g.imported + g.projected, 0) + bills.reduce((s, x) => s + x.bill.amount_cents, 0);
+  return { faturas, bills, total, count: faturas.length + bills.length };
 }

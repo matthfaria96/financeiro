@@ -21,17 +21,18 @@
 
   let { children }: { children: Snippet } = $props();
 
+  // Celular: as quatro perguntas do dia a dia + Ajustes (o resto fica lá dentro).
   const tabs = [
     { href: '#/', id: '/', label: 'Início', icon: 'home' },
-    { href: '#/transacoes', id: '/transacoes', label: 'Transações', icon: 'transactions' },
-    { href: '#/relatorios', id: '/relatorios', label: 'Relatórios', icon: 'reports' },
-    { href: '#/contas-fixas', id: '/contas-fixas', label: 'Contas fixas', icon: 'calendar' },
-    { href: '#/mais', id: '/mais', label: 'Mais', icon: 'more' }
+    { href: '#/transacoes', id: '/transacoes', label: 'Lançamentos', icon: 'transactions' },
+    { href: '#/a-pagar', id: '/a-pagar', label: 'A pagar', icon: 'receipt' },
+    { href: '#/mais/compras', id: '/mais/compras', label: 'Compras', icon: 'basket' },
+    { href: '#/mais', id: '/mais', label: 'Ajustes', icon: 'settings' }
   ];
   const active = $derived.by(() => {
     const route = page.route.id ?? '/';
     if (route === '/') return '/';
-    return tabs.find((tab) => tab.id !== '/' && route.startsWith(tab.id))?.id ?? (route.startsWith('/contas') || route.startsWith('/a-pagar') ? '/' : '/mais');
+    return tabs.find((tab) => tab.id !== '/' && route.startsWith(tab.id))?.id ?? (route.startsWith('/contas') || route.startsWith('/relatorios') ? '/' : '/mais');
   });
 
   let dragging = $state(false);
@@ -45,7 +46,8 @@
   onMount(async () => {
     await store.start();
     if (store.demo) {
-      await seedDemo();
+      // ?demo&vazio: demonstração sem dados, para ver o primeiro acesso.
+      if (!new URLSearchParams(location.search).has('vazio')) await seedDemo();
       // Só na demonstração: ?abrir=importar | lancamento | conta, para conferir as folhas.
       const open = new URLSearchParams(location.search).get('abrir');
       if (open === 'importar') ui.startImport();

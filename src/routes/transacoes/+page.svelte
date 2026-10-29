@@ -11,6 +11,7 @@
   import EntryRow from '$lib/screens/EntryRow.svelte';
   import MoveSheet from '$lib/screens/transactions/MoveSheet.svelte';
   import TxInsights from '$lib/screens/transactions/TxInsights.svelte';
+  import { prefs } from '$lib/ui/prefs.svelte';
   import { filter, periodName, type Period } from '$lib/screens/transactions/filter.svelte';
   import { inScopeAccount, kindOf } from '$lib/features/model';
   import { reconcileMirrors } from '$lib/features/mirrors';
@@ -37,6 +38,7 @@
   let moving = $state(false);
   let confirmDelete = $state(false);
   let menu = $state(false);
+  let moreFilters = $state(false);
 
   $effect(() => {
     // Trocou filtro ou área: limpa a seleção (para nunca mexer no que não está à vista).
@@ -64,9 +66,9 @@
   const roots = $derived(store.categories.filter((c) => !c.parent_id).toSorted((a, b) => a.sort_order - b.sort_order));
 </script>
 
-<div class="page">
+<div class="page" class:narrow={!prefs.full}>
   <header class="row between top">
-    <h1>Transações</h1>
+    <h1>Lançamentos</h1>
     <div class="row" style="gap: 8px">
       {#if selecting}
         <button class="btn" onclick={() => { selecting = false; selected = new Set(); }}>Concluir</button>
@@ -105,6 +107,7 @@
       {store.accountById.get(filter.accountId ?? '')?.name ?? 'Conta'}<Icon name="chevron-down" size={13} />
       <select value={filter.accountId ?? ''} onchange={(e) => (filter.accountId = e.currentTarget.value || null)}><option value="">Todas</option>{#each accounts as a (a.id)}<option value={a.id}>{a.name}</option>{/each}</select>
     </label>
+    {#if prefs.full || moreFilters || filter.personId || filter.cost || filter.uncategorized}
     <label class="chip" class:active={filter.personId} use:hint={['De quem', 'Só o que é seu, da sua esposa, da casa, do filho…']}>
       {store.personById.get(filter.personId ?? '')?.name ?? 'De quem'}<Icon name="chevron-down" size={13} />
       <select value={filter.personId ?? ''} onchange={(e) => (filter.personId = e.currentTarget.value || null)}><option value="">Todos</option>{#each store.people as p (p.id)}<option value={p.id}>{p.name}</option>{/each}</select>
@@ -114,13 +117,16 @@
       <select value={filter.cost ?? ''} onchange={(e) => (filter.cost = (e.currentTarget.value || null) as typeof filter.cost)}><option value="">Todos</option><option value="fixed">Só fixos</option><option value="variable">Só variáveis</option></select>
     </label>
     <button class="chip" class:active={filter.uncategorized} onclick={() => (filter.uncategorized = !filter.uncategorized)} use:hint={['Sem categoria', 'Só o que o app não soube classificar.']}>Sem categoria</button>
+    {:else}
+    <button class="chip" onclick={() => (moreFilters = true)} use:hint={['Mais filtros', 'De quem é, fixo ou variável e sem categoria.']}><Icon name="filter" size={13} />Mais filtros</button>
+    {/if}
     {#if filter.active}<button class="btn ghost" onclick={() => filter.reset()}>Limpar</button>{/if}
   </div>
 
-  <div class="layout">
+  <div class="layout" class:wide={prefs.full}>
   <div class="list">
   {#if list.length}
-    <div class="card tight row between totals mobile-only" use:hint={['Resumo', 'Somas do que está filtrado. Transferências entre suas contas e pagamento de fatura ficam de fora.']}>
+    <div class="card tight row between totals" class:mobile-only={prefs.full} use:hint={['Resumo', 'Somas do que está filtrado. Transferências entre suas contas e pagamento de fatura ficam de fora.']}>
       <div><span class="caption">Entradas</span><b class="num pos">{money(totals.income)}</b></div>
       <div><span class="caption">Saídas</span><b class="num">{money(totals.out)}</b></div>
       <div style="text-align: right"><span class="caption">Resultado</span><b class="num" class:pos={totals.net >= 0} class:neg={totals.net < 0}>{money(totals.net)}</b></div>
@@ -139,7 +145,7 @@
     <div class="empty stack-sm"><Icon name="search" size={34} class="faint" /><b>Nenhum lançamento</b><span class="muted small">{store.entries.length ? 'Mude o período ou limpe os filtros.' : 'Importe um extrato para começar.'}</span></div>
   {/each}
   </div>
-  {#if list.length}<div class="side"><TxInsights entries={list} /></div>{/if}
+  {#if list.length && prefs.full}<div class="side"><TxInsights entries={list} /></div>{/if}
   </div>
 </div>
 
@@ -169,7 +175,7 @@
   .list { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
   .side { display: none; }
   @media (min-width: 1100px) {
-    .layout { grid-template-columns: minmax(0, 1fr) 360px; }
+    .layout.wide { grid-template-columns: minmax(0, 1fr) 360px; }
     .side { display: block; position: sticky; top: 22px; }
     .mobile-only { display: none; }
   }

@@ -4,6 +4,7 @@
   import { addDays, lastDay, monthOf, shortDate, today, dayMonth } from '$lib/core/dates';
   import { money } from '$lib/core/money';
   import Icon from '$lib/ui/Icon.svelte';
+  import { hint } from '$lib/ui/hint';
   import Avatar from '$lib/ui/Avatar.svelte';
   import BankCard from '$lib/ui/BankCard.svelte';
   import WorkspaceBar from '$lib/ui/WorkspaceBar.svelte';
@@ -12,10 +13,14 @@
   import BarChart from '$lib/ui/charts/BarChart.svelte';
   import { bankColor } from '$lib/ui/look';
   import { shortMonth } from '$lib/core/dates';
-  import { payableGroups, type PayableGroup } from '$lib/features/payables';
+  import { payableGroups, pendingThisMonth, type PayableGroup } from '$lib/features/payables';
   import { isBillPaid } from '$lib/features/month';
   import { billStatus } from '$lib/features/bills';
   import { accountOf, categoryOf, inScope, inScopeAccount, inScopeBill } from '$lib/features/model';
+  import BillEditor from '$lib/screens/bills/BillEditor.svelte';
+  import { prefs } from '$lib/ui/prefs.svelte';
+  import { monthTitle } from '$lib/core/dates';
+  import type { Bill } from '$lib/data/types';
 
   const month = monthOf(today());
   const now = today();
@@ -34,6 +39,22 @@
         values: months.map((m) => groups.filter((g) => g.account.id === card.id && monthOf(g.due) === m).reduce((s, g) => s + g.imported + g.projected, 0)) }))
     };
   });
+  // Contas fixas do mês: as que faltam primeiro; as pagas ficam recolhidas.
+  const scoped = $derived(store.entries.filter(inScope));
+  const billStatuses = $derived(bills.map((b) => ({ bill: b, status: billStatus(b, month, scoped) })));
+  const billsPending = $derived(billStatuses.filter((x) => x.status.type !== 'paid'));
+  const billsPaid = $derived(billStatuses.filter((x) => x.status.type === 'paid'));
+  const cardsPending = $derived(thisMonth.filter((g) => !isBillPaid(g.account, g.due, g.imported, cash)));
+  const cardsPaid = $derived(thisMonth.filter((g) => isBillPaid(g.account, g.due, g.imported, cash)));
+  const pendingTotal = $derived(pendingThisMonth().total);
+  const paidTotal = $derived(cardsPaid.reduce((s, g) => s + g.imported, 0) + billsPaid.reduce((s, x) => s + x.bill.amount_cents, 0));
+  let showPaid = $state(false);
+  let editorOpen = $state(false);
+  let editing = $state<Bill | null>(null);
+  function editBill(bill: Bill | null) {
+    editing = bill;
+    editorOpen = true;
+  }
   let open = $state<Set<string>>(new Set());
   const key = (g: PayableGroup) => `${g.account.id}-${g.due}`;
   function toggle(id: string) {
@@ -72,27 +93,56 @@
 {/snippet}
 
 <div class="page">
-  <header class="row top"><a class="icon-btn back" href="#/" aria-label="Voltar"><Icon name="chevron-left" /></a><h1>A pagar</h1></header>
+  <header class="row between top">
+    <h1>A pagar</h1>
+    <button class="btn" onclick={() => editBill(null)} use:hint={['Nova conta fixa', 'Uma conta que se repete todo mês (aluguel, luz, escola, assinatura).']}><Icon name="plus" size={16} />Conta fixa</button>
+  </header>
   <WorkspaceBar />
-  {#if chart.labels.length}
+
+  <section class="card summary">
+    <div><span class="caption">Falta pagar em {monthTitle(month).split(' ')[0].toLowerCase()}</span><b class="big" class:warn={pendingTotal > 0}>{money(pendingTotal, { cents: false })}</b></div>
+    <div class="right"><span class="caption">Já pago</span><b class="num pos">{money(paidTotal, { cents: false })}</b></div>
+  </section>
+
+  {#if prefs.full && chart.labels.length}
     <section class="card">
       <div class="card-head"><h3>Faturas dos próximos meses</h3><span class="sub">compras já feitas + parcelas previstas</span></div>
       <BarChart labels={chart.labels} series={chart.series} current={0} height={200} title="Faturas por mês de vencimento" />
     </section>
   {/if}
-  <SectionTitle title="Faturas deste mês" />
-  {#each thisMonth as g (key(g))}{@render group(g)}{:else}<div class="card small muted">Nenhuma fatura vence neste mês.</div>{/each}
-  <SectionTitle title="Próximas faturas" />
-  {#each upcoming as g (key(g))}{@render group(g)}{:else}<div class="card small muted">Nada comprometido nas próximas faturas.</div>{/each}
-  {#if bills.length}
-    <SectionTitle title="Contas fixas deste mês" />
-    <div class="card stack">{#each bills as bill (bill.id)}<BillRow {bill} status={billStatus(bill, month, store.entries.filter(inScope))} />{/each}</div>
+
+  <SectionTitle title="Falta pagar" />
+  {#each cardsPending as g (key(g))}{@render group(g)}{/each}
+  {#if billsPending.length}
+    <div class="card flush list">{#each billsPending as { bill, status } (bill.id)}<button class="list-row plain" onclick={() => editBill(bill)}><BillRow {bill} {status} /></button>{/each}</div>
+  {/if}
+  {#if !cardsPending.length && !billsPending.length}<div class="card row done"><Icon name="check-circle" size={22} />Tudo pago neste mês.</div>{/if}
+
+  {#if cardsPaid.length || billsPaid.length}
+    <button class="btn ghost toggle" onclick={() => (showPaid = !showPaid)}><Icon name={showPaid ? 'chevron-up' : 'chevron-down'} size={15} />Pagas este mês ({cardsPaid.length + billsPaid.length})</button>
+    {#if showPaid}
+      {#each cardsPaid as g (key(g))}{@render group(g)}{/each}
+      {#if billsPaid.length}<div class="card flush list paid">{#each billsPaid as { bill, status } (bill.id)}<button class="list-row plain" onclick={() => editBill(bill)}><BillRow {bill} {status} /></button>{/each}</div>{/if}
+    {/if}
+  {/if}
+
+  {#if upcoming.length}
+    <SectionTitle title="Próximas faturas" />
+    {#each upcoming as g (key(g))}{@render group(g)}{/each}
   {/if}
 </div>
+<BillEditor bind:open={editorOpen} bill={editing} />
 
 <style>
   .top { gap: 10px; }
-  @media (min-width: 960px) { .back { display: none; } }
+  .summary { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; padding: 22px; }
+  .summary > div { display: flex; flex-direction: column; gap: 4px; }
+  .summary .right { text-align: right; }
+  .big { font: 600 38px var(--font-display); letter-spacing: -0.02em; }
+  .plain { background: none; border: 0; width: 100%; text-align: left; }
+  .done { gap: 10px; color: var(--positive); }
+  .toggle { align-self: flex-start; }
+  .paid { opacity: 0.75; }
   .top h1 { margin: 6px 0; font: 700 30px var(--font-display); letter-spacing: -0.02em; }
   .head, .line { background: none; border: 0; padding: 0; text-align: left; width: 100%; }
   .line { padding-top: 6px; }

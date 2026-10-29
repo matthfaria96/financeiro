@@ -7,13 +7,16 @@
   import Icon from '$lib/ui/Icon.svelte';
   import { kindIcon } from '$lib/ui/look';
   import { accountOf, categoryOf, costOf, kindOf } from '$lib/features/model';
+  import { prefs } from '$lib/ui/prefs.svelte';
 
-  let { entry, onclick, selected = null }: { entry: Entry; onclick?: () => void; selected?: boolean | null } = $props();
+  let { entry, onclick, selected = null, compact = false }: { entry: Entry; onclick?: () => void; selected?: boolean | null; compact?: boolean } = $props();
   const category = $derived(categoryOf(entry));
   const merchant = $derived(entry.merchant_id ? store.merchantById.get(entry.merchant_id) : undefined);
   const person = $derived(entry.person_id ? store.personById.get(entry.person_id) : undefined);
   const account = $derived(accountOf(entry));
   const transfer = $derived(kindOf(entry) === 'transfer');
+  // Visão simples: a pessoa só aparece quando não é a dona da conta (o que foge do normal).
+  const showPerson = $derived(!compact && person && (prefs.full || person.id !== account?.default_person_id));
 </script>
 
 <button class="entry" {onclick} aria-pressed={selected ?? undefined}>
@@ -26,15 +29,15 @@
     <span class="meta ellipsis">
       {#if category}<span style:color={category.color}>{category.name}</span>{/if}
       {#if entry.installment_total > 1}<span class="pill tag">{entry.installment_current}/{entry.installment_total}</span>{/if}
-      {#if kindOf(entry) === 'expense' && costOf(entry) === 'fixed'}<span class="pill fixed">Fixo</span>{/if}
+      {#if prefs.full && kindOf(entry) === 'expense' && costOf(entry) === 'fixed'}<span class="pill fixed">Fixo</span>{/if}
     </span>
   </span>
   <span class="right">
     <Money cents={entry.amount_cents} muted={transfer} class="amount" />
     <span class="row" style="gap: 6px">
       {#if transfer}<span class="caption">não conta</span>{/if}
-      {#if person}<PersonChip {person} />{/if}
-      {#if account}<span class="faint" title={account.name}><Icon name={kindIcon[account.kind]} size={13} /></span>{/if}
+      {#if showPerson && person}<PersonChip {person} />{/if}
+      {#if account && prefs.full && !compact}<span class="faint" title={account.name}><Icon name={kindIcon[account.kind]} size={13} /></span>{/if}
     </span>
   </span>
 </button>

@@ -1,6 +1,7 @@
 // Uso: Chrome com --remote-debugging-port=9333, depois `node scripts/smoke.mjs 9333 http://localhost:4317`.
 // Percorre as telas e ações principais procurando erros de JavaScript e telas vazias.
-const [port, base] = process.argv.slice(2);
+const [port, base, mode = 'simples'] = process.argv.slice(2);
+const full = mode === 'completa';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const target = await (await fetch(`http://127.0.0.1:${port}/json/new?about:blank`, { method: 'PUT' })).json();
 const ws = new WebSocket(target.webSocketDebuggerUrl);
@@ -17,6 +18,8 @@ const ev = async (expression) => (await send('Runtime.evaluate', { expression, r
 await send('Runtime.enable');
 await send('Page.enable');
 await send('Page.navigate', { url: `${base}/?demo#/` });
+await sleep(4000);
+await ev(`localStorage.setItem('financeiro.visao-completa', ${full ? "'1'" : "'0'"}); location.reload()`);
 await sleep(5000);
 const click = (text) => ev(`(() => { const scope = document.querySelector('[role=dialog]') ?? document.querySelector('main'); const el = [...scope.querySelectorAll('a,button,[role=button],[role=radio]')].find((e) => e.textContent.trim().startsWith(${JSON.stringify(text)}) && e.offsetParent); if (!el) return 'NÃO ACHEI: ' + ${JSON.stringify(text)}; el.click(); return 'ok'; })()`);
 const report = [];
@@ -31,27 +34,31 @@ async function step(name, action, expect) {
 }
 const go = (hash) => () => ev(`location.hash = ${JSON.stringify(hash)}`);
 const closeSheet = () => ev(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))`).then(() => sleep(700));
-await step('Início', go('#/'), 'Quanto tenho agora');
-await step('Transações', go('#/transacoes'), 'Gastos por dia');
+await step('Início', go('#/'), full ? 'Quanto tenho agora' : 'Falta pagar');
+await step('Transações', go('#/transacoes'), full ? 'Gastos por dia' : 'Mais filtros');
 await step('Abrir um lançamento', () => ev(`(() => { const el = [...document.querySelectorAll('main .list button, main .list a')].find((e) => e.textContent.includes('R$')); if (!el) return 'NÃO ACHEI lançamento'; el.click(); return 'ok'; })()`), 'Categoria');
 await closeSheet();
-await step('Relatórios', go('#/relatorios'), 'Últimos 12 meses');
-await step('Relatórios › Categorias', () => click('Categorias'), 'Despesas');
-await step('Relatórios › Fixo e variável', () => click('Fixo e variável'), 'Últimos 6 meses');
-await step('Relatórios › Pagamento', () => click('Pagamento'), 'Cartão');
+await step('Relatórios', go('#/relatorios'), full ? 'Últimos 12 meses' : 'Despesas');
+if (full) {
+  await step('Relatórios › Categorias', () => click('Categorias'), 'Despesas');
+  await step('Relatórios › Fixo e variável', () => click('Fixo e variável'), 'Últimos 6 meses');
+  await step('Relatórios › Pagamento', () => click('Pagamento'), 'Cartão');
+}
 await step('Mês a mês', go('#/relatorios/planilha'), 'ENTRADAS');
-await step('Contas fixas', go('#/contas-fixas'), 'O que mais pesa');
-await step('A pagar', go('#/a-pagar'), 'Faturas dos próximos meses');
+await step('Calendário de contas', go('#/contas-fixas'), 'O que mais pesa');
+await step('A pagar', go('#/a-pagar'), full ? 'Faturas dos próximos meses' : 'Falta pagar em');
+await step('Ajustes (central)', go('#/mais'), 'Visão completa');
 await step('Lista de compras', go('#/mais/compras'), 'Quanto deu cada compra');
 await step('Abrir lista', () => click('Mercado da semana'), 'NO CARRINHO');
 await step('Adicionar item', () => ev(`(() => { const i = document.querySelector('form.add input'); i.value = '3 maçã'; i.dispatchEvent(new Event('input', { bubbles: true })); i.form.requestSubmit(); return 'ok'; })()`), 'Maçã');
 await step('Casa e compras', go('#/mais/projetos'), 'Próximas compras');
 await step('Abrir projeto', () => ev(`(() => { const el = [...document.querySelectorAll('main a')].find((a) => a.getAttribute('href')?.includes('prj-apto')); if (!el) return 'NÃO ACHEI'; el.click(); return 'ok'; })()`), 'Por cômodo');
 await step('Carro', go('#/mais/carro'), 'Consumo médio');
-await step('Abrir carro', () => ev(`(() => { const el = document.querySelector('main a[href*="car-1"]'); if (!el) return 'NÃO ACHEI'; el.click(); return 'ok'; })()`), 'Gasto por mês');
+await step('Abrir carro', () => ev(`(() => { const el = document.querySelector('main a[href*="car-1"]'); if (!el) return 'NÃO ACHEI'; el.click(); return 'ok'; })()`), 'Consumo médio');
 await step('Abasteci (folha)', () => click('Abasteci'), 'Encheu o tanque');
 await closeSheet();
 await step('Revisões', () => click('Revisões'), 'Feito');
+await step('Gráficos do carro', () => click('Gráficos'), 'Gasto por mês');
 await step('Compartilhar', go('#/mais/compartilhar'), 'Nós dois');
 await step('Contas e cartões', go('#/mais/contas'), 'Cadastrar conta');
 await step('Abrir conta', () => ev(`(() => { const el = [...document.querySelectorAll('main a')].find((a) => a.textContent.includes('Nubank conta')); if (!el) return 'NÃO ACHEI'; el.click(); return 'ok'; })()`), 'Entrou e saiu');
@@ -59,13 +66,13 @@ await step('Categorias', go('#/mais/categorias'), 'Alimentação');
 await step('Estabelecimentos', go('#/mais/estabelecimentos'), 'iFood');
 await step('Pessoas', go('#/mais/pessoas'), 'Esposa');
 await step('Importações', go('#/mais/importacoes'), 'csv');
-await step('Ajustes', go('#/mais/ajustes'), 'Sair da demonstração');
-await step('Voltar ao início', go('#/'), 'Quanto tenho agora');
+await step('Conta e preferências', go('#/mais/ajustes'), 'Sair da demonstração');
+await step('Voltar ao início', go('#/'), full ? 'Quanto tenho agora' : 'Falta pagar');
 await step('Importar (folha)', () => click('Importar'), 'Para qual conta');
 await closeSheet();
 await step('Novo lançamento (folha)', () => click('Lançamento'), 'Valor');
 await closeSheet();
-await step('Botão Sair da demonstração existe', () => ev(`[...document.querySelectorAll('button')].some((b) => b.textContent.includes('Sair da demonstração')) ? 'ok' : 'NÃO ACHEI'`), '');
+await step('Aviso de demonstração com Sair', () => ev(`document.querySelector('.demo-bar button') ? 'ok' : 'NÃO ACHEI'`), '');
 console.log(report.join('\n'));
 console.log(`\n${report.filter((r) => r.startsWith('FAIL')).length} falhas, ${errors.length} erros no total`);
 ws.close();

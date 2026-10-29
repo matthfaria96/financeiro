@@ -23,7 +23,7 @@
 </script>
 
 <div class="page">
-  <SubHeader title="Casa e compras"><button class="icon-btn" aria-label="Novo projeto" onclick={() => (creating = true)} use:hint={['Novo projeto', 'Apartamento, reforma, compras de alguém…']}><Icon name="plus" /></button></SubHeader>
+  <SubHeader top title="Casa e compras"><button class="icon-btn" aria-label="Novo projeto" onclick={() => (creating = true)} use:hint={['Novo projeto', 'Apartamento, reforma, compras de alguém…']}><Icon name="plus" /></button></SubHeader>
 
   {#if next.length}
     <SectionTitle title="Próximas compras" />
