@@ -35,6 +35,10 @@ async function step(name, action, expect) {
 const go = (hash) => () => ev(`location.hash = ${JSON.stringify(hash)}`);
 const closeSheet = () => ev(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))`).then(() => sleep(700));
 await step('Início', go('#/'), 'Saldo financeiro');
+await step('Início › escolher contas', () => ev(`document.querySelector('main [aria-label="Escolher contas"]').click(); 'ok'`), 'Contas no Início');
+await step('Esconder uma conta', () => ev(`document.querySelector('[role=dialog] [role=switch]').click(); 'ok'`), 'Esconder não apaga');
+await closeSheet();
+await step('Previsão (abrir mês)', () => ev(`document.querySelector('main .bar-row').click(); 'ok'`), 'Fatura');
 await step('Início › gráfico do saldo', () => ev(`document.querySelector('main [aria-label="Ver gráfico"]').click(); 'ok'`), 'Saldo nas contas');
 await closeSheet();
 await step('Lançamentos (analítico)', go('#/transacoes'), 'Saídas por categoria');
