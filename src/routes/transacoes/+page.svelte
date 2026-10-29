@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { store } from '$lib/data/store.svelte';
+  import { ui } from '$lib/ui/ui.svelte';
   import { addMonths, dayMonth, monthOf, monthTitle, today, type Month } from '$lib/core/dates';
   import { money } from '$lib/core/money';
   import Icon from '$lib/ui/Icon.svelte';
@@ -48,7 +49,7 @@
     </div>
     <div class="row" style="gap: 8px">
       <ChartButton onclick={() => (chartsOpen = true)} detail="Entradas × saídas por mês, saídas por categoria e saldo no tempo." />
-      <ChartButton icon="calendar" label="Calendário" detail="Faturas e contas fixas: o que vence, o que já foi pago." onclick={() => goto('#/a-pagar')} />
+      <ChartButton icon="calendar" label="Contas fixas" detail="Contas fixas do mês ou do ano, e o calendário." onclick={() => (ui.billsOpen = true)} />
       <ChartButton icon="search" label="Buscar" detail="Todos os lançamentos deste mês, com busca e filtros." onclick={search} />
     </div>
   </header>

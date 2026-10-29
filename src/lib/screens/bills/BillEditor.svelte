@@ -1,35 +1,44 @@
 <script lang="ts">
   import { store } from '$lib/data/store.svelte';
-  import type { Bill } from '$lib/data/types';
+  import type { Bill, BillMethod } from '$lib/data/types';
   import { centsToInput, parseCents } from '$lib/core/money';
   import Sheet from '$lib/ui/Sheet.svelte';
+  import Segmented from '$lib/ui/Segmented.svelte';
   import CategorySelect from '$lib/ui/CategorySelect.svelte';
   import { hint } from '$lib/ui/hint';
+  import DeleteRow from '$lib/screens/organizer/DeleteRow.svelte';
+  import { methodName, monthNames } from '$lib/features/bills';
 
-  let { open = $bindable(), bill = null }: { open: boolean; bill?: Bill | null } = $props();
+  /** Conta fixa: o que se paga sempre (todo mês ou uma vez por ano), como paga e se o valor muda. */
+  let { open = $bindable(), bill = null, yearly = false }: { open: boolean; bill?: Bill | null; yearly?: boolean } = $props();
   let name = $state('');
   let amount = $state('');
   let day = $state(10);
+  let frequency = $state<'monthly' | 'yearly'>('monthly');
+  let monthOfYear = $state(1);
+  let method = $state<BillMethod>('account');
+  let variable = $state(false);
   let pattern = $state('');
   let categoryId = $state<string | null>(null);
   let personId = $state<string | null>(null);
   let accountId = $state<string | null>(null);
-  let workspaceId = $state<string | null>(null);
-  let confirmDelete = $state(false);
 
   $effect(() => {
     if (!open) return;
-    confirmDelete = false;
-    if (bill) {
-      name = bill.name; amount = centsToInput(bill.amount_cents); day = bill.day_of_month; pattern = bill.match_pattern;
-      categoryId = bill.category_id; personId = bill.person_id; accountId = bill.account_id; workspaceId = bill.workspace_id;
-    } else {
-      name = ''; amount = ''; day = 10; pattern = ''; categoryId = null; personId = null; accountId = null; workspaceId = store.scopeId || null;
-    }
+    name = bill?.name ?? ''; amount = bill ? centsToInput(bill.amount_cents) : ''; day = bill?.day_of_month ?? 10;
+    frequency = bill?.frequency ?? (yearly ? 'yearly' : 'monthly'); monthOfYear = bill?.month_of_year ?? new Date().getMonth() + 1;
+    method = bill?.method ?? 'account'; variable = bill?.variable ?? false; pattern = bill?.match_pattern ?? '';
+    categoryId = bill?.category_id ?? null; personId = bill?.person_id ?? null; accountId = bill?.account_id ?? null;
   });
 
+  const accounts = $derived(store.accounts.filter((a) => !a.archived && (method === 'card' ? a.kind === 'creditCard' : method === 'cash' ? a.kind === 'cash' : a.kind === 'checking')));
+
   async function save() {
-    const fields: Partial<Bill> = { name: name.trim(), amount_cents: Math.abs(parseCents(amount) ?? 0), day_of_month: day, match_pattern: pattern.trim(), active: true, category_id: categoryId, person_id: personId, account_id: accountId, workspace_id: workspaceId };
+    const fields: Partial<Bill> = {
+      name: name.trim(), amount_cents: Math.abs(parseCents(amount) ?? 0), day_of_month: day, match_pattern: pattern.trim(), active: true,
+      category_id: categoryId, person_id: personId, account_id: accounts.some((a) => a.id === accountId) ? accountId : null,
+      workspace_id: bill?.workspace_id ?? (store.scopeId || null), method, variable, frequency, month_of_year: frequency === 'yearly' ? monthOfYear : null
+    };
     if (bill) await store.update('bills', bill.id, fields);
     else await store.insert('bills', [fields]);
     open = false;
@@ -38,27 +47,42 @@
 
 <Sheet bind:open title={bill ? 'Conta fixa' : 'Nova conta fixa'}>
   {#snippet actions()}<button class="btn primary" disabled={!name.trim()} onclick={save}>Salvar</button>{/snippet}
+  <div style="margin-top: 8px"><Segmented label="Frequência" bind:value={frequency} options={[{ value: 'monthly', label: 'Todo mês' }, { value: 'yearly', label: 'Uma vez por ano' }]} /></div>
   <div class="form-group" style="margin-top: 10px">
-    <label class="form-row"><span class="field-label">Nome</span><input class="field" placeholder="ex.: Aluguel, Netflix" bind:value={name} /></label>
-    <label class="form-row"><span class="field-label">Valor</span><input class="field num" inputmode="decimal" placeholder="55,90" bind:value={amount} /></label>
-    <label class="form-row" use:hint={['Vencimento', 'Dia do mês. Dia 31 vira o último dia em meses mais curtos.']}><span class="field-label">Vence todo dia</span><input class="field" type="number" min="1" max="31" bind:value={day} /></label>
+    <label class="form-row"><span class="field-label">Nome</span><input class="field" placeholder={frequency === 'yearly' ? 'ex.: IPVA, IPTU' : 'ex.: Aluguel, Luz, Netflix'} bind:value={name} /></label>
+    <label class="form-row"><span class="field-label">{variable ? 'Valor médio' : 'Valor'}</span><input class="field num" inputmode="decimal" placeholder="0,00" bind:value={amount} /></label>
+    {#if frequency === 'yearly'}
+      <label class="form-row"><span class="field-label">Mês</span><select class="field" bind:value={monthOfYear}>{#each monthNames as label, index (label)}<option value={index + 1}>{label}</option>{/each}</select></label>
+    {/if}
+    <label class="form-row" use:hint={['Vencimento', 'Dia do mês. Dia 31 vira o último dia em meses mais curtos.']}><span class="field-label">Vence no dia</span><input class="field" type="number" min="1" max="31" bind:value={day} /></label>
   </div>
-  <div class="form-group" style="margin-top: 12px">
-    <label class="form-row" use:hint={['Texto no extrato', 'Trecho da descrição do banco que mostra que foi paga. Vazio: usa o nome.']}><span class="field-label">Texto no extrato</span><input class="field" placeholder="opcional" bind:value={pattern} /></label>
+
+  <div class="form-title">Valor</div>
+  <Segmented label="Valor" bind:value={variable} options={[{ value: false, label: 'Fixo (sempre igual)' }, { value: true, label: 'Variável (luz, água…)' }]} />
+
+  <div class="form-title">Como paga</div>
+  <div class="methods">
+    {#each Object.entries(methodName) as [value, label] (value)}
+      <button class="method" class:on={method === value} onclick={() => (method = value as BillMethod)}>{label}</button>
+    {/each}
   </div>
-  <p class="form-footer">Quando aparecer um lançamento com esse texto no mês, a conta fica como Paga sozinha.</p>
+  {#if method === 'card'}<p class="form-footer">No cartão a conta já entra na fatura: não é somada de novo na previsão.</p>{/if}
+
   <div class="form-group" style="margin-top: 12px">
+    {#if accounts.length}
+      <label class="form-row"><span class="field-label">{method === 'card' ? 'Qual cartão' : method === 'cash' ? 'De onde' : 'Qual conta'}</span>
+        <select class="field" bind:value={accountId}><option value={null}>Não informar</option>{#each accounts as a (a.id)}<option value={a.id}>{a.name}</option>{/each}</select></label>
+    {/if}
     <label class="form-row"><span class="field-label">Categoria</span><span class="field"><CategorySelect value={categoryId} pill={false} allowNone kinds={['expense']} onchange={(v) => (categoryId = v || null)} /></span></label>
     <label class="form-row"><span class="field-label">De quem</span><select class="field" bind:value={personId}><option value={null}>Ninguém</option>{#each store.people as p (p.id)}<option value={p.id}>{p.name}</option>{/each}</select></label>
-    <label class="form-row" use:hint={['Pago com', 'Se for no cartão, já vem na fatura e não conta de novo no "falta pagar".']}><span class="field-label">Pago com</span><select class="field" bind:value={accountId}><option value={null}>Não informado</option>{#each store.accounts.filter((a) => a.kind !== 'savings' && !a.archived) as a (a.id)}<option value={a.id}>{a.name}</option>{/each}</select></label>
-    {#if store.workspacesEnabled}
-      <label class="form-row"><span class="field-label">Área de trabalho</span><select class="field" bind:value={workspaceId}><option value={null}>Nenhuma</option>{#each store.workspaces as w (w.id)}<option value={w.id}>{w.name}</option>{/each}</select></label>
-    {/if}
+    <label class="form-row" use:hint={['Texto no extrato', 'Trecho da descrição do banco que mostra que foi paga. Vazio: usa o nome.']}><span class="field-label">Texto no extrato</span><input class="field" placeholder="opcional" bind:value={pattern} /></label>
   </div>
-  {#if bill}
-    <div class="form-group" style="margin-top: 18px">
-      {#if confirmDelete}<div class="form-row"><span class="grow small neg">Apagar esta conta fixa?</span><button class="btn danger" onclick={async () => { await store.remove('bills', [bill!.id]); open = false; }}>Apagar</button></div>
-      {:else}<button class="form-row neg" style="background: none; border: 0; width: 100%; text-align: left" onclick={() => (confirmDelete = true)}>Apagar conta fixa</button>{/if}
-    </div>
-  {/if}
+  <p class="form-footer">Quando aparecer no extrato um lançamento com esse texto, a conta fica como paga sozinha.</p>
+  {#if bill}<DeleteRow label="Apagar conta fixa" question="Apagar esta conta fixa?" ondelete={async () => { await store.remove('bills', [bill!.id]); open = false; }} />{/if}
 </Sheet>
+
+<style>
+  .methods { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .method { min-height: 44px; padding: 6px; border-radius: 12px; border: 1px solid var(--stroke); background: var(--card-2); font-size: 13.5px; font-weight: 600; color: var(--text-2); }
+  .method.on { color: #04140e; background: var(--accent); border-color: transparent; }
+</style>

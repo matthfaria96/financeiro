@@ -7,15 +7,19 @@
   import { hint } from '$lib/ui/hint';
   import SharedBadge from '$lib/screens/organizer/SharedBadge.svelte';
   import NotebookEditor from '$lib/screens/notes/NotebookEditor.svelte';
+  import NotesSettings from '$lib/screens/notes/NotesSettings.svelte';
+  import { visibleNoteCards } from '$lib/features/notes';
   import { currentList, ensureNotebooks, itemsOf, notebooks } from '$lib/features/shopping';
   import { dueText, logsOf, planOf } from '$lib/features/car';
 
   /** Notas: cada coisa da casa vira um cartão (listas, desejos, transporte). Toque para abrir. */
   let creating = $state(false);
+  let configuring = $state(false);
   $effect(() => {
     if (organizer.loadedFor && !organizer.notebooks.length) void ensureNotebooks();
   });
-  const books = $derived(notebooks());
+  const cards = $derived(visibleNoteCards());
+  const bookById = $derived(new Map(notebooks().map((n) => [n.id, n])));
   const wishes = $derived(organizer.project_items.filter((i) => !i.done).toSorted((a, b) => a.priority - b.priority));
   const wishTotal = $derived(wishes.reduce((s, i) => s + (i.amount_cents ?? 0), 0));
   const vehicles = $derived(organizer.vehicles.filter((v) => !v.archived));
@@ -31,7 +35,9 @@
   </header>
 
   <div class="grid">
-    {#each books as book (book.id)}
+    {#each cards as card (card.key)}
+    {#if card.notebookId && bookById.get(card.notebookId)}
+      {@const book = bookById.get(card.notebookId)!}
       {@const list = currentList(book)}
       {@const items = list ? itemsOf(list) : []}
       {@const left = items.filter((i) => !i.checked)}
@@ -39,19 +45,22 @@
         <div class="row top-row"><span class="emoji">{book.emoji}</span><span class="grow"><b>{book.name}</b><span class="caption block">{left.length ? `Faltam ${left.length} ${left.length === 1 ? 'item' : 'itens'}` : items.length ? 'Tudo pego' : 'Lista vazia'}</span></span><SharedBadge householdId={book.household_id} /><Icon name="chevron-right" size={16} class="faint" /></div>
         <div class="strip">{#each left.slice(0, 9) as item (item.id)}<span>{itemEmoji(item.name)}</span>{/each}{#if left.length > 9}<span class="more">+{left.length - 9}</span>{/if}</div>
       </a>
-    {/each}
-
+    {:else if card.key === 'desejos'}
     <a class="card note" href="#/notas/desejos" style:--c="#38D9F5">
       <div class="row top-row"><span class="emoji">⭐</span><span class="grow"><b>Lista de desejos</b><span class="caption block">{wishes.length ? `${wishes.length} ${wishes.length === 1 ? 'desejo' : 'desejos'} · ${money(wishTotal, { cents: false })}` : 'O que quer comprar ou fazer'}</span></span><Icon name="chevron-right" size={16} class="faint" /></div>
       <div class="wish">{#each wishes.slice(0, 3) as w (w.id)}<span class="ellipsis">{w.description}</span>{/each}</div>
     </a>
-
+    {:else if card.key === 'transporte'}
     <a class="card note" href="#/notas/transporte" style:--c="#FF9F1C">
       <div class="row top-row"><span class="emoji">🚗</span><span class="grow"><b>Transporte</b><span class="caption block">{vehicles.length ? `${vehicles.length === 1 ? vehicles[0].name : `${vehicles.length} veículos`} · ${money(carMonth, { cents: false })} este mês` : 'Combustível, gastos e revisões'}</span></span><Icon name="chevron-right" size={16} class="faint" /></div>
       {#if alert}<div class="alert"><Icon name="wrench.and.screwdriver" size={14} />{alert.item.name} · {dueText(alert.due)}</div>{/if}
     </a>
+    {/if}
+    {/each}
   </div>
+  <button class="configure" onclick={() => (configuring = true)}><Icon name="settings" size={12} />Configurar</button>
 </div>
+<NotesSettings bind:open={configuring} />
 <NotebookEditor bind:open={creating} onsaved={(n) => (location.hash = `#/notas/lista/${n.id}`)} />
 
 <style>
@@ -68,5 +77,7 @@
   .strip span { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; font-size: 16px; background: rgba(255, 255, 255, 0.05); }
   .strip .more { width: auto; padding: 0 8px; font-size: 12px; color: var(--text-2); }
   .wish { display: flex; flex-direction: column; gap: 4px; font-size: 13.5px; color: var(--text-2); position: relative; }
+  .configure { align-self: center; display: inline-flex; align-items: center; gap: 5px; margin-top: 12px; padding: 4px 10px; border: 0; background: none; font-size: 12px; color: var(--text-3); }
+  .configure:hover { color: var(--text-2); }
   .alert { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--warning); position: relative; }
 </style>

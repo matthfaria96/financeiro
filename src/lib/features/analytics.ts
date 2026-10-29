@@ -4,6 +4,7 @@ import { store } from '$lib/data/store.svelte';
 import type { Account, Category, Entry } from '$lib/data/types';
 import { accountOf, balanceOf, categoryOf, kindOf, rootOf } from './model';
 import { payableGroups } from './payables';
+import { billInMonth, onCard } from './bills';
 
 /**
  * A conta do mês usada no Início e em Lançamentos (sempre a mesma, para os números baterem):
@@ -77,7 +78,7 @@ export function forecastMonth(month: Month, accounts: Account[]) {
     .map((g) => ({ account: g.account, due: g.due, cents: g.imported + g.projected }));
   const scope = new Set(accounts.map((a) => a.id));
   const bills = store.bills
-    .filter((b) => b.active && store.accountById.get(b.account_id ?? '')?.kind !== 'creditCard' && (!b.account_id || scope.has(b.account_id)))
+    .filter((b) => b.active && billInMonth(b, month) && !onCard(b, store.accountById.get(b.account_id ?? '')?.kind === 'creditCard') && (!b.account_id || scope.has(b.account_id)))
     .toSorted((a, b) => a.day_of_month - b.day_of_month);
   const total = faturas.reduce((s, f) => s + f.cents, 0) + bills.reduce((s, b) => s + b.amount_cents, 0);
   return { faturas, bills, total };

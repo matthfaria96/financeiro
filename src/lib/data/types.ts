@@ -12,7 +12,7 @@ export interface Household {
   invite_code: string;
   /** 'personal': o financeiro de alguém. 'shared': espaço compartilhado (carro, casa, listas). */
   kind?: 'personal' | 'shared';
-  settings: { forecast_months?: number; workspaces_enabled?: boolean; /** Contas escondidas do Saldo do Início. */ home_hidden?: string[] };
+  settings: { forecast_months?: number; workspaces_enabled?: boolean; /** Contas escondidas do Saldo do Início. */ home_hidden?: string[]; /** Notas: cartões desligados e a ordem ('nb:<id>', 'desejos', 'transporte'). */ notes_hidden?: string[]; notes_order?: string[] };
 }
 
 export interface Member {
@@ -148,7 +148,16 @@ export interface Bill {
   account_id: string | null;
   person_id: string | null;
   workspace_id: string | null;
+  /** Como paga: dinheiro em espécie, conta (débito/Pix/TED/boleto) ou cartão de crédito. */
+  method?: BillMethod;
+  /** Valor muda todo mês (luz, água): o valor cadastrado é uma estimativa. */
+  variable?: boolean;
+  frequency?: 'monthly' | 'yearly';
+  /** Só nas anuais: o mês em que vence (1–12). */
+  month_of_year?: number | null;
 }
+
+export type BillMethod = 'cash' | 'account' | 'card';
 
 export interface Tables {
   people: Person;

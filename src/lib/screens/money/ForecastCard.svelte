@@ -2,6 +2,7 @@
   import { money } from '$lib/core/money';
   import { addMonths, dayMonth, monthOf, monthTitle, today } from '$lib/core/dates';
   import { store } from '$lib/data/store.svelte';
+  import { ui } from '$lib/ui/ui.svelte';
   import type { Account } from '$lib/data/types';
   import Icon from '$lib/ui/Icon.svelte';
   import BankCard from '$lib/ui/BankCard.svelte';
@@ -19,7 +20,7 @@
 </script>
 
 <section class="card">
-  <div class="card-head"><h3>Previsão dos próximos meses</h3><ChartButton icon="calendar" label="Calendário" detail="Faturas e contas fixas, dia a dia." onclick={() => (location.hash = '#/a-pagar')} /></div>
+  <div class="card-head"><h3>Previsão dos próximos meses</h3><ChartButton icon="calendar" label="Contas fixas" detail="Contas fixas do mês ou do ano, e o calendário." onclick={() => (ui.billsOpen = true)} /></div>
   <div class="months">
     {#each months as n (n.month)}
       <button class="bar-row" onclick={() => (open = open === n.month ? '' : n.month)} aria-expanded={open === n.month}>

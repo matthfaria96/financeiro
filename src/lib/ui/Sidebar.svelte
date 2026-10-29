@@ -21,13 +21,11 @@
     {/each}
   </div>
   <div class="bottom">
-    <a href="#/mais" class="link" class:on={active === 'settings'} aria-current={active === 'settings' ? 'page' : undefined}>
-      <span class="ico" style:--c="#8e8e93"><Icon name="settings" size={17} stroke={2.2} /></span>Configuração
-    </a>
     <button class="btn primary block import" onclick={() => ui.startImport()} use:hint={['Importar extrato', 'Escolha a conta e o arquivo do banco (OFX, CSV ou PDF). Também dá para arrastar o arquivo para a janela.']}>
       <Icon name="import" size={17} />Importar extrato
     </button>
-    <div class="who caption ellipsis">{store.demo ? 'Demonstração (dados fictícios)' : store.userEmail}</div>
+    <div class="row who"><span class="caption ellipsis grow">{store.demo ? 'Demonstração (dados fictícios)' : store.userEmail}</span>
+      <a class="gear" class:on={active === 'settings'} href="#/mais" aria-label="Configurações gerais" use:hint={['Configurações gerais', 'Contas e cartões, categorias, pessoas, compartilhar, relatórios e senha.']}><Icon name="settings" size={14} /></a></div>
   </div>
 </nav>
 
@@ -42,5 +40,7 @@
   .ico { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; flex: none; color: #fff; background: linear-gradient(160deg, var(--c), color-mix(in srgb, var(--c) 62%, black)); box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.2); }
   .bottom { display: flex; flex-direction: column; gap: 10px; padding-top: 10px; border-top: 1px solid var(--stroke); }
   .import { box-shadow: 0 6px 20px rgba(43, 212, 164, 0.25); background: linear-gradient(180deg, #3fe3b4, #20b98d); }
-  .who { padding: 0 4px; }
+  .who { padding: 0 4px; gap: 6px; }
+  .gear { width: 24px; height: 24px; border-radius: 7px; display: grid; place-items: center; color: var(--text-3); flex: none; }
+  .gear:hover, .gear.on { color: var(--text); background: rgba(255, 255, 255, 0.07); }
 </style>

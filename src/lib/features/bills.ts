@@ -16,6 +16,16 @@ export function statusLabel(status: BillStatus): string {
 
 export const dueDate = (bill: Bill, month: Month) => clampedDay(month, bill.day_of_month);
 
+/** A conta vence neste mês? Mensais sempre; anuais só no mês delas. */
+export const billInMonth = (bill: Bill, month: Month) => bill.frequency !== 'yearly' || Number(month.slice(5, 7)) === (bill.month_of_year ?? 1);
+
+/** No cartão a conta já vem na fatura: não soma de novo no que falta pagar. */
+export const onCard = (bill: Bill, cardAccount: boolean) => bill.method === 'card' || cardAccount;
+
+export const methodName = { cash: 'Dinheiro', account: 'Débito / Pix / boleto', card: 'Cartão de crédito' } as const;
+export const methodShort = { cash: 'Dinheiro', account: 'Conta', card: 'Cartão' } as const;
+export const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+
 export function billPayment(bill: Bill, month: Month, entries: Entry[]): Entry | undefined {
   const pattern = fold(bill.match_pattern || bill.name);
   if (!pattern) return undefined;

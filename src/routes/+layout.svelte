@@ -17,6 +17,7 @@
   import EntryEditor from '$lib/screens/transactions/EntryEditor.svelte';
   import NewEntry from '$lib/screens/transactions/NewEntry.svelte';
   import AccountEditor from '$lib/screens/accounts/AccountEditor.svelte';
+  import BillsSheet from '$lib/screens/bills/BillsSheet.svelte';
   import { seedDemo } from '$lib/features/demoData';
   import { exitDemo } from '$lib/data/demoMode';
 
@@ -97,6 +98,7 @@
   <EntryEditor />
   <NewEntry />
   <AccountEditor bind:open={ui.newAccountOpen} />
+  <BillsSheet />
   {#if dragging}<div class="dropzone"><Icon name="import" size={40} /><p>Solte os extratos para importar</p></div>{/if}
 {/if}
 <Toasts />

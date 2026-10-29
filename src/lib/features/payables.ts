@@ -4,7 +4,7 @@ import { store } from '$lib/data/store.svelte';
 import type { Account, Entry } from '$lib/data/types';
 import { accountOf, billDueOf, inScope, inScopeAccount, inScopeBill, kindOf } from './model';
 import { isBillPaid } from './month';
-import { billStatus } from './bills';
+import { billInMonth, billStatus, onCard } from './bills';
 
 /** Uma fatura (cartão + vencimento): compras importadas e parcelas previstas. */
 export interface PayableGroup {
@@ -57,7 +57,7 @@ export function pendingThisMonth() {
   const scoped = store.entries.filter(inScope);
   const faturas = payableGroups(cards).filter((g) => monthOf(g.due) === month && !isBillPaid(g.account, g.due, g.imported, cash));
   const bills = store.bills
-    .filter((b) => b.active && inScopeBill(b) && store.accountById.get(b.account_id ?? '')?.kind !== 'creditCard')
+    .filter((b) => b.active && inScopeBill(b) && billInMonth(b, month) && !onCard(b, store.accountById.get(b.account_id ?? '')?.kind === 'creditCard'))
     .map((bill) => ({ bill, status: billStatus(bill, month, scoped) }))
     .filter((x) => x.status.type !== 'paid')
     .toSorted((a, b) => a.bill.day_of_month - b.bill.day_of_month);
