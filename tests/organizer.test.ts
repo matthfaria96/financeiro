@@ -99,7 +99,11 @@ import { itemEmoji } from '../src/lib/core/shopping';
 describe('Figurinhas da lista', () => {
   it('reconhece pelo nome', () => {
     expect(['Leite integral', 'Pão de forma', 'Ovos', 'Arroz', 'Feijão', 'Maçã', 'Papel higiênico', 'Detergente', 'Frango', 'Café', 'Sal', 'Salsicha', 'Pastel'].map(itemEmoji))
-      .toEqual(['🥛', '🍞', '🥚', '🍚', '🫘', '🍎', '🧻', '🧴', '🍗', '☕', '🧂', '🥓', '🛒']);
+      .toEqual(['🥛', '🍞', '🥚', '🍚', '🫘', '🍎', '🧻', '🧴', '🍗', '☕', '🧂', '🥓', '🥟']);
+  });
+  it('entende erro de digitação e itens comuns', () => {
+    expect(['Mioijo', 'miojo', 'fejão', 'arros', 'detergemte', 'Leiti', 'papel higienco', 'Nescau', 'ração', 'Coisa estranha'].map(itemEmoji))
+      .toEqual(['🍜', '🍜', '🫘', '🍚', '🧴', '🥛', '🧻', '🍫', '🐾', '🛒']);
   });
 });
 
