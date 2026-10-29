@@ -21,7 +21,7 @@ export function buildOrganizerDemo(personal: string): OrgSnapshot {
   }
   const extra: [number, VehicleLog['kind'], string, number, string][] = [
     [-200, 'service', 'Troca de óleo, filtros e boia', 106_000, 'Oficina do bairro'], [-160, 'wash', 'Higienização interna', 30_000, 'Estética automotiva'],
-    [-120, 'product', 'Suporte de celular', 9_428, 'Loja online'], [-90, 'tax', 'IPVA', 185_328, ''], [-90, 'tax', 'Licenciamento', 17_408, ''],
+    [-120, 'other', 'Suporte de celular', 9_428, 'Loja online'], [-90, 'tax', 'IPVA', 185_328, ''], [-90, 'tax', 'Licenciamento', 17_408, ''],
     [-40, 'service', 'Pneu furado', 3_500, 'Borracharia'], [-10, 'parking', 'Estacionamento shopping', 1_800, '']
   ];
   extra.forEach(([offset, kind, description, cents, vendor], i) => logs.push({ ...base(`log-${i}`, shared, addDays(now, offset)), vehicle_id: car.id, date: addDays(now, offset), kind, description, amount_cents: cents, odometer: null, liters: null, fuel: '', full_tank: true, vendor, notes: '' }));
@@ -51,7 +51,9 @@ export function buildOrganizerDemo(personal: string): OrgSnapshot {
   const notebooks: Notebook[] = [
     { ...base('nb-mercado', shared), name: 'Mercado', emoji: '🛒', color: '#2BD4A4', sort_order: 0 },
     { ...base('nb-farmacia', personal), name: 'Farmácia', emoji: '💊', color: '#FF6B6B', sort_order: 1 },
-    { ...base('nb-pet', shared), name: 'Petshop', emoji: '🐾', color: '#FF9F1C', sort_order: 2 }
+    { ...base('nb-pet', shared), name: 'Petshop', emoji: '🐾', color: '#FF9F1C', sort_order: 2 },
+    { ...base('nb-nf', personal), name: 'Notas fiscais a emitir', emoji: '🧾', color: '#7C8CF8', sort_order: 3, workspace_id: 'w-esposa' },
+    { ...base('nb-cobrar', personal), name: 'Clientes a cobrar', emoji: '💼', color: '#2BD4A4', sort_order: 4, workspace_id: 'w-esposa' }
   ];
   const list = (id: string, notebook: Notebook, offset: number, done: number | null, cents: number | null): ShoppingList =>
     ({ ...base(id, notebook.household_id, addDays(now, offset)), notebook_id: notebook.id, name: notebook.name, done_at: done === null ? null : stamp(addDays(now, done)), total_cents: cents });
@@ -60,17 +62,21 @@ export function buildOrganizerDemo(personal: string): OrgSnapshot {
     list('list-old', notebooks[0], -9, -8, 41_230),
     list('list-now', notebooks[0], -1, null, null),
     list('list-farm', notebooks[1], -3, null, null),
-    list('list-pet', notebooks[2], -12, null, null)
+    list('list-pet', notebooks[2], -12, null, null),
+    list('list-nf', notebooks[3], -2, null, null),
+    list('list-cobrar', notebooks[4], -2, null, null)
   ];
   // [nome, quantidade, repete]
   const contents: Record<string, [string, string, boolean][]> = {
     mercado: [['Leite', '6', true], ['Pão de forma', '', true], ['Ovos', '1 dz', true], ['Arroz', '5 kg', true], ['Feijão', '2', true], ['Banana', '', true], ['Café', '2', true],
       ['Papel higiênico', '', true], ['Detergente', '3', true], ['Frango', '1 kg', true], ['Cabo de vassoura', '', false], ['Pá de lixo', '', false]],
     farmacia: [['Dipirona', '', true], ['Protetor solar', '', false], ['Vitamina D', '', true]],
-    pet: [['Ração 10 kg', '', true], ['Areia', '2', true], ['Petisco', '', true], ['Brinquedo', '', false]]
+    pet: [['Ração 10 kg', '', true], ['Areia', '2', true], ['Petisco', '', true], ['Brinquedo', '', false]],
+    nf: [['NF Escola Aprender — outubro', '', true], ['NF Loja Bela — arte da vitrine', '', false]],
+    cobrar: [['Escola Aprender — parcela de novembro', '', true], ['Loja Bela — 50% restante', '', false]]
   };
   const shoppingItems: ShoppingItem[] = lists.flatMap((l) => {
-    const rows = contents[l.notebook_id === 'nb-farmacia' ? 'farmacia' : l.notebook_id === 'nb-pet' ? 'pet' : 'mercado'];
+    const rows = contents[{ 'nb-farmacia': 'farmacia', 'nb-pet': 'pet', 'nb-nf': 'nf', 'nb-cobrar': 'cobrar' }[l.notebook_id ?? ''] ?? 'mercado'];
     return rows.map(([name, quantity, repeat], i) => ({
       ...base(`${l.id}-${i}`, l.household_id, addDays(now, -1)), list_id: l.id, name, quantity, repeat, checked: l.done_at !== null || (l.id === 'list-now' && i < 3), sort_order: i
     }));

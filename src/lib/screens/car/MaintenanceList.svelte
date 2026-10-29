@@ -10,7 +10,9 @@
 
   /** Plano de revisões com o que está vencido ou perto em cima. "Feito hoje" anota km e data. */
   let { vehicle, onedit }: { vehicle: Vehicle; onedit: (item: MaintenanceItem | null) => void } = $props();
-  const plan = $derived(planOf(vehicle));
+  const all = $derived(planOf(vehicle));
+  let expanded = $state(false);
+  const plan = $derived(expanded ? all : all.slice(0, 3));
   const stateName = { overdue: 'Vencida', soon: 'Perto', ok: 'Em dia', unknown: 'Sem registro' } as const;
 
   async function done(item: MaintenanceItem) {
@@ -25,7 +27,7 @@
   }
 </script>
 
-<div class="card flush list">
+<div class="card flush list revisions" class:faded={!expanded && all.length > 3}>
   {#each plan as { item, due } (item.id)}
     <div class="list-row">
       <span class="dot" style:background={dueColor[due.state]} aria-label={stateName[due.state]}></span>
@@ -43,9 +45,16 @@
     </div>
   {/each}
 </div>
-<button class="btn ghost" onclick={() => onedit(null)}><Icon name="plus" size={16} />Adicionar item ao plano</button>
+<div class="row between foot">
+  {#if all.length > 3}<button class="btn" onclick={() => (expanded = !expanded)}><Icon name={expanded ? 'chevron-up' : 'chevron-down'} size={15} />{expanded ? 'Ver menos' : `Ver mais (${all.length - 3})`}</button>{:else}<span></span>{/if}
+  <button class="btn ghost" onclick={() => onedit(null)}><Icon name="plus" size={16} />Adicionar revisão</button>
+</div>
 
 <style>
+  .revisions { position: relative; }
+  .faded > :global(:nth-child(2)) { opacity: 0.6; }
+  .faded > :global(:nth-child(3)) { opacity: 0.3; -webkit-mask-image: linear-gradient(180deg, #000, transparent); mask-image: linear-gradient(180deg, #000, transparent); }
+  .foot { margin-top: -4px; }
   .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
   .plain { background: none; border: 0; text-align: left; padding: 0; color: inherit; }
   .pad { padding: 16px; }

@@ -1,7 +1,7 @@
 <script lang="ts">
+  import Select from '$lib/ui/Select.svelte';
   import { goto } from '$app/navigation';
   import { store } from '$lib/data/store.svelte';
-  import { ui } from '$lib/ui/ui.svelte';
   import { addMonths, dayMonth, monthOf, monthTitle, today, type Month } from '$lib/core/dates';
   import { money } from '$lib/core/money';
   import Icon from '$lib/ui/Icon.svelte';
@@ -17,6 +17,7 @@
   import { filter } from '$lib/screens/transactions/filter.svelte';
   import { inScope, inScopeAccount } from '$lib/features/model';
   import { analyzeMonth, forecastMonth } from '$lib/features/analytics';
+  import { isBusiness } from '$lib/features/ambient';
 
   /** Lançamentos (o "analítico"): o mês escolhido em saldo, entradas, saídas por categoria e balanço.
    *  Meses futuros mostram o que já está previsto (faturas e contas fixas). */
@@ -27,7 +28,8 @@
   const first = $derived(entries.map((e) => monthOf(e.date)).sort()[0] ?? current);
   const options = $derived(Array.from({ length: 64 }, (_, i) => addMonths(current, 3 - i)).filter((m) => m >= first || m >= current));
   const future = $derived(month > current);
-  const analysis = $derived(analyzeMonth(month, entries, accounts));
+  const business = $derived(isBusiness());
+  const analysis = $derived(analyzeMonth(month, entries, accounts, business));
   const forecast = $derived(future ? forecastMonth(month, accounts) : null);
   let chartsOpen = $state(false);
 
@@ -41,15 +43,11 @@
   <header class="row between top">
     <div class="month">
       <button class="icon-btn" aria-label="Mês anterior" disabled={month <= options.at(-1)!} onclick={() => (month = addMonths(month, -1))}><Icon name="chevron-left" /></button>
-      <label class="picker" use:hint={['Mês', 'Escolha o mês. Dá para ver os próximos meses com o que já está previsto.']}>
-        <span>{monthTitle(month)}</span><Icon name="chevron-down" size={16} />
-        <select bind:value={month} aria-label="Mês">{#each options as m (m)}<option value={m}>{monthTitle(m)}{m > current ? ' (previsão)' : ''}</option>{/each}</select>
-      </label>
+      <Select variant="title" bind:value={month} label="Mês" options={options.map((m) => ({ value: m, label: monthTitle(m), hint: m > current ? 'previsão' : undefined }))} />
       <button class="icon-btn" aria-label="Próximo mês" disabled={month >= options[0]} onclick={() => (month = addMonths(month, 1))}><Icon name="chevron-right" /></button>
     </div>
     <div class="row" style="gap: 8px">
       <ChartButton onclick={() => (chartsOpen = true)} detail="Entradas × saídas por mês, saídas por categoria e saldo no tempo." />
-      <ChartButton icon="calendar" label="Contas fixas" detail="Contas fixas do mês ou do ano, e o calendário." onclick={() => (ui.billsOpen = true)} />
       <ChartButton icon="search" label="Buscar" detail="Todos os lançamentos deste mês, com busca e filtros." onclick={search} />
     </div>
   </header>
@@ -72,7 +70,7 @@
     <div class="layout">
       <div class="col">
         <BalanceCard {analysis} title={month === current ? 'Saldo financeiro' : 'Saldo no fim do mês'} />
-        <GroupsCard title="Entradas" groups={analysis.income} total={analysis.incomeTotal} tone="pos" />
+        <GroupsCard title={business ? 'Entradas por cliente' : 'Entradas'} groups={analysis.income} total={analysis.incomeTotal} tone="pos" />
         <section class="card balance">
           <div class="card-head"><h3>Balanço</h3></div>
           <div class="row between"><span class="muted">Entradas</span><span class="num pos">{money(analysis.incomeTotal)}</span></div>
@@ -91,8 +89,6 @@
 <style>
   .top { gap: 10px; flex-wrap: wrap; }
   .month { display: flex; align-items: center; gap: 8px; }
-  .picker { position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--stroke-strong); background: rgba(255, 255, 255, 0.07); font: 600 19px var(--font-display); cursor: pointer; }
-  .picker select { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
   .icon-btn:disabled { opacity: 0.3; }
   .layout { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); align-items: start; }
   @media (min-width: 1000px) { .layout { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

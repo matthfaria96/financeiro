@@ -1,6 +1,6 @@
 <script lang="ts">
   import { addMonths, dayMonth, monthOf, shortMonth, today } from '$lib/core/dates';
-  import { logKindColor, logKindShort, type LogKind, type Vehicle } from '$lib/data/organizerTypes';
+  import { logKindColor, logKindShort, normalizeKind, type LogKind, type Vehicle } from '$lib/data/organizerTypes';
   import LineChart from '$lib/ui/charts/LineChart.svelte';
   import BarChart from '$lib/ui/charts/BarChart.svelte';
   import { fuelInfo, fuelsOf, logsOf } from '$lib/features/car';
@@ -16,7 +16,7 @@
 
   const months = $derived(Array.from({ length: 12 }, (_, i) => addMonths(monthOf(today()), i - 11)));
   const series = $derived.by(() => {
-    const logs = logsOf(vehicle).filter((l) => monthOf(l.date) >= months[0]);
+    const logs = logsOf(vehicle).filter((l) => monthOf(l.date) >= months[0]).map((l) => ({ ...l, kind: normalizeKind(l.kind) }));
     const kinds = [...new Set(logs.map((l) => l.kind))] as LogKind[];
     const totals = kinds.map((kind) => ({ kind, sum: logs.filter((l) => l.kind === kind).reduce((s, l) => s + l.amount_cents, 0) })).toSorted((a, b) => b.sum - a.sum);
     // Os 5 tipos que mais pesam; o resto vira "Outros".

@@ -1,7 +1,7 @@
 import { today, type Day } from '$lib/core/dates';
 import { currentOdometer, fillStats, fuelSummary, maintenanceDue, type DueInfo } from '$lib/core/vehicle';
 import { organizer } from '$lib/data/organizer.svelte';
-import type { LogKind, MaintenanceItem, Vehicle, VehicleLog } from '$lib/data/organizerTypes';
+import { normalizeKind, type LogKind, type MaintenanceItem, type Vehicle, type VehicleLog } from '$lib/data/organizerTypes';
 
 /** Contas do carro em cima dos registros: km atual, consumo, revisões e gasto por tipo. */
 export const logsOf = (vehicle: Vehicle): VehicleLog[] =>
@@ -35,7 +35,7 @@ export function planOf(vehicle: Vehicle, now: Day = today()): PlanItem[] {
 /** Gasto por tipo desde uma data (ex.: começo do ano), do maior para o menor. */
 export function spendByKind(vehicle: Vehicle, since: Day): { kind: LogKind; cents: number }[] {
   const totals = new Map<LogKind, number>();
-  for (const log of logsOf(vehicle)) if (log.date >= since) totals.set(log.kind, (totals.get(log.kind) ?? 0) + log.amount_cents);
+  for (const log of logsOf(vehicle)) if (log.date >= since) totals.set(normalizeKind(log.kind), (totals.get(normalizeKind(log.kind)) ?? 0) + log.amount_cents);
   return [...totals].map(([kind, cents]) => ({ kind, cents })).filter((t) => t.cents > 0).toSorted((a, b) => b.cents - a.cents);
 }
 

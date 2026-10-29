@@ -1,9 +1,17 @@
 import { defaultNotebooks, duplicateItems, newestFirst } from '$lib/core/shopping';
 import { organizer } from '$lib/data/organizer.svelte';
+import { store } from '$lib/data/store.svelte';
 import type { Notebook, ShoppingList } from '$lib/data/organizerTypes';
 
 /** Cadernos de lista (Mercado, Farmácia…): a lista mais nova é a atual; as outras são o histórico. */
-export const notebooks = () => organizer.notebooks.toSorted((a, b) => a.sort_order - b.sort_order || a.created_at.localeCompare(b.created_at));
+export const notebooks = () => {
+  // Cada ambiente tem suas listas: na empresa, as da empresa; no pessoal (ou em Tudo), as pessoais.
+  const ambient = store.workspaceById.get(store.scopeId);
+  const business = ambient?.kind === 'business';
+  return organizer.notebooks
+    .filter((n) => (business ? n.workspace_id === ambient!.id : !n.workspace_id || store.workspaceById.get(n.workspace_id)?.kind !== 'business'))
+    .toSorted((a, b) => a.sort_order - b.sort_order || a.created_at.localeCompare(b.created_at));
+};
 
 export const listsOf = (notebook: Notebook) => newestFirst(organizer.shopping_lists.filter((l) => l.notebook_id === notebook.id));
 export const currentList = (notebook: Notebook): ShoppingList | undefined => listsOf(notebook)[0];

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Select from '$lib/ui/Select.svelte';
   import { store } from '$lib/data/store.svelte';
   import type { Account, AccountKind } from '$lib/data/types';
   import { bankList, bankName, type Bank } from '$lib/core/banks';
@@ -121,10 +122,10 @@
   <div class="form-title">Organização</div>
   <div class="form-group">
     <label class="form-row" use:hint={['De quem é', 'Tudo que for importado nesta conta já vem marcado para esta pessoa.']}><span class="field-label">De quem é</span>
-      <select class="field" bind:value={person} onchange={autoName}><option value="">Ninguém</option>{#each store.people as p (p.id)}<option value={p.id}>{p.name}</option>{/each}</select></label>
+      <span class="field"><Select bind:value={person} label="De quem é" onchange={autoName} options={[{ value: '', label: 'Ninguém' }, ...store.people.map((p) => ({ value: p.id, label: p.name, color: p.color }))]} /></span></label>
     {#if store.workspacesEnabled}
       <label class="form-row" use:hint={['Área de trabalho', 'A conta, seus lançamentos e relatórios só aparecem nesta área (e em Tudo).']}><span class="field-label">Área de trabalho</span>
-        <select class="field" bind:value={workspace}><option value="">Nenhuma</option>{#each store.workspaces as w (w.id)}<option value={w.id}>{w.name}</option>{/each}</select></label>
+        <span class="field"><Select bind:value={workspace} label="Área de trabalho" options={[{ value: '', label: 'Nenhuma' }, ...store.workspaces.map((w) => ({ value: w.id, label: w.name, color: w.color }))]} /></span></label>
     {/if}
   </div>
 
@@ -139,7 +140,7 @@
     <div class="form-title">Investimento</div>
     <div class="form-group">
       <label class="form-row" use:hint={['Acompanhar', 'Aplicações e resgates (caixinha, RDB) dessa conta entram e saem deste investimento sozinhos.']}><span class="field-label">Acompanhar aplicações de</span>
-        <select class="field" bind:value={source}><option value="">Nenhuma</option>{#each store.accounts.filter((a) => a.kind === 'checking') as a (a.id)}<option value={a.id}>{a.name}</option>{/each}</select></label>
+        <span class="field"><Select bind:value={source} label="Acompanhar aplicações de" options={[{ value: '', label: 'Nenhuma' }, ...store.accounts.filter((a) => a.kind === 'checking').map((a) => ({ value: a.id, label: a.name }))]} /></span></label>
     </div>
     <p class="form-footer">O rendimento não aparece no extrato: de vez em quando, informe o saldo de hoje abaixo.</p>
   {/if}

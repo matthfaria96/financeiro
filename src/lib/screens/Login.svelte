@@ -23,7 +23,11 @@
       } else {
         const { data, error } = await supabase().auth.signInWithPassword({ email: email.trim(), password });
         if (error) throw new Error(error.message.includes('Invalid') ? 'E-mail ou senha incorretos.' : error.message);
-        await store.enter(data.user.id, data.user.email ?? '');
+        if (data.user.user_metadata?.must_change_password) {
+          store.userId = data.user.id;
+          store.userEmail = data.user.email ?? '';
+          store.status = 'setPassword';
+        } else await store.enter(data.user.id, data.user.email ?? '');
       }
     } catch (error) {
       message = describe(error);

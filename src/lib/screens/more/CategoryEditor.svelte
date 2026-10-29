@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Select from '$lib/ui/Select.svelte';
   import { store } from '$lib/data/store.svelte';
   import type { Category } from '$lib/data/types';
   import { UNCATEGORIZED, costName, type CategoryKind } from '$lib/core/catalog';
@@ -52,14 +53,12 @@
   {#snippet actions()}<button class="btn primary" disabled={!name.trim()} onclick={save}>Salvar</button>{/snippet}
   <div class="row" style="padding: 14px 4px 0"><CategoryIcon {symbol} {color} size={48} /><input class="input grow" placeholder="Nome" bind:value={name} /></div>
   <div class="form-group" style="margin-top: 12px">
-    <label class="form-row"><span class="field-label">Tipo</span><select class="field" bind:value={kind}><option value="expense">Despesa</option><option value="income">Receita</option><option value="transfer">Transferência entre contas</option></select></label>
+    <label class="form-row"><span class="field-label">Tipo</span><span class="field"><Select bind:value={kind} label="Tipo" options={[{ value: 'expense', label: 'Despesa' }, { value: 'income', label: 'Receita' }, { value: 'transfer', label: 'Transferência entre contas' }]} /></span></label>
     {#if !hasChildren}
-      <label class="form-row"><span class="field-label">Dentro de</span><select class="field" bind:value={parentId}><option value={null}>Nenhuma (principal)</option>{#each roots as r (r.id)}<option value={r.id}>{r.name}</option>{/each}</select></label>
+      <label class="form-row"><span class="field-label">Dentro de</span><span class="field"><Select bind:value={parentId} label="Dentro de" options={[{ value: null, label: 'Nenhuma (principal)' }, ...roots.map((r) => ({ value: r.id, label: r.name, color: r.color }))]} /></span></label>
     {/if}
     {#if kind === 'expense'}
-      <label class="form-row"><span class="field-label">Gasto</span><select class="field" bind:value={cost}>
-        {#if parentId}<option value="">Igual à categoria ({costName[categoryCost(parentCategory)].toLowerCase()})</option>{/if}
-        <option value="fixed">Fixo</option><option value="variable">Variável</option></select></label>
+      <label class="form-row"><span class="field-label">Gasto</span><span class="field"><Select bind:value={cost} label="Gasto" options={[...(parentId ? [{ value: '', label: `Igual à categoria (${costName[categoryCost(parentCategory)].toLowerCase()})` }] : []), { value: 'fixed', label: 'Fixo' }, { value: 'variable', label: 'Variável' }]} /></span></label>
     {/if}
   </div>
   <div class="form-title">Ícone</div>

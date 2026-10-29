@@ -71,8 +71,8 @@ export async function seedDemo() {
   await store.insert('entries', months.flatMap((m, i) => ([[14, 20_000, 'Saque 24h', 'saque'], [16, -8_500 - i * 50, 'Feira', 'alim-mercado'], [21, -3_000 - i * 50, 'Pastel e caldo de cana', 'alim-padaria']] as [number, number, string, string][])
     .filter(([d]) => past(m, d)).map(([d, cents, title, key]) => ({ ...blankEntry(), account_id: cash.id, date: day(m, d), amount_cents: cents, title, original_title: title, import_key: `demo-cash-${m}-${d}`, category_id: cat(key), person_id: 'p-eu' }))));
   const bills: [string, number, number, string, string, string][] = [
-    ['Aluguel', 2350, 6, 'imobiliaria', 'casa-moradia', 'w-casa'], ['Netflix', 55.9, 3, 'netflix', 'ass-streaming', 'w-meu'], ['Vivo Fibra', 129.9, 8, 'vivo', 'casa-internet', 'w-casa'],
-    ['Luz', 238.4, 9, 'enel', 'casa-luz', 'w-casa'], ['Spotify', 34.9, 9, 'spotify', 'ass-streaming', 'w-meu'], ['Água', 96.3, 12, 'sabesp', 'casa-agua', 'w-casa'],
+    ['Aluguel', 2350, 6, 'imobiliaria', 'casa-moradia', 'w-meu'], ['Netflix', 55.9, 3, 'netflix', 'ass-streaming', 'w-meu'], ['Vivo Fibra', 129.9, 8, 'vivo', 'casa-internet', 'w-meu'],
+    ['Luz', 238.4, 9, 'enel', 'casa-luz', 'w-meu'], ['Spotify', 34.9, 9, 'spotify', 'ass-streaming', 'w-meu'], ['Água', 96.3, 12, 'sabesp', 'casa-agua', 'w-meu'],
     ['Disney+', 43.9, 13, 'disney', 'ass-streaming', 'w-esposa'], ['Escola', 890, 15, 'colegio', 'edu-escola', 'w-esposa'], ['Smart Fit', 119.9, 23, 'smart fit', 'cuidados-academia', 'w-meu'], ['Seguro do carro', 210, 28, 'porto seguro', 'carro-seguro', 'w-meu']
   ];
   const variable = ['Luz', 'Água'];
@@ -81,5 +81,5 @@ export async function seedDemo() {
     method: onCardBills.includes(name) ? 'card' : 'account', variable: variable.includes(name), frequency: 'monthly', month_of_year: null }) as Partial<Bill>));
   // Contas que vêm uma vez por ano.
   await store.insert('bills', ([['IPVA do carro', 1853.28, 15, 1, 'ipva', 'carro-impostos'], ['IPTU da casa', 1045.73, 10, 2, 'iptu', 'taxas-impostos'], ['Licenciamento', 174.08, 20, 3, 'licenciamento', 'carro-impostos'], ['Seguro residencial', 389.9, 5, 8, 'seguro residencial', 'casa']] as [string, number, number, number, string, string][])
-    .map(([name, v, d, m, pattern, key]) => ({ name, amount_cents: Math.round(v * 100), day_of_month: d, match_pattern: pattern, active: true, category_id: cat(key), account_id: null, person_id: null, workspace_id: 'w-casa', method: 'account', variable: false, frequency: 'yearly', month_of_year: m }) as Partial<Bill>));
+    .map(([name, v, d, m, pattern, key]) => ({ name, amount_cents: Math.round(v * 100), day_of_month: d, match_pattern: pattern, active: true, category_id: cat(key), account_id: null, person_id: null, workspace_id: 'w-meu', method: 'account', variable: false, frequency: 'yearly', month_of_year: m }) as Partial<Bill>));
 }

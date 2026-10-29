@@ -25,7 +25,7 @@
 <div class="wrap">
   <form class="panel stack" onsubmit={submit}>
     <h1>Senha nova</h1>
-    <p class="muted">Para {store.userEmail}. Depois você entra direto.</p>
+    <p class="muted">Para {store.userEmail}. Crie a sua senha; depois você entra direto.</p>
     <input class="input" type="password" autocomplete="new-password" placeholder="Senha nova (8+ caracteres)" bind:value={password} required />
     <input class="input" type="password" autocomplete="new-password" placeholder="Repita a senha" bind:value={repeat} required />
     <button class="btn primary lg block" disabled={busy}>Salvar e entrar</button>

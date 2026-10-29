@@ -89,6 +89,8 @@ export interface ProjectItem extends Row {
 
 /** Caderno de listas (Mercado, Farmácia, Petshop…): a lista mais nova é a atual. */
 export interface Notebook extends Row {
+  /** Ambiente (área) a que o caderno pertence; vazio = pessoal. */
+  workspace_id?: string | null;
   name: string;
   emoji: string;
   color: string;
@@ -137,18 +139,19 @@ export const parentOf: Partial<Record<OrgTable, { table: OrgTable; key: string }
 
 export type OrgSnapshot = { spaces: Space[]; members: SpaceMember[] } & { [K in OrgTable]: OrgTables[K][] };
 
-export const logKindName: Record<LogKind, string> = {
-  fuel: 'Abastecimento', service: 'Serviço / manutenção', tax: 'Imposto (IPVA, licenciamento)', insurance: 'Seguro', fee: 'Taxas e documentos',
-  product: 'Produtos e acessórios', wash: 'Lavagem e estética', parking: 'Estacionamento e pedágio', other: 'Outro'
-};
+/** Tipos de lançamento do carro: Combustível ou um Gasto (Seguro, Imposto, Lavagem, Manutenção, Estacionamento, Outro).
+ *  'fee' e 'product' são de registros antigos: aparecem como Outro. */
+export const expenseKinds: LogKind[] = ['insurance', 'tax', 'wash', 'service', 'parking', 'other'];
+export const normalizeKind = (kind: LogKind): LogKind => (kind === 'fee' || kind === 'product' ? 'other' : kind);
 export const logKindShort: Record<LogKind, string> = {
-  fuel: 'Combustível', service: 'Serviço', tax: 'Imposto', insurance: 'Seguro', fee: 'Taxa', product: 'Produto', wash: 'Lavagem', parking: 'Estacionamento', other: 'Outro'
+  fuel: 'Combustível', service: 'Manutenção', tax: 'Imposto', insurance: 'Seguro', fee: 'Outro', product: 'Outro', wash: 'Lavagem', parking: 'Estacionamento', other: 'Outro'
 };
+export const logKindName = logKindShort;
 export const logKindIcon: Record<LogKind, string> = {
-  fuel: 'fuelpump', service: 'wrench.and.screwdriver', tax: 'receipt', insurance: 'shield', fee: 'doc.text', product: 'shippingbox',
+  fuel: 'fuelpump', service: 'wrench.and.screwdriver', tax: 'receipt', insurance: 'shield', fee: 'tag', product: 'tag',
   wash: 'sparkles', parking: 'parkingsign', other: 'tag'
 };
 export const logKindColor: Record<LogKind, string> = {
-  fuel: '#FF9F1C', service: '#7C8CF8', tax: '#FF6B6B', insurance: '#38D9F5', fee: '#9E9E9E', product: '#E056FD', wash: '#2EC4B6', parking: '#FFD60A', other: '#78909C'
+  fuel: '#FF9F1C', service: '#7C8CF8', tax: '#FF6B6B', insurance: '#38D9F5', fee: '#78909C', product: '#78909C', wash: '#2EC4B6', parking: '#FFD60A', other: '#78909C'
 };
 export const fuelName: Record<Fuel, string> = { '': 'Não informado', etanol: 'Etanol', gasolina: 'Gasolina', aditivada: 'Gasolina aditivada', diesel: 'Diesel', gnv: 'GNV', eletrico: 'Elétrico (kWh)' };

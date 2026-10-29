@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Select from '$lib/ui/Select.svelte';
   import { store } from '$lib/data/store.svelte';
   import type { Bill, BillMethod } from '$lib/data/types';
   import { centsToInput, parseCents } from '$lib/core/money';
@@ -52,7 +53,7 @@
     <label class="form-row"><span class="field-label">Nome</span><input class="field" placeholder={frequency === 'yearly' ? 'ex.: IPVA, IPTU' : 'ex.: Aluguel, Luz, Netflix'} bind:value={name} /></label>
     <label class="form-row"><span class="field-label">{variable ? 'Valor médio' : 'Valor'}</span><input class="field num" inputmode="decimal" placeholder="0,00" bind:value={amount} /></label>
     {#if frequency === 'yearly'}
-      <label class="form-row"><span class="field-label">Mês</span><select class="field" bind:value={monthOfYear}>{#each monthNames as label, index (label)}<option value={index + 1}>{label}</option>{/each}</select></label>
+      <label class="form-row"><span class="field-label">Mês</span><span class="field"><Select bind:value={monthOfYear} label="Mês" options={monthNames.map((label, index) => ({ value: index + 1, label }))} /></span></label>
     {/if}
     <label class="form-row" use:hint={['Vencimento', 'Dia do mês. Dia 31 vira o último dia em meses mais curtos.']}><span class="field-label">Vence no dia</span><input class="field" type="number" min="1" max="31" bind:value={day} /></label>
   </div>
@@ -71,10 +72,10 @@
   <div class="form-group" style="margin-top: 12px">
     {#if accounts.length}
       <label class="form-row"><span class="field-label">{method === 'card' ? 'Qual cartão' : method === 'cash' ? 'De onde' : 'Qual conta'}</span>
-        <select class="field" bind:value={accountId}><option value={null}>Não informar</option>{#each accounts as a (a.id)}<option value={a.id}>{a.name}</option>{/each}</select></label>
+        <span class="field"><Select bind:value={accountId} label="Conta" options={[{ value: null, label: 'Não informar' }, ...accounts.map((a) => ({ value: a.id, label: a.name }))]} /></span></label>
     {/if}
     <label class="form-row"><span class="field-label">Categoria</span><span class="field"><CategorySelect value={categoryId} pill={false} allowNone kinds={['expense']} onchange={(v) => (categoryId = v || null)} /></span></label>
-    <label class="form-row"><span class="field-label">De quem</span><select class="field" bind:value={personId}><option value={null}>Ninguém</option>{#each store.people as p (p.id)}<option value={p.id}>{p.name}</option>{/each}</select></label>
+    <label class="form-row"><span class="field-label">De quem</span><span class="field"><Select bind:value={personId} label="De quem" options={[{ value: null, label: 'Ninguém' }, ...store.people.map((p) => ({ value: p.id, label: p.name, color: p.color }))]} /></span></label>
     <label class="form-row" use:hint={['Texto no extrato', 'Trecho da descrição do banco que mostra que foi paga. Vazio: usa o nome.']}><span class="field-label">Texto no extrato</span><input class="field" placeholder="opcional" bind:value={pattern} /></label>
   </div>
   <p class="form-footer">Quando aparecer no extrato um lançamento com esse texto, a conta fica como paga sozinha.</p>

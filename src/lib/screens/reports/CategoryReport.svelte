@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Select from '$lib/ui/Select.svelte';
   import type { Month } from '$lib/core/dates';
   import { money, percent } from '$lib/core/money';
   import { store } from '$lib/data/store.svelte';
@@ -28,8 +29,7 @@
 </script>
 
 <div class="row between" style="flex-wrap: wrap; gap: 8px">
-  <label class="chip" style="position: relative">{groupingName[grouping]}<Icon name="chevron-down" size={13} />
-    <select style="position: absolute; inset: 0; opacity: 0" bind:value={grouping}>{#each groupings as g}<option value={g}>{groupingName[g]}</option>{/each}</select></label>
+  <Select variant="chip" bind:value={grouping} label="Agrupar" options={groupings.map((g) => ({ value: g, label: groupingName[g] }))} />
   <div style="width: 220px"><Segmented label="Tipo" bind:value={flow} options={[{ value: 'expenses', label: 'Despesas' }, { value: 'income', label: 'Receitas' }]} /></div>
 </div>
 

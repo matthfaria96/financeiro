@@ -5,14 +5,16 @@
   import Icon from './Icon.svelte';
   import { hint } from './hint';
   import { sectionOf, sections } from './nav';
+  import WorkspaceBar from './WorkspaceBar.svelte';
 
   /** Menu lateral fino do computador: Início, Lançamentos e Notas; Configuração e Importar embaixo. */
   const active = $derived(sectionOf(page.route.id ?? '/'));
-  const ordered = $derived([sections[1], sections[0], sections[2]]);
+  const ordered = $derived([sections[1], sections[0], sections[2], sections[3]]);
 </script>
 
 <nav class="sidebar glass" aria-label="Seções">
   <div class="brand"><span class="logo"><Icon name="trending-up" size={17} stroke={2.6} /></span>Financeiro</div>
+  <div class="ambient"><WorkspaceBar compact={false} /></div>
   <div class="links">
     {#each ordered as s (s.id)}
       <a href={s.href} class="link" class:on={active === s.id} aria-current={active === s.id ? 'page' : undefined}>
@@ -24,8 +26,7 @@
     <button class="btn primary block import" onclick={() => ui.startImport()} use:hint={['Importar extrato', 'Escolha a conta e o arquivo do banco (OFX, CSV ou PDF). Também dá para arrastar o arquivo para a janela.']}>
       <Icon name="import" size={17} />Importar extrato
     </button>
-    <div class="row who"><span class="caption ellipsis grow">{store.demo ? 'Demonstração (dados fictícios)' : store.userEmail}</span>
-      <a class="gear" class:on={active === 'settings'} href="#/mais" aria-label="Configurações gerais" use:hint={['Configurações gerais', 'Contas e cartões, categorias, pessoas, compartilhar, relatórios e senha.']}><Icon name="settings" size={14} /></a></div>
+    <div class="who caption ellipsis">{store.demo ? 'Demonstração (dados fictícios)' : store.userEmail}</div>
   </div>
 </nav>
 
@@ -40,7 +41,8 @@
   .ico { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; flex: none; color: #fff; background: linear-gradient(160deg, var(--c), color-mix(in srgb, var(--c) 62%, black)); box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.2); }
   .bottom { display: flex; flex-direction: column; gap: 10px; padding-top: 10px; border-top: 1px solid var(--stroke); }
   .import { box-shadow: 0 6px 20px rgba(43, 212, 164, 0.25); background: linear-gradient(180deg, #3fe3b4, #20b98d); }
-  .who { padding: 0 4px; gap: 6px; }
-  .gear { width: 24px; height: 24px; border-radius: 7px; display: grid; place-items: center; color: var(--text-3); flex: none; }
-  .gear:hover, .gear.on { color: var(--text); background: rgba(255, 255, 255, 0.07); }
+  .who { padding: 0 4px; }
+  .ambient { margin: -8px 0 14px; }
+  .ambient :global(.switch) { flex-direction: column; }
+  .ambient :global(.switch button) { flex: none; justify-content: flex-start; height: 34px; padding: 0 10px; }
 </style>

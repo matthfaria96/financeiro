@@ -9,6 +9,8 @@
   import BalanceCard from '$lib/screens/money/BalanceCard.svelte';
   import MonthCard from '$lib/screens/money/MonthCard.svelte';
   import ForecastCard from '$lib/screens/money/ForecastCard.svelte';
+  import MeiCard from '$lib/screens/money/MeiCard.svelte';
+  import { isBusiness } from '$lib/features/ambient';
   import AccountsSheet from '$lib/screens/money/AccountsSheet.svelte';
   import ChartsSheet from '$lib/screens/money/ChartsSheet.svelte';
   import { inScope, inScopeAccount } from '$lib/features/model';
@@ -48,6 +50,7 @@
     <div class="cards">
       <BalanceCard {analysis} hidden={store.household?.settings.home_hidden ?? []} onconfig={() => (configOpen = true)} onchart={() => charts('balance')} />
       <MonthCard {analysis} title={monthTitle(month)} link="#/transacoes" onchart={() => charts('flow')} />
+      {#if isBusiness()}<MeiCard />{/if}
       <ForecastCard {accounts} />
     </div>
   {/if}

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Select from '$lib/ui/Select.svelte';
   import { store } from '$lib/data/store.svelte';
   import { shortMonth, type Month } from '$lib/core/dates';
   import { money } from '$lib/core/money';
@@ -104,9 +105,7 @@
   <div class="controls">
     <Segmented label="Agrupar" bind:value={grouping} options={[{ value: 'category', label: 'Por categoria' }, { value: 'person', label: 'Por pessoa' }]} />
     <Segmented label="Crédito" bind:value={creditMonth} options={[{ value: 'bill', label: 'Crédito no mês da fatura' }, { value: 'purchase', label: 'No mês da compra' }]} />
-    <select class="input period" bind:value={count} aria-label="Período" use:hint={['Período', 'Quantos meses para trás aparecem.']}>
-      <option value={6}>6 meses</option><option value={12}>12 meses</option><option value={24}>24 meses</option>
-    </select>
+    <Select variant="chip" bind:value={count} label="Período" options={[{ value: 6, label: '6 meses' }, { value: 12, label: '12 meses' }, { value: 24, label: '24 meses' }]} />
   </div>
   <section class="card">
     <div class="card-head"><h3>Entradas × saídas</h3><span class="sub">meses previstos em tom mais claro</span></div>
@@ -146,7 +145,6 @@
 <style>
   .page.wide { max-width: 1240px; }
   .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-  .period { width: auto; height: 40px; }
   .scroll { overflow-x: auto; }
   table { border-collapse: separate; border-spacing: 0; font-size: 13.5px; white-space: nowrap; min-width: 100%; }
   th, td { padding: 8px 12px; text-align: right; }

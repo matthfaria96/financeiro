@@ -84,11 +84,18 @@ class Store {
     const session = await currentSession();
     if (this.status === 'setPassword') return;
     if (!session) return void (this.status = 'signedOut');
+    // Convidado por um familiar: entrou com a senha provisória, então cria a dele antes de tudo.
+    if (session.user.user_metadata?.must_change_password) {
+      this.userId = session.user.id;
+      this.userEmail = session.user.email ?? '';
+      return void (this.status = 'setPassword');
+    }
     await this.enter(session.user.id, session.user.email ?? '');
   }
 
   async startDemo() {
     this.demo = true;
+    this.userId = 'demo';
     this.backend = new MemoryBackend(buildDemo());
     this.apply(await this.backend.load(''));
     this.status = 'ready';
@@ -135,7 +142,7 @@ class Store {
   }
 
   async changePassword(password: string) {
-    const { error } = await supabase().auth.updateUser({ password });
+    const { error } = await supabase().auth.updateUser({ password, data: { must_change_password: false } });
     if (error) throw new Error(error.message.includes('different') ? 'A senha nova precisa ser diferente da atual.' : error.message);
   }
 

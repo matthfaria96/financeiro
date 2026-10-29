@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Select from '$lib/ui/Select.svelte';
   import { untrack } from 'svelte';
   import { store } from '$lib/data/store.svelte';
   import { bankName, dateRange } from '$lib/core/statement';
@@ -72,19 +73,16 @@
   <div class="form-title">Destino</div>
   <div class="form-group">
     <label class="form-row" use:hint={['Conta', 'Escolhida pelo número da conta no arquivo ou pelo banco. Repetidos nesta conta são pulados.']}><span class="field-label">Conta</span>
-      <select class="field" bind:value={draft.target} onchange={retarget}>
-        {#each choices as a (a.id)}<option value={a.id}>{a.name} ({kindName[a.kind].toLowerCase()})</option>{/each}
-        <option value="new">Nova conta…</option>
-      </select></label>
+      <span class="field"><Select bind:value={draft.target} label="Conta" onchange={retarget} options={[...choices.map((a) => ({ value: a.id, label: a.name, hint: kindName[a.kind] })), { value: 'new', label: 'Nova conta…' }]} /></span></label>
     {#if draft.target === 'new'}
       <label class="form-row"><span class="field-label">Nome da nova conta</span><input class="field" bind:value={draft.newAccountName} /></label>
-      <label class="form-row"><span class="field-label">Tipo</span><select class="field" bind:value={draft.newAccountKind} onchange={retarget}>{#each ['checking', 'creditCard', 'savings', 'cash'] as k}<option value={k}>{kindShort[k as AccountKind]}</option>{/each}</select></label>
+      <label class="form-row"><span class="field-label">Tipo</span><span class="field"><Select bind:value={draft.newAccountKind} label="Tipo" onchange={retarget} options={(['checking', 'creditCard', 'savings', 'cash'] as AccountKind[]).map((k) => ({ value: k, label: kindShort[k] }))} /></span></label>
       {#if store.workspacesEnabled}
-        <label class="form-row"><span class="field-label">Área de trabalho</span><select class="field" bind:value={draft.newAccountWorkspace}><option value={null}>Nenhuma</option>{#each store.workspaces as w (w.id)}<option value={w.id}>{w.name}</option>{/each}</select></label>
+        <label class="form-row"><span class="field-label">Área de trabalho</span><span class="field"><Select bind:value={draft.newAccountWorkspace} label="Área de trabalho" options={[{ value: null, label: 'Nenhuma' }, ...store.workspaces.map((w) => ({ value: w.id, label: w.name, color: w.color }))]} /></span></label>
       {/if}
     {/if}
     <label class="form-row" use:hint={['De quem é', 'Dono dos lançamentos deste arquivo, quando nenhum estabelecimento disser outra coisa.']}><span class="field-label">De quem é</span>
-      <select class="field" bind:value={draft.defaultPersonId}><option value={null}>{target?.default_person_id ? `Padrão da conta (${store.personById.get(target.default_person_id)?.name})` : 'Ninguém'}</option>{#each store.people as p (p.id)}<option value={p.id}>{p.name}</option>{/each}</select></label>
+      <span class="field"><Select bind:value={draft.defaultPersonId} label="De quem é" options={[{ value: null, label: target?.default_person_id ? `Padrão da conta (${store.personById.get(target.default_person_id)?.name})` : 'Ninguém' }, ...store.people.map((p) => ({ value: p.id, label: p.name, color: p.color }))]} /></span></label>
     {#if draft.statement.kind === 'checking' && draft.statement.balanceCents === undefined && range}
       <label class="form-row" use:hint={['Saldo no fim do extrato', 'Este arquivo não traz o saldo. Digite o saldo nesse dia (veja no app do banco). O OFX já traz sozinho.']}><span class="field-label">Saldo em {shortDate(range[1])}</span><input class="field num" inputmode="decimal" placeholder="opcional" bind:value={draft.manualBalance} /></label>
     {/if}
@@ -114,11 +112,9 @@
     <div class="form-title row" style="gap: 6px"><Icon name="invest" size={14} />{draft.investmentCount} movimentos de caixinha/RDB</div>
     <div class="form-group">
       <label class="form-row" use:hint={['Investimento', 'Aplicação soma no investimento e resgate tira, sozinhos. O rendimento você corrige informando o saldo de hoje.']}><span class="field-label">Acompanhar em</span>
-        <select class="field" value={draft.investment.type === 'existing' ? draft.investment.id : draft.investment.type} onchange={(e) => { const v = e.currentTarget.value; draft.investment = v === 'none' ? { type: 'none' } : v === 'new' ? { type: 'new' } : { type: 'existing', id: v }; }}>
-          <option value="none">Não acompanhar</option>
-          {#each store.accounts.filter((a) => a.kind === 'savings') as a (a.id)}<option value={a.id}>{a.name}</option>{/each}
-          <option value="new">Nova: {draft.newInvestmentName}</option>
-        </select></label>
+        <span class="field"><Select value={draft.investment.type === 'existing' ? draft.investment.id : draft.investment.type} label="Investimento"
+          options={[{ value: 'none', label: 'Não acompanhar' }, ...store.accounts.filter((a) => a.kind === 'savings').map((a) => ({ value: a.id, label: a.name })), { value: 'new', label: `Nova: ${draft.newInvestmentName}` }]}
+          onchange={(v) => { draft.investment = v === 'none' ? { type: 'none' } : v === 'new' ? { type: 'new' } : { type: 'existing', id: v }; }} /></span></label>
       {#if draft.investment.type === 'new'}<label class="form-row"><span class="field-label">Nome</span><input class="field" bind:value={draft.newInvestmentName} /></label>{/if}
     </div>
   {/if}

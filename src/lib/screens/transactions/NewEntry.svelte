@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Select from '$lib/ui/Select.svelte';
   import { store } from '$lib/data/store.svelte';
   import { ui } from '$lib/ui/ui.svelte';
   import { parseCents } from '$lib/core/money';
@@ -50,9 +51,9 @@
     <label class="form-row"><span class="field-label">Descrição</span><input class="field" bind:value={title} placeholder="ex.: Feira" /></label>
     <label class="form-row"><span class="field-label">Valor</span><input class="field num" inputmode="decimal" placeholder="49,90" bind:value={amount} /></label>
     <label class="form-row"><span class="field-label">Data</span><input class="field" type="date" bind:value={date} /></label>
-    <label class="form-row"><span class="field-label">Conta</span><select class="field" bind:value={accountId}>{#each accounts as a (a.id)}<option value={a.id}>{a.name}</option>{/each}</select></label>
+    <label class="form-row"><span class="field-label">Conta</span><span class="field"><Select bind:value={accountId} label="Conta" options={accounts.map((a) => ({ value: a.id, label: a.name }))} /></span></label>
     <label class="form-row"><span class="field-label">Categoria</span><span class="field"><CategorySelect value={categoryId} pill={false} allowNone kinds={type === 'out' ? ['expense', 'transfer'] : ['income', 'transfer']} onchange={(v) => (categoryId = v || null)} /></span></label>
-    <label class="form-row"><span class="field-label">De quem</span><select class="field" bind:value={personId}><option value={null}>Padrão da conta</option>{#each store.people as p (p.id)}<option value={p.id}>{p.name}</option>{/each}</select></label>
+    <label class="form-row"><span class="field-label">De quem</span><span class="field"><Select bind:value={personId} label="De quem" options={[{ value: null, label: 'Padrão da conta' }, ...store.people.map((p) => ({ value: p.id, label: p.name, color: p.color }))]} /></span></label>
   </div>
   {#if !accounts.length}<p class="form-footer">Cadastre uma conta primeiro (Início › Cadastrar).</p>{/if}
 </Sheet>

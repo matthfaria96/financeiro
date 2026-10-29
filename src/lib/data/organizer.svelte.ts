@@ -46,7 +46,12 @@ class Organizer {
     const key = store.demo ? 'demo' : store.userId;
     if (!key || this.loadedFor === key) return;
     this.loadedFor = key;
-    if (store.demo) return this.apply(buildOrganizerDemo(this.personalId));
+    if (store.demo) {
+      const demo = buildOrganizerDemo(this.personalId);
+      // Na demonstração, "Você" é o próprio usuário (para não aparecer duas vezes na família).
+      demo.members = demo.members.map((m) => (m.display_name === 'Você' ? { ...m, user_id: store.userId || m.user_id } : m));
+      return this.apply(demo);
+    }
     const cached = await readKey<OrgSnapshot>(this.cacheKey);
     if (cached) this.apply(cached);
     try {

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Select from '$lib/ui/Select.svelte';
   import { store } from '$lib/data/store.svelte';
   import type { Merchant } from '$lib/data/types';
   import { costName } from '$lib/core/catalog';
@@ -117,8 +118,8 @@
   <div class="form-title">O que aplicar</div>
   <div class="form-group">
     <label class="form-row"><span class="field-label">Categoria</span><span class="field"><CategorySelect value={categoryId} pill={false} allowNone onchange={(v) => (categoryId = v || null)} /></span></label>
-    <label class="form-row"><span class="field-label">De quem</span><select class="field" bind:value={personId}><option value={null}>Não mudar</option>{#each store.people as p (p.id)}<option value={p.id}>{p.name}</option>{/each}</select></label>
-    <label class="form-row"><span class="field-label">Tipo de gasto</span><select class="field" bind:value={cost}><option value="">Automático ({costName[categoryCost(category ?? undefined)].toLowerCase()})</option><option value="fixed">Fixo</option><option value="variable">Variável</option></select></label>
+    <label class="form-row"><span class="field-label">De quem</span><span class="field"><Select bind:value={personId} label="De quem" options={[{ value: null, label: 'Não mudar' }, ...store.people.map((p) => ({ value: p.id, label: p.name, color: p.color }))]} /></span></label>
+    <label class="form-row"><span class="field-label">Tipo de gasto</span><span class="field"><Select bind:value={cost} label="Tipo de gasto" options={[{ value: '', label: `Automático (${costName[categoryCost(category ?? undefined)].toLowerCase()})` }, { value: 'fixed', label: 'Fixo' }, { value: 'variable', label: 'Variável' }]} /></span></label>
   </div>
 
   {#if merchant}

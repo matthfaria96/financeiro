@@ -23,12 +23,11 @@ export function buildDemo(): Snapshot {
     { id: 'p-filho', household_id: household, key: 'filho', name: 'Filho', role: 'child', color: '#FFD60A', sort_order: 3 }
   ];
   const workspaces: Workspace[] = [
-    { id: 'w-meu', household_id: household, name: 'Meu', symbol: 'person', color: '#2BD4A4', sort_order: 0 },
-    { id: 'w-esposa', household_id: household, name: 'Esposa', symbol: 'heart', color: '#FF8FAB', sort_order: 1 },
-    { id: 'w-casa', household_id: household, name: 'Casa', symbol: 'house', color: '#38D9F5', sort_order: 2 }
+    { id: 'w-meu', household_id: household, name: 'Pessoal', symbol: 'person', color: '#2BD4A4', sort_order: 0, kind: 'personal' },
+    { id: 'w-esposa', household_id: household, name: 'Ateliê (MEI)', symbol: 'briefcase', color: '#7C8CF8', sort_order: 1, kind: 'business' }
   ];
   return {
-    household: { id: household, name: 'Casa de demonstração', invite_code: 'DEMO1234', settings: { forecast_months: 6, workspaces_enabled: false } },
+    household: { id: household, name: 'Casa de demonstração', invite_code: 'DEMO1234', settings: { forecast_months: 6, workspaces_enabled: true } },
     members: [{ household_id: household, user_id: 'demo', display_name: 'Você' }],
     people, workspaces, categories, merchants, accounts: [], import_batches: [], entries: [], bills: []
   };

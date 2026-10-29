@@ -12,7 +12,9 @@
   import MoveSheet from '$lib/screens/transactions/MoveSheet.svelte';
   import TxInsights from '$lib/screens/transactions/TxInsights.svelte';
   import { prefs } from '$lib/ui/prefs.svelte';
-  import { filter, periodName, type Period } from '$lib/screens/transactions/filter.svelte';
+  import { filter, periodName, typeName, type EntryType, type Period } from '$lib/screens/transactions/filter.svelte';
+  import Select from '$lib/ui/Select.svelte';
+  import { today } from '$lib/core/dates';
   import { inScopeAccount, kindOf } from '$lib/features/model';
   import { reconcileMirrors } from '$lib/features/mirrors';
 
@@ -21,9 +23,12 @@
   });
 
   const list = $derived(store.entries.filter((e) => filter.matches(e)).toSorted((a, b) => b.date.localeCompare(a.date) || b.created_at.localeCompare(a.created_at)));
+  // Mostra 15 por vez (lista leve); "Carregar mais" traz os próximos 15.
+  let limit = $state(15);
+  const shownList = $derived(list.slice(0, limit));
   const days = $derived.by(() => {
     const map = new Map<string, typeof list>();
-    for (const entry of list) map.set(entry.date, [...(map.get(entry.date) ?? []), entry]);
+    for (const entry of shownList) map.set(entry.date, [...(map.get(entry.date) ?? []), entry]);
     return [...map.entries()];
   });
   const totals = $derived.by(() => {
@@ -42,8 +47,9 @@
 
   $effect(() => {
     // Trocou filtro ou área: limpa a seleção (para nunca mexer no que não está à vista).
-    void [filter.period, filter.month, filter.categoryId, filter.accountId, filter.personId, filter.cost, filter.uncategorized, store.scopeId];
+    void [filter.period, filter.month, filter.categoryId, filter.accountId, filter.personId, filter.cost, filter.uncategorized, filter.type, filter.from, filter.to, filter.search, store.scopeId];
     selected = new Set();
+    limit = 15;
   });
 
   function toggle(id: string) {
@@ -89,39 +95,34 @@
   <WorkspaceBar />
   <label class="search"><Icon name="search" size={17} class="faint" /><input placeholder="Pesquisar" bind:value={filter.search} /></label>
 
-  <div class="scroll-x filters">
-    <label class="chip" class:active={filter.period !== 'thisMonth' || filter.month} use:hint={['Período', 'De quando são os lançamentos mostrados.']}>
-      {filter.month ? shortMonth(filter.month) : periodName[filter.period]}<Icon name="chevron-down" size={13} />
-      <select value={filter.period} onchange={(e) => { filter.period = e.currentTarget.value as Period; filter.month = null; }}>{#each Object.entries(periodName) as [value, label]}<option {value}>{label}</option>{/each}</select>
-    </label>
-    <label class="chip" class:active={filter.categoryId} use:hint={['Categoria', 'Mostra só uma categoria (com as subcategorias).']}>
-      {store.categoryById.get(filter.categoryId ?? '')?.name ?? 'Categoria'}<Icon name="chevron-down" size={13} />
-      <select value={filter.categoryId ?? ''} onchange={(e) => (filter.categoryId = e.currentTarget.value || null)}>
-        <option value="">Todas</option>
-        {#each roots as root (root.id)}
-          <optgroup label={root.name}><option value={root.id}>{root.name} (tudo)</option>{#each store.categories.filter((c) => c.parent_id === root.id) as sub (sub.id)}<option value={sub.id}>{sub.name}</option>{/each}</optgroup>
-        {/each}
-      </select>
-    </label>
-    <label class="chip" class:active={filter.accountId} use:hint={['Conta', 'Mostra só uma conta ou cartão.']}>
-      {store.accountById.get(filter.accountId ?? '')?.name ?? 'Conta'}<Icon name="chevron-down" size={13} />
-      <select value={filter.accountId ?? ''} onchange={(e) => (filter.accountId = e.currentTarget.value || null)}><option value="">Todas</option>{#each accounts as a (a.id)}<option value={a.id}>{a.name}</option>{/each}</select>
-    </label>
+  <div class="filters">
+    <Select variant="chip" active={filter.period !== 'thisMonth' || !!filter.month} label="Período" display={filter.month ? shortMonth(filter.month) : periodName[filter.period]}
+      value={filter.month ? 'month' : filter.period} options={Object.entries(periodName).map(([value, label]) => ({ value, label }))}
+      onchange={(v) => { filter.period = v as Period; filter.month = null; if (v === 'range' && !filter.from) { filter.from = `${today().slice(0, 8)}01`; filter.to = today(); } }} />
+    <Select variant="chip" active={!!filter.type} label="Tipo" display={filter.type ? typeName[filter.type] : 'Tipo'} value={filter.type ?? ''}
+      options={[{ value: '', label: 'Todos os tipos' }, ...Object.entries(typeName).map(([value, label]) => ({ value, label }))]} onchange={(v) => (filter.type = (v || null) as EntryType | null)} />
+    <Select variant="chip" active={!!filter.categoryId} label="Categoria" display={store.categoryById.get(filter.categoryId ?? '')?.name ?? 'Categoria'} value={filter.categoryId ?? ''}
+      options={[{ value: '', label: 'Todas' }, ...roots.flatMap((root) => [{ value: root.id, label: `${root.name} (tudo)`, group: root.name, color: root.color }, ...store.categories.filter((c) => c.parent_id === root.id).map((sub) => ({ value: sub.id, label: sub.name, group: root.name, color: sub.color }))])]}
+      onchange={(v) => (filter.categoryId = v || null)} />
+    <Select variant="chip" active={!!filter.accountId} label="Conta" display={store.accountById.get(filter.accountId ?? '')?.name ?? 'Conta'} value={filter.accountId ?? ''}
+      options={[{ value: '', label: 'Todas' }, ...accounts.map((a) => ({ value: a.id, label: a.name }))]} onchange={(v) => (filter.accountId = v || null)} />
     {#if prefs.full || moreFilters || filter.personId || filter.cost || filter.uncategorized}
-    <label class="chip" class:active={filter.personId} use:hint={['De quem', 'Só o que é seu, da sua esposa, da casa, do filho…']}>
-      {store.personById.get(filter.personId ?? '')?.name ?? 'De quem'}<Icon name="chevron-down" size={13} />
-      <select value={filter.personId ?? ''} onchange={(e) => (filter.personId = e.currentTarget.value || null)}><option value="">Todos</option>{#each store.people as p (p.id)}<option value={p.id}>{p.name}</option>{/each}</select>
-    </label>
-    <label class="chip" class:active={filter.cost} use:hint={['Fixo ou variável', 'Só os gastos fixos (que se repetem) ou só os variáveis.']}>
-      {filter.cost === 'fixed' ? 'Fixos' : filter.cost === 'variable' ? 'Variáveis' : 'Fixo/variável'}<Icon name="chevron-down" size={13} />
-      <select value={filter.cost ?? ''} onchange={(e) => (filter.cost = (e.currentTarget.value || null) as typeof filter.cost)}><option value="">Todos</option><option value="fixed">Só fixos</option><option value="variable">Só variáveis</option></select>
-    </label>
-    <button class="chip" class:active={filter.uncategorized} onclick={() => (filter.uncategorized = !filter.uncategorized)} use:hint={['Sem categoria', 'Só o que o app não soube classificar.']}>Sem categoria</button>
+      <Select variant="chip" active={!!filter.personId} label="De quem" display={store.personById.get(filter.personId ?? '')?.name ?? 'De quem'} value={filter.personId ?? ''}
+        options={[{ value: '', label: 'Todos' }, ...store.people.map((p) => ({ value: p.id, label: p.name, color: p.color }))]} onchange={(v) => (filter.personId = v || null)} />
+      <Select variant="chip" active={!!filter.cost} label="Fixo ou variável" display={filter.cost === 'fixed' ? 'Fixos' : filter.cost === 'variable' ? 'Variáveis' : 'Fixo/variável'} value={filter.cost ?? ''}
+        options={[{ value: '', label: 'Todos' }, { value: 'fixed', label: 'Só fixos' }, { value: 'variable', label: 'Só variáveis' }]} onchange={(v) => (filter.cost = (v || null) as typeof filter.cost)} />
+      <button class="chip" class:active={filter.uncategorized} onclick={() => (filter.uncategorized = !filter.uncategorized)} use:hint={['Sem categoria', 'Só o que o app não soube classificar.']}>Sem categoria</button>
     {:else}
-    <button class="chip" onclick={() => (moreFilters = true)} use:hint={['Mais filtros', 'De quem é, fixo ou variável e sem categoria.']}><Icon name="filter" size={13} />Mais filtros</button>
+      <button class="chip" onclick={() => (moreFilters = true)} use:hint={['Mais filtros', 'De quem é, fixo ou variável e sem categoria.']}><Icon name="filter" size={13} />Mais filtros</button>
     {/if}
     {#if filter.active}<button class="btn ghost" onclick={() => filter.reset()}>Limpar</button>{/if}
   </div>
+  {#if filter.period === 'range' && !filter.month}
+    <div class="range card tight">
+      <label><span class="caption">De</span><input class="input" type="date" bind:value={filter.from} max={filter.to || undefined} /></label>
+      <label><span class="caption">Até</span><input class="input" type="date" bind:value={filter.to} min={filter.from || undefined} /></label>
+    </div>
+  {/if}
 
   <div class="layout" class:wide={prefs.full}>
   <div class="list">
@@ -144,6 +145,7 @@
   {:else}
     <div class="empty stack-sm"><Icon name="search" size={34} class="faint" /><b>Nenhum lançamento</b><span class="muted small">{store.entries.length ? 'Mude o período ou limpe os filtros.' : 'Importe um extrato para começar.'}</span></div>
   {/each}
+  {#if list.length > limit}<button class="btn block more" onclick={() => (limit += 15)}>Carregar mais ({list.length - limit} restantes)</button>{/if}
   </div>
   {#if list.length && prefs.full}<div class="side"><TxInsights entries={list} /></div>{/if}
   </div>
@@ -169,8 +171,10 @@
   .top h1 { margin: 6px 4px; font: 700 30px var(--font-display); letter-spacing: -0.02em; }
   .search { display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 14px; border-radius: 14px; background: rgba(255, 255, 255, 0.07); border: 1px solid var(--stroke); }
   .search input { flex: 1; background: none; border: 0; outline: none; color: var(--text); }
-  .filters .chip { position: relative; }
-  .filters select { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .range { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .range label { display: flex; flex-direction: column; gap: 4px; }
+  .more { margin-top: 6px; }
   .layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; align-items: start; }
   .list { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
   .side { display: none; }

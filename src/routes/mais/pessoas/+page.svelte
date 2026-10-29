@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Select from '$lib/ui/Select.svelte';
   import { store } from '$lib/data/store.svelte';
   import type { Person, PersonRole } from '$lib/data/types';
   import { money } from '$lib/core/money';
@@ -78,7 +79,7 @@
   <div class="pick"><PhotoPicker bind:value={photo} label="Foto" maxPixel={240} maxChars={40_000} wide={false} icon={roleIcon[role]} /></div>
   <div class="form-group" style="margin-top: 10px">
     <label class="form-row"><span class="field-label">Nome</span><input class="field" bind:value={name} /></label>
-    <label class="form-row"><span class="field-label">Papel</span><select class="field" bind:value={role}>{#each Object.entries(roleName) as [value, label]}<option {value}>{label}</option>{/each}</select></label>
+    <label class="form-row"><span class="field-label">Papel</span><span class="field"><Select bind:value={role} label="Papel" options={Object.entries(roleName).map(([value, label]) => ({ value: value as PersonRole, label }))} /></span></label>
     <div class="form-row" style="flex-wrap: wrap; gap: 10px">{#each palette as c}<button class="swatch" class:on={c === color} style:background={c} aria-label="Cor" onclick={() => (color = c)}></button>{/each}</div>
   </div>
   {#if editing}

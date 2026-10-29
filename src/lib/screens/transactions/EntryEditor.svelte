@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Select from '$lib/ui/Select.svelte';
   import { store } from '$lib/data/store.svelte';
   import { ui } from '$lib/ui/ui.svelte';
   import { costName } from '$lib/core/catalog';
@@ -113,10 +114,10 @@
         <label class="form-row" use:hint={['Categoria', 'Categoria e subcategoria (ex.: Carro › Combustível). Transferências entre contas não entram nos gastos.']}><span class="field-label">Categoria</span>
           <span class="field"><CategorySelect value={draft.category_id} pill={false} onchange={(v) => (draft!.category_id = v || null)} /></span></label>
         <label class="form-row" use:hint={['De quem', 'Separa o que é seu, da esposa, da casa ou do filho nos relatórios.']}><span class="field-label">De quem</span>
-          <select class="field" bind:value={draft.person_id}><option value={null}>Ninguém</option>{#each store.people as p (p.id)}<option value={p.id}>{p.name}</option>{/each}</select></label>
+          <span class="field"><Select bind:value={draft.person_id} label="De quem" options={[{ value: null, label: 'Ninguém' }, ...store.people.map((p) => ({ value: p.id, label: p.name, color: p.color }))]} /></span></label>
         {#if kindOf(draft) === 'expense'}
           <label class="form-row" use:hint={['Fixo ou variável', 'Fixo: se repete todo mês (aluguel, escola, assinatura). Automático usa o padrão do estabelecimento ou da categoria.']}><span class="field-label">Tipo de gasto</span>
-            <select class="field" bind:value={draft.cost_type}><option value="">Automático ({costName[autoCost].toLowerCase()})</option><option value="fixed">Fixo</option><option value="variable">Variável</option></select></label>
+            <span class="field"><Select bind:value={draft.cost_type} label="Fixo ou variável" options={[{ value: '', label: `Automático (${costName[autoCost].toLowerCase()})` }, { value: 'fixed', label: 'Fixo' }, { value: 'variable', label: 'Variável' }]} /></span></label>
         {/if}
       </div>
 
@@ -132,7 +133,7 @@
         <div class="form-title">Cartão</div>
         <div class="form-group">
           <label class="form-row" use:hint={['Fatura', 'Mês em que esta compra é paga. Mude se o fechamento foi diferente neste mês.']}><span class="field-label">Fatura</span>
-            <select class="field" value={due} onchange={(e) => (draft!.bill_due_date = e.currentTarget.value)}>{#each dueOptions(due) as option}<option value={option}>Vence {shortDate(option)}</option>{/each}</select></label>
+            <span class="field"><Select value={due} label="Fatura" options={dueOptions(due).map((option) => ({ value: option, label: `Vence ${shortDate(option)}` }))} onchange={(v) => (draft!.bill_due_date = v)} /></span></label>
         </div>
         <p class="form-footer">A compra entra no informativo do mês em que foi feita e no "a pagar" do mês da fatura.</p>
       {/if}

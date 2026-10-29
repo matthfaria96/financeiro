@@ -1,5 +1,7 @@
 <script lang="ts">
   import { organizer } from '$lib/data/organizer.svelte';
+  import WorkspaceBar from '$lib/ui/WorkspaceBar.svelte';
+  import { isBusiness } from '$lib/features/ambient';
   import { money } from '$lib/core/money';
   import { itemEmoji } from '$lib/core/shopping';
   import { monthOf, today } from '$lib/core/dates';
@@ -16,7 +18,7 @@
   let creating = $state(false);
   let configuring = $state(false);
   $effect(() => {
-    if (organizer.loadedFor && !organizer.notebooks.length) void ensureNotebooks();
+    if (organizer.loadedFor && !organizer.notebooks.length && !isBusiness()) void ensureNotebooks();
   });
   const cards = $derived(visibleNoteCards());
   const bookById = $derived(new Map(notebooks().map((n) => [n.id, n])));
@@ -33,6 +35,7 @@
     <h1>Notas</h1>
     <button class="btn primary" onclick={() => (creating = true)} use:hint={['Cadastrar novo', 'Uma lista nova: limpeza, bebê, festa…']}><Icon name="plus" size={16} />Cadastrar novo</button>
   </header>
+  <WorkspaceBar />
 
   <div class="grid">
     {#each cards as card (card.key)}

@@ -23,7 +23,7 @@
 
   let { children }: { children: Snippet } = $props();
 
-  // Celular: os três botões (Lançamentos, Início, Notas). Configuração fica no Início.
+  // Celular: Lançamentos, Início, Notas e Configuração.
   const tabs = sections;
   const active = $derived(sectionOf(page.route.id ?? '/'));
 
@@ -111,7 +111,7 @@
   .shell > :global(.sidebar) { display: none; }
   .tabbar {
     position: fixed; z-index: 50; left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom));
-    display: grid; grid-template-columns: repeat(3, 1fr); height: 66px; border-radius: 30px; padding: 0 6px;
+    display: grid; grid-template-columns: repeat(4, 1fr); height: 66px; border-radius: 30px; padding: 0 6px;
     background: rgba(28, 36, 33, 0.66); backdrop-filter: blur(24px) saturate(1.8); -webkit-backdrop-filter: blur(24px) saturate(1.8);
     border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
   }

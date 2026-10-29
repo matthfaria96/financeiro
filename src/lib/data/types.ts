@@ -40,6 +40,8 @@ export interface Workspace {
   symbol: string;
   color: string;
   sort_order: number;
+  /** Ambiente pessoal ou de empresa (MEI): muda o que o Início, Lançamentos e Notas mostram. */
+  kind?: 'personal' | 'business';
 }
 
 export interface Category {

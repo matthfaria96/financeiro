@@ -9,7 +9,6 @@
   import { enterDemo, exitDemo } from '$lib/data/demoMode';
   import { prefs } from '$lib/ui/prefs.svelte';
 
-  let workspaces = $state(store.workspacesEnabled);
   let months = $state(store.forecastMonths);
   let reapplied = $state<number | null>(null);
   let advanced = $state(prefs.full);
@@ -32,23 +31,8 @@
   }
 
   $effect(() => {
-    if (workspaces !== store.workspacesEnabled) void toggleWorkspaces(workspaces);
-  });
-  $effect(() => {
     if (months !== store.forecastMonths) void store.updateSettings({ forecast_months: months });
   });
-
-  async function toggleWorkspaces(on: boolean) {
-    await store.updateSettings({ workspaces_enabled: on });
-    if (on && !store.workspaces.length) {
-      await store.insert('workspaces', [
-        { name: 'Meu', symbol: 'person', color: '#2BD4A4', sort_order: 0 },
-        { name: 'Esposa', symbol: 'heart', color: '#FF8FAB', sort_order: 1 },
-        { name: 'Casa', symbol: 'house', color: '#38D9F5', sort_order: 2 }
-      ]);
-    }
-    if (!on) store.setWorkspace('');
-  }
 
   async function copyCode() {
     await navigator.clipboard.writeText(store.household?.invite_code ?? '');
@@ -71,13 +55,6 @@
     <button class="form-row plain" onclick={() => store.rotateInvite()} use:hint={['Trocar código', 'O código antigo deixa de valer (quem já entrou continua).']}><Icon name="refresh" size={16} />Gerar código novo</button>
   </div>
   <p class="form-footer">Este código dá acesso a todo o seu financeiro. Para compartilhar só carro, casa e listas de compras, use <a class="link" href="#/mais/compartilhar">Mais › Compartilhar</a>.</p>
-
-  <SectionTitle title="Organização" />
-  <div class="form-group">
-    <div class="form-row" use:hint={['Áreas de trabalho', 'Separa contas inteiras em espaços (Meu, Esposa, Casa). Desligado, tudo junto e você separa por pessoa.']}><span class="field-label grow">Usar áreas de trabalho</span><Toggle label="Áreas de trabalho" bind:checked={workspaces} /></div>
-    {#if store.workspacesEnabled}<a class="form-row" href="#/mais/areas"><span class="grow">Áreas e a conta de cada uma</span><Icon name="chevron-right" size={15} class="faint" /></a>{/if}
-  </div>
-  <p class="form-footer">Ligado: cada conta fica numa área e, ao escolher uma área no topo, o app mostra só ela — contas, lançamentos, relatórios, contas fixas e importação. "Tudo" junta todas.</p>
 
   <SectionTitle title="Previsão" />
   <div class="form-group">

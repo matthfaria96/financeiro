@@ -1,6 +1,7 @@
 <script lang="ts">
+  import Select from '$lib/ui/Select.svelte';
   import { organizer } from '$lib/data/organizer.svelte';
-  import { fuelName, logKindIcon, logKindShort, type Fuel, type LogKind, type Vehicle, type VehicleLog } from '$lib/data/organizerTypes';
+  import { expenseKinds, fuelName, logKindIcon, logKindShort, normalizeKind, type Fuel, type LogKind, type Vehicle, type VehicleLog } from '$lib/data/organizerTypes';
   import { centsToInput, parseCents } from '$lib/core/money';
   import { today } from '$lib/core/dates';
   import Sheet from '$lib/ui/Sheet.svelte';
@@ -26,7 +27,7 @@
   $effect(() => {
     if (!open) return;
     const lastFuel = organizer.vehicle_logs.filter((l) => l.vehicle_id === vehicle.id && l.kind === 'fuel').toSorted((a, b) => b.date.localeCompare(a.date))[0];
-    kind = log?.kind ?? initialKind; date = log?.date ?? today(); amount = log ? centsToInput(log.amount_cents) : ''; description = log?.description ?? '';
+    kind = log ? normalizeKind(log.kind) : initialKind; date = log?.date ?? today(); amount = log ? centsToInput(log.amount_cents) : ''; description = log?.description ?? '';
     km = log?.odometer ? String(log.odometer) : ''; liters = log?.liters ? String(log.liters).replace('.', ',') : '';
     fuel = log?.fuel ?? lastFuel?.fuel ?? ''; full = log?.full_tank ?? true; vendor = log?.vendor ?? (log ? '' : lastFuel?.vendor ?? ''); notes = log?.notes ?? '';
   });
@@ -35,9 +36,7 @@
   const cents = $derived(Math.abs(parseCents(amount) ?? 0));
   const perLiter = $derived(litersValue ? cents / 100 / litersValue : null);
   // Dois tipos de lançamento: Combustível ou Gasto (e o gasto diz o que foi).
-  const expenseKinds: LogKind[] = ['insurance', 'tax', 'wash', 'service', 'parking', 'other'];
-  const expenseName: Partial<Record<LogKind, string>> = { insurance: 'Seguro', tax: 'Imposto', wash: 'Lavagem', service: 'Manutenção', parking: 'Estacionamento', other: 'Outro' };
-  const kinds = $derived(expenseKinds.includes(kind) || kind === 'fuel' ? expenseKinds : [...expenseKinds, kind]);
+  const kinds = expenseKinds;
   const lastKm = $derived(odometerOf(vehicle));
 
   async function save() {
@@ -67,7 +66,7 @@
     <div class="kinds">
       {#each kinds as value (value)}
         <button class="kind" class:on={kind === value} aria-pressed={kind === value} onclick={() => (kind = value)}>
-          <Icon name={logKindIcon[value]} size={18} /><span>{expenseName[value] ?? logKindShort[value]}</span></button>
+          <Icon name={logKindIcon[value]} size={18} /><span>{logKindShort[value]}</span></button>
       {/each}
     </div>
   {/if}
@@ -81,7 +80,7 @@
   {#if kind === 'fuel'}
     <div class="form-group" style="margin-top: 12px">
       <label class="form-row"><span class="field-label">Litros</span><input class="field num" inputmode="decimal" placeholder="ex.: 38,5" bind:value={liters} /></label>
-      <label class="form-row"><span class="field-label">Combustível</span><select class="field" bind:value={fuel}>{#each Object.entries(fuelName) as [value, label] (value)}<option {value}>{label}</option>{/each}</select></label>
+      <label class="form-row"><span class="field-label">Combustível</span><span class="field"><Select bind:value={fuel} label="Combustível" options={Object.entries(fuelName).map(([value, label]) => ({ value: value as Fuel, label }))} /></span></label>
       <div class="form-row" use:hint={['Tanque cheio', 'O consumo (km/L) é medido de um tanque cheio até o próximo. Se só completou um pouco, desligue.']}>
         <span class="field-label grow">Encheu o tanque</span><Toggle label="Tanque cheio" bind:checked={full} /></div>
     </div>
