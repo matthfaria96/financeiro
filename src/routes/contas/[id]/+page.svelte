@@ -13,6 +13,7 @@
   import { kindName } from '$lib/ui/look';
   import EntryRow from '$lib/screens/EntryRow.svelte';
   import AccountEditor from '$lib/screens/accounts/AccountEditor.svelte';
+  import ConfigureLink from '$lib/ui/ConfigureLink.svelte';
   import { filter } from '$lib/screens/transactions/filter.svelte';
   import { balanceOf, billDueOf, kindOf, lastEntryDate } from '$lib/features/model';
   import LineChart from '$lib/ui/charts/LineChart.svelte';
@@ -43,13 +44,13 @@
   <div class="page">
     <header class="row between top">
       <span class="row" style="gap: 10px; min-width: 0"><button class="icon-btn" aria-label="Voltar" onclick={() => history.back()}><Icon name="chevron-left" /></button><h1 class="ellipsis">{account.name}</h1></span>
-      <button class="icon-btn" aria-label="Editar conta" onclick={() => (editing = true)} use:hint={['Editar conta', 'Nome, banco, tipo, de quem é, área e saldo.']}><Icon name="pencil" /></button>
+      <button class="import" aria-label="Importar extrato" onclick={() => ui.startImport(account.id)} use:hint={['Importar extrato', `Solte o arquivo do banco: entra direto em ${account.name}.`]}><Icon name="import" size={16} /><span class="hide-m">Importar</span></button>
     </header>
     <section class="card row summary">
       <BankCard {account} width={140} />
       <div class="grow stack-sm" style="gap: 4px">
         <span class="caption">{kindName[account.kind]}</span>
-        <span class="value-lg" class:neg={balanceOf(account) < 0}>{money(balanceOf(account))}</span>
+        <span class="value-lg balance" class:neg={balanceOf(account) < 0}>{money(balanceOf(account))}</span>
         <span class="row" style="gap: 6px; flex-wrap: wrap">
           {#if account.default_person_id && store.personById.get(account.default_person_id)}<PersonChip person={store.personById.get(account.default_person_id)!} />{/if}
           {#if account.workspace_id && store.workspaceById.get(account.workspace_id)}{@const w = store.workspaceById.get(account.workspace_id)!}<span class="pill" style:color={w.color} style:background="color-mix(in srgb, {w.color} 15%, transparent)">{w.name}</span>{/if}
@@ -69,10 +70,6 @@
           <BarChart {labels} current={11} height={200} title="Entrou e saiu por mês" series={[{ id: 'in', name: 'Entrou', color: seriesColor.income, values: perMonth(1) }, { id: 'out', name: 'Saiu', color: seriesColor.account, values: perMonth(-1) }]} /></section>
       </div>
     {/if}
-    <div class="two">
-      <button class="btn primary lg" onclick={() => ui.startImport(account.id)}><Icon name="import" size={18} />Importar extrato</button>
-      <button class="btn lg" onclick={() => { filter.set({ accountId: account.id, period: 'all' }); goto('#/transacoes/todos'); }}><Icon name="list" size={18} />Ver lançamentos</button>
-    </div>
     <section class="card stack" use:hint={['Meses com extrato', 'Quais dos últimos 12 meses já têm lançamentos nesta conta.']}>
       <div class="row between"><span class="label">Meses com extrato</span>{#if lastEntryDate(account)}<span class="caption">até {dayMonth(lastEntryDate(account)!)}</span>{/if}</div>
       <div class="months">{#each months as m (m)}<div class="mo" title={monthTitle(m)}><span class:on={covered.has(m)}></span><small>{monthInitial(m)}</small></div>{/each}</div>
@@ -83,7 +80,7 @@
       <div style="text-align: right"><span class="caption">Saiu este mês</span><div class="value-md">{money(thisMonth.filter((e) => e.amount_cents < 0).reduce((s, e) => s + e.amount_cents, 0))}</div></div>
     </section>
     {#if entries.length}
-      <SectionTitle title="Últimos lançamentos" />
+      <SectionTitle title="Últimos lançamentos"><button class="btn ghost" onclick={() => { filter.set({ accountId: account.id, period: 'all' }); goto('#/transacoes/todos'); }}>Ver todos</button></SectionTitle>
       <div class="card flush entries">{#each entries.slice(0, 8) as entry (entry.id)}<EntryRow {entry} onclick={() => ui.editEntry(entry.id)} />{/each}</div>
     {/if}
     {#if batches.length}
@@ -94,6 +91,7 @@
         {/each}
       </div>
     {/if}
+    <ConfigureLink onclick={() => (editing = true)} />
   </div>
   <AccountEditor bind:open={editing} {account} />
 {:else}
@@ -103,7 +101,13 @@
 <style>
   .top h1 { margin: 6px 0; font: 700 26px var(--font-display); letter-spacing: -0.02em; }
   .summary { gap: 18px; }
-  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .balance { white-space: nowrap; font-size: clamp(20px, 6.4vw, 28px); }
+  @media (max-width: 600px) { .summary :global(.bank-card), .summary > :global(:first-child) { max-width: 120px; } }
+  .import { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 40px; min-width: 40px; padding: 0 14px; border-radius: 999px; font-size: 14px; font-weight: 600; flex: none;
+    color: var(--accent); border: 1px solid rgba(43, 212, 164, 0.3); background: var(--accent-soft); transition: background 0.2s, transform 0.2s var(--spring); }
+  .import:hover { background: rgba(43, 212, 164, 0.22); }
+  .import:active { transform: scale(0.94); }
+  @media (max-width: 600px) { .import { padding: 0; width: 40px; } }
   .months { display: grid; grid-template-columns: repeat(12, 1fr); gap: 5px; }
   .mo { display: flex; flex-direction: column; align-items: center; gap: 4px; }
   .mo span { width: 100%; height: 26px; border-radius: 6px; background: rgba(255, 255, 255, 0.07); }

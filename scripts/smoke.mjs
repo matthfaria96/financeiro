@@ -119,6 +119,12 @@ await step('Conta e preferências', go('#/mais/ajustes'), 'Painéis avançados')
 await step('Voltar ao início', go('#/'), 'Seu dinheiro');
 await step('Notas', go('#/notas'), 'Lista de desejos');
 await step('Notas › Configurar', () => ev(`document.querySelector('main .configure').click(); 'ok'`), 'Do app');
+await step('Início (conta)', go('#/'), 'Seu dinheiro');
+await step('Abrir uma conta', () => ev(`document.querySelector('main a.item').click(); 'ok'`), 'Meses com extrato');
+await step('Conta › Configurar (editar)', () => ev(`document.querySelector('main .configure').click(); 'ok'`), 'Nome');
+await closeSheet();
+await step('Conta › Importar no topo', () => ev(`document.querySelector('main [aria-label="Importar extrato"]').click(); 'ok'`), 'Solte os extratos');
+await closeSheet();
 await step('Voltar ao início (importar)', go('#/'), 'Panorama de');
 await step('Importar (folha)', () => ev(`document.querySelector('main [aria-label="Importar extrato"]').click(); 'ok'`), 'Solte os extratos');
 await closeSheet();

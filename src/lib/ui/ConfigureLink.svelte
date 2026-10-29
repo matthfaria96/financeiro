@@ -1,10 +1,11 @@
 <script lang="ts">
   import Icon from './Icon.svelte';
-  /** "Configurar" discreto no pé das três telas: leva à tela de configurações daquela tela (Voltar retorna). */
-  let { href, label = 'Configurar' }: { href: string; label?: string } = $props();
+  /** "Configurar" discreto no pé das telas: leva às configurações daquela tela (`href`) ou abre o editor dela (`onclick`). */
+  let { href, onclick, label = 'Configurar' }: { href?: string; onclick?: () => void; label?: string } = $props();
 </script>
 
-<a class="configure" {href}><Icon name="settings" size={14} />{label}</a>
+{#if href}<a class="configure" {href}><Icon name="settings" size={14} />{label}</a>
+{:else}<button class="configure" {onclick}><Icon name="settings" size={14} />{label}</button>{/if}
 
 <style>
   .configure { align-self: center; display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; padding: 7px 14px; border: 0; border-radius: 999px; background: none;
