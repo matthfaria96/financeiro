@@ -34,7 +34,7 @@ async function step(name, action, expect) {
 }
 const go = (hash) => () => ev(`location.hash = ${JSON.stringify(hash)}`);
 const closeSheet = () => ev(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))`).then(() => sleep(700));
-await step('Início', go('#/'), 'Gastos por mês');
+await step('Início', go('#/'), 'Panorama mensal');
 await step('Fechar o mês (janela)', () => click('Fechar o mês'), 'somando a caixinha');
 await closeSheet();
 await step('Início › escolher contas', () => ev(`document.querySelector('main [aria-label="Escolher contas"]').click(); 'ok'`), 'Contas no Início');
@@ -57,7 +57,7 @@ await step('Seletor Período abre', () => ev(`document.querySelector('main [aria
 await step('Período De… até…', () => ev(`(() => { const o = [...document.querySelectorAll('.select-pop [role=option]')].find((x) => x.textContent.includes('De…')); if (!o) return 'NÃO ACHEI'; o.click(); return 'ok'; })()`), 'Até');
 await step('Abrir um lançamento', () => ev(`(() => { const el = [...document.querySelectorAll('main .entries button')].find((e) => e.textContent.includes('R$')); if (!el) return 'NÃO ACHEI lançamento'; el.click(); return 'ok'; })()`), 'Categoria');
 await closeSheet();
-await step('Voltar ao início (contas)', go('#/'), 'Gastos por mês');
+await step('Voltar ao início (contas)', go('#/'), 'Panorama mensal');
 await step('Contas fixas (janela)', go('#/a-pagar'), 'Total do mês');
 await step('Contas fixas › Ano', () => ev(`[...document.querySelectorAll('[role=dialog] [role=radio]')].find((b) => b.textContent.trim() === 'Ano').click(); 'ok'`), 'Uma vez por ano');
 await step('Nova conta anual (folha)', () => click('Anual'), 'Uma vez por ano');

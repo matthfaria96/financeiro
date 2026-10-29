@@ -5,23 +5,24 @@
   import BarChart from '$lib/ui/charts/BarChart.svelte';
   import Icon from '$lib/ui/Icon.svelte';
   import { seriesColor } from '$lib/ui/charts/scale';
-  import { spendingScale } from '$lib/features/analytics';
+  import { analyzeMonth, spendingScale } from '$lib/features/analytics';
 
-  /** Gastos dos últimos 6 meses com a linha da média: este mês está acima ou abaixo do normal? */
+  /** Panorama mensal: entradas e saídas dos últimos 6 meses lado a lado, com a média das saídas. */
   let { entries, accounts }: { entries: Entry[]; accounts: Account[] } = $props();
   const scale = $derived(spendingScale(entries, accounts, 6));
+  const income = $derived(scale.months.map((m) => analyzeMonth(m, entries, accounts).incomeTotal));
   const diff = $derived(scale.average ? (scale.current - scale.average) / scale.average : null);
 </script>
 
 <section class="card">
-  <div class="card-head"><h3>Gastos por mês</h3>
-    {#if diff !== null && Math.abs(diff) < 0.03}<span class="pill">Na média</span>
-    {:else if diff !== null}<span class="pill" class:up={diff > 0} class:down={diff <= 0}><Icon name={diff > 0 ? 'trending-up' : 'trending-down'} size={12} />{percent(diff)} {diff > 0 ? 'acima' : 'abaixo'} da média</span>{/if}
+  <div class="card-head"><h3>Panorama mensal</h3>
+    {#if diff !== null && Math.abs(diff) < 0.03}<span class="pill">Gastos na média</span>
+    {:else if diff !== null}<span class="pill" class:up={diff > 0} class:down={diff <= 0}><Icon name={diff > 0 ? 'trending-up' : 'trending-down'} size={12} />Gastos {percent(diff)} {diff > 0 ? 'acima' : 'abaixo'} da média</span>{/if}
   </div>
-  <BarChart labels={scale.months.map((m) => shortMonth(m).slice(0, 3))} current={scale.months.length - 1} height={170} title="Gastos por mês com a média"
-    series={[{ id: 'out', name: 'Gastos', color: seriesColor.credit, values: scale.values }]}
-    reference={scale.average ? { value: scale.average, label: `média ${money(scale.average, { cents: false })}` } : null} />
-  <p class="caption note">{scale.average === null ? 'Importe meses anteriores para comparar com a sua média.' : `Média dos ${scale.monthsInAverage} meses anteriores com dados. O mês atual ainda não terminou.`}</p>
+  <BarChart labels={scale.months.map((m) => shortMonth(m).slice(0, 3))} current={scale.months.length - 1} height={190} title="Entradas e saídas por mês"
+    series={[{ id: 'in', name: 'Entradas', color: seriesColor.income, values: income }, { id: 'out', name: 'Saídas', color: seriesColor.credit, values: scale.values }]}
+    reference={scale.average ? { value: scale.average, label: `média das saídas ${money(scale.average, { cents: false })}` } : null} />
+  <p class="caption note">{scale.average === null ? 'Importe meses anteriores para comparar com a sua média.' : `Média das saídas nos ${scale.monthsInAverage} meses anteriores com dados. O mês atual ainda não terminou.`}</p>
 </section>
 
 <style>

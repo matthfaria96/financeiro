@@ -63,7 +63,8 @@
   }
 
   function isSure(draft: ImportDraft): boolean {
-    if (draft.targetAccount) return draft.possibleCount === 0 && !draft.otherAccountMatches.length && draft.investment.type !== 'new';
+    const kindOk = (draft.statement.kind === 'creditCard') === (draft.targetAccount?.kind === 'creditCard');
+    if (draft.targetAccount) return kindOk && draft.possibleCount === 0 && !draft.otherAccountMatches.length && draft.investment.type !== 'new';
     return draft.statement.bank !== 'other' && draft.possibleCount === 0;
   }
 

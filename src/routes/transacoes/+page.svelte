@@ -70,11 +70,13 @@
       <div><span class="caption">Saídas</span><b class="num">{money(analysis.expenseTotal)}</b></div>
       <div><span class="caption">Balanço</span><b class="num" class:pos={analysis.balance >= 0} class:neg={analysis.balance < 0}>{money(analysis.balance)}</b></div>
     </section>
+    {#if accounts.some((a) => a.kind === 'creditCard')}
     <div class="credit-mode">
       <Segmented label="Compras no cartão" value={prefs.creditByPurchase ? 'purchase' : 'bill'} options={[{ value: 'bill', label: 'Cartão no mês da fatura' }, { value: 'purchase', label: 'No mês da compra' }]}
         onchange={(v) => prefs.setCreditByPurchase(v === 'purchase')} />
       <span class="caption">{prefs.creditByPurchase ? 'Compras no cartão contam no dia em que foram feitas.' : 'Compras no cartão contam quando a fatura vence (parceladas: só a parcela do mês).'}</span>
     </div>
+    {/if}
     <div class="layout">
       <CategoryDonut title="Saídas" groups={analysis.expenses} total={analysis.expenseTotal} empty="Nenhuma saída neste mês." />
       <CategoryDonut title="Entradas" groups={analysis.income} total={analysis.incomeTotal} tone="pos" empty="Nenhuma entrada neste mês. Importe o extrato da conta." />

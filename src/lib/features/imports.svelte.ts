@@ -134,8 +134,20 @@ export function matchAccount(statement: ImportedStatement, accounts: Account[]):
 export function createDraft(fileName: string, statement: ImportedStatement, accountId: string | null): ImportDraft {
   const draft = new ImportDraft(fileName, statement);
   draft.newAccountWorkspace = store.scopeId || null;
-  const chosen = accountId ? store.accountById.get(accountId) : undefined;
-  const match = chosen ?? matchAccount(statement, store.accounts.filter(inScopeAccount)) ?? matchAccount(statement, store.accounts);
+  // Fatura nunca vai para conta corrente (nem extrato de conta para cartão): se a conta escolhida é do tipo errado,
+  // usa a do tipo certo do mesmo banco; se não existir, cria.
+  const wanted: AccountKind = statement.kind === 'creditCard' ? 'creditCard' : 'checking';
+  const picked = accountId ? store.accountById.get(accountId) : undefined;
+  const sameKind = (a: Account | undefined) => !!a && (wanted === 'creditCard' ? a.kind === 'creditCard' : a.kind !== 'creditCard');
+  const sibling = picked && !sameKind(picked) ? store.accounts.find((a) => !a.archived && a.bank === picked.bank && a.default_person_id === picked.default_person_id && sameKind(a)) : undefined;
+  const chosen = sameKind(picked) ? picked : sibling;
+  if (picked && !chosen) {
+    draft.newAccountBank = picked.bank;
+    draft.defaultPersonId = picked.default_person_id;
+    draft.newAccountName = `${picked.bank === 'other' ? picked.name : bankName[picked.bank]} ${wanted === 'creditCard' ? 'cartão' : 'conta'}`;
+  }
+  const found = matchAccount(statement, store.accounts.filter(inScopeAccount)) ?? matchAccount(statement, store.accounts);
+  const match = chosen ?? (picked ? undefined : found);
   if (match) draft.target = match.id;
   rebuildRows(draft);
   configureBills(draft);
