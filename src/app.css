@@ -60,6 +60,12 @@ body::before {
 }
 
 button, input, select, textarea { font: inherit; color: inherit; }
+/* Toque como app nativo: sem atraso de clique, sem menu de "pressionar e segurar" nem seleção de texto em botões e menus
+   (o texto dos lançamentos e campos continua selecionável). */
+button, a, [role='button'], [role='tab'], [role='radio'], [role='switch'], label { touch-action: manipulation; -webkit-touch-callout: none; }
+button, [role='button'], [role='tab'], [role='radio'], [role='switch'], .tabbar, .sidebar, .card-head, .chip, .btn { -webkit-user-select: none; user-select: none; }
+img { -webkit-user-drag: none; -webkit-touch-callout: none; }
+@media (pointer: coarse) { :root { --tap: 44px; } }
 button { cursor: pointer; }
 a { color: inherit; text-decoration: none; }
 a.link { color: var(--accent); }

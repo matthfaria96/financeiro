@@ -94,7 +94,7 @@
   .body { overflow-y: auto; padding: 8px 16px 20px; overscroll-behavior: contain; }
   .grabber { display: none; }
   @media (max-width: 720px) {
-    .sheet { left: 0; right: 0; top: auto; bottom: 0; transform: none; width: 100%; max-height: 94dvh; border-radius: 22px 22px 0 0; padding-bottom: env(safe-area-inset-bottom); }
+    .sheet { left: 0; right: 0; top: auto; bottom: 0; transform: none; width: 100%; max-height: calc(100dvh - env(safe-area-inset-top) - 12px); border-radius: 22px 22px 0 0; padding-bottom: env(safe-area-inset-bottom); }
     .sheet.wide { width: 100%; }
     .grabber { display: block; width: 38px; height: 5px; border-radius: 3px; background: rgba(255, 255, 255, 0.25); margin: 8px auto 0; }
   }

@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
+  import { haptic } from '$lib/features/pwa.svelte';
 
   /**
    * Carrossel de cartões do mesmo tamanho: arraste (dedo, mouse ou dois dedos no trackpad), use as setas
@@ -16,7 +17,11 @@
   let wheelTotal = 0, wheelPause = 0;
 
   const clamp = (i: number) => Math.max(0, Math.min(count - 1, i));
-  const go = (i: number) => (index = clamp(i));
+  const go = (i: number) => {
+    const next = clamp(i);
+    if (next !== index) haptic();
+    index = next;
+  };
   // Nas pontas, resiste (efeito elástico) em vez de parar seco.
   const resisted = $derived((index === 0 && drag > 0) || (index === count - 1 && drag < 0) ? drag / 3 : drag);
   const offset = $derived(-index * (width + GAP) + resisted);

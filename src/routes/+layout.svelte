@@ -1,7 +1,7 @@
 <script lang="ts">
   import '../app.css';
   import { onMount, type Snippet } from 'svelte';
-  import { page } from '$app/state';
+  import { page, updated } from '$app/state';
   import { afterNavigate } from '$app/navigation';
   import { store } from '$lib/data/store.svelte';
   import { organizer } from '$lib/data/organizer.svelte';
@@ -20,6 +20,9 @@
   import AccountEditor from '$lib/screens/accounts/AccountEditor.svelte';
   import { seedDemo } from '$lib/features/demoData';
   import { exitDemo } from '$lib/data/demoMode';
+  import { haptic, pwa } from '$lib/features/pwa.svelte';
+  import { billInMonth, billStatus } from '$lib/features/bills';
+  import { monthOf, today } from '$lib/core/dates';
 
   let { children }: { children: Snippet } = $props();
 
@@ -38,17 +41,39 @@
     if (store.status === 'signedOut') organizer.reset();
   });
 
+  // ?abrir=… (atalhos do ícone, "Compartilhar" do Android e a demonstração): o que fazer quando o app estiver pronto.
+  const params = typeof location === 'undefined' ? new URLSearchParams() : new URLSearchParams(location.search);
+  let pendingOpen = params.get('abrir');
+  const capture = params.has('captura');
+
   onMount(async () => {
+    pwa.start((files) => ui.startImport(null, files));
+    if (pendingOpen) history.replaceState(history.state, '', `${location.pathname}${params.has('demo') ? `?demo${capture ? '&captura' : ''}` : ''}${location.hash}`);
     await store.start();
     if (store.demo) {
       // ?demo&vazio: demonstração sem dados, para ver o primeiro acesso.
-      if (!new URLSearchParams(location.search).has('vazio')) await seedDemo();
-      // Só na demonstração: ?abrir=importar | lancamento | conta, para conferir as folhas.
-      const open = new URLSearchParams(location.search).get('abrir');
-      if (open === 'importar') ui.startImport();
-      if (open === 'conta') ui.newAccountOpen = true;
-      if (open === 'lancamento') ui.editEntry(store.entries.find((e) => e.merchant_id && e.bill_due_date)?.id ?? '');
+      if (!params.has('vazio')) await seedDemo();
+      // Só na demonstração: ?abrir=conta | lancamento abre as folhas para conferir.
+      if (pendingOpen === 'conta') ui.newAccountOpen = true;
+      if (pendingOpen === 'lancamento') ui.editEntry(store.entries.find((e) => e.merchant_id && e.bill_due_date)?.id ?? '');
     }
+  });
+
+  $effect(() => {
+    if (store.status !== 'ready' || !pendingOpen) return;
+    const action = pendingOpen;
+    pendingOpen = null;
+    if (action === 'importar') ui.startImport();
+    if (action === 'novo') ui.newEntryOpen = true;
+    if (action === 'recebidos') void pwa.takeShared().then((files) => files.length && ui.startImport(null, files));
+  });
+
+  // Selo no ícone do app: contas fixas deste mês vencidas ou que vencem hoje (e ainda não pagas).
+  $effect(() => {
+    if (store.status !== 'ready' || store.demo) return;
+    const month = monthOf(today());
+    const late = store.bills.filter((b) => b.active && billInMonth(b, month)).map((b) => billStatus(b, month, store.entries)).filter((s) => s.type === 'overdue' || s.type === 'today').length;
+    pwa.badge(late);
   });
 
   // Arrastar arquivos de extrato para a janela abre a importação com eles.
@@ -78,10 +103,15 @@
     <button class="btn primary" onclick={() => location.reload()}>Tentar de novo</button>
   </div>
 {:else}
+  <div class="statusbar" aria-hidden="true"></div>
+  {#if !pwa.online}<div class="offline" role="status"><Icon name="cloud" size={14} />Sem internet · mostrando o que está salvo</div>{/if}
+  {#if updated.current}
+    <div class="update glass" role="status"><Icon name="sparkles" size={16} /><span class="grow">Versão nova do app pronta.</span><button class="btn sm primary" onclick={() => location.reload()}>Atualizar</button></div>
+  {/if}
   <div class="shell">
     <Sidebar />
     <main>
-      {#if store.demo}
+      {#if store.demo && !capture}
         <div class="demo-bar glass" role="status">
           <Icon name="sparkles" size={16} /><span class="grow"><b>Demonstração</b> · dados fictícios<span class="hide-m">, nada é salvo e nada mexe na sua conta</span></span>
           <button class="btn sm" onclick={exitDemo}>Sair</button>
@@ -91,7 +121,7 @@
     </main>
     <nav class="tabbar" aria-label="Seções">
       {#each tabs as tab (tab.id)}
-        <a href={tab.href} class:on={active === tab.id} aria-current={active === tab.id ? 'page' : undefined}>
+        <a href={tab.href} class:on={active === tab.id} aria-current={active === tab.id ? 'page' : undefined} onclick={() => active !== tab.id && haptic()}>
           <Icon name={tab.icon} size={23} stroke={active === tab.id ? 2.3 : 1.9} /><span>{tab.label}</span>
         </a>
       {/each}
@@ -129,10 +159,22 @@
     .shell > :global(.sidebar) { display: flex; }
     main { padding-top: 0; }
   }
-  .demo-bar { position: sticky; top: 8px; z-index: 40; margin: 8px 16px 0; display: flex; align-items: center; gap: 10px; padding: 8px 10px 8px 14px; border-radius: 14px; font-size: 13.5px; color: var(--text-2); }
+  .demo-bar { position: sticky; top: calc(8px + env(safe-area-inset-top)); z-index: 40; margin: 8px 16px 0; display: flex; align-items: center; gap: 10px; padding: 8px 10px 8px 14px; border-radius: 14px; font-size: 13.5px; color: var(--text-2); }
   .demo-bar b { color: var(--warning); }
   .demo-bar :global(svg) { color: var(--warning); flex: none; }
   .demo-bar .btn.sm { height: 30px; padding: 0 12px; font-size: 13px; }
   @media (min-width: 960px) { .demo-bar { margin: 12px auto 0; max-width: 1108px; width: calc(100% - 72px); } }
+  /* App instalado no iPhone: a barra de status fica por cima do conteúdo; esta faixa de vidro a mantém legível. */
+  .statusbar { position: fixed; z-index: 60; top: 0; left: 0; right: 0; height: env(safe-area-inset-top); pointer-events: none;
+    background: rgba(6, 10, 9, 0.72); backdrop-filter: blur(16px) saturate(1.6); -webkit-backdrop-filter: blur(16px) saturate(1.6); }
+  main { padding-top: env(safe-area-inset-top); }
+  .offline { position: fixed; z-index: 70; top: calc(8px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 6px;
+    padding: 6px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: #ffd28a; background: rgba(60, 40, 10, 0.85); border: 1px solid rgba(255, 166, 61, 0.35);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); animation: rise 0.4s var(--spring) both; white-space: nowrap; }
+  .update { position: fixed; z-index: 130; left: 12px; right: 12px; bottom: calc(88px + env(safe-area-inset-bottom)); max-width: 440px; margin: 0 auto; display: flex; align-items: center; gap: 10px;
+    padding: 10px 10px 10px 14px; border-radius: 16px; font-size: 14px; box-shadow: 0 14px 40px rgba(0, 0, 0, 0.45); animation: rise 0.45s var(--spring) both; }
+  .update :global(svg) { color: var(--accent); flex: none; }
+  .update .btn.sm { height: 32px; padding: 0 12px; font-size: 13px; }
+  @media (min-width: 960px) { .update { bottom: 24px; left: calc(220px + 24px); right: 24px; } }
   .dropzone { position: fixed; inset: 12px; z-index: 150; border-radius: 28px; border: 2px dashed var(--accent); background: rgba(8, 18, 15, 0.85); display: grid; place-items: center; align-content: center; gap: 8px; color: var(--accent); font-weight: 600; pointer-events: none; }
 </style>

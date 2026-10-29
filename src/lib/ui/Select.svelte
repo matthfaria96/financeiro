@@ -130,6 +130,8 @@
   @keyframes pop { from { opacity: 0; transform: translateY(-6px) scale(0.98); } }
   @keyframes pop-up { from { opacity: 0; transform: translateY(calc(-100% + 6px)) scale(0.98); } }
   .search { flex: none; margin: 2px 2px 6px; height: 36px; border-radius: 10px; border: 1px solid var(--stroke-strong); background: rgba(255, 255, 255, 0.06); padding: 0 10px; color: var(--text); outline: none; font: inherit; font-size: 14px; }
+  /* Celular: 16 px no campo de busca evita o zoom automático do iPhone. */
+  @media (pointer: coarse) { .search { font-size: 16px; } }
   .items { overflow-y: auto; overscroll-behavior: contain; }
   .group { padding: 8px 10px 4px; font-size: 11.5px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; }
   .item { display: flex; align-items: center; gap: 9px; width: 100%; min-height: 38px; padding: 6px 10px; border: 0; border-radius: 9px; background: none; color: var(--text); text-align: left; font: inherit; font-size: 14.5px; cursor: pointer; }

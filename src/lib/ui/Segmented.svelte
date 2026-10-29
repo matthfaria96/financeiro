@@ -1,5 +1,6 @@
 <script lang="ts" generics="T">
   import { untrack } from 'svelte';
+  import { haptic } from '$lib/features/pwa.svelte';
   /** Controle segmentado do iOS: a pastilha desliza até a opção escolhida. */
   let { options, value = $bindable(), label, onchange }: { options: { value: T; label: string }[]; value: T; label: string; onchange?: (value: T) => void } = $props();
   let buttons = $state<HTMLButtonElement[]>([]);
@@ -21,7 +22,7 @@
 <div class="seg" role="radiogroup" aria-label={label} bind:clientWidth={width}>
   {#if thumb}<span class="thumb" class:ready style:width="{thumb.w}px" style:transform="translateX({thumb.x}px)" aria-hidden="true"></span>{/if}
   {#each options as option, i (String(option.value))}
-    <button bind:this={buttons[i]} type="button" role="radio" aria-checked={value === option.value} class:on={value === option.value} onclick={() => { value = option.value; onchange?.(option.value); }}>{option.label}</button>
+    <button bind:this={buttons[i]} type="button" role="radio" aria-checked={value === option.value} class:on={value === option.value} onclick={() => { if (value !== option.value) haptic(); value = option.value; onchange?.(option.value); }}>{option.label}</button>
   {/each}
 </div>
 

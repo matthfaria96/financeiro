@@ -11,6 +11,8 @@ export default {
     paths: { base, relative: true },
     // Rotas no "#" (…/#/transacoes): funciona no GitHub Pages sem servidor e sem página 404.
     router: { type: 'hash' },
-    serviceWorker: { register: true }
+    serviceWorker: { register: true },
+    // Confere a cada minuto se saiu versão nova (o app mostra "Atualizar").
+    version: { pollInterval: 60_000 }
   }
 };

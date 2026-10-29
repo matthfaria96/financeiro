@@ -21,6 +21,7 @@
   import Tally from '$lib/ui/Tally.svelte';
   import { prefs } from '$lib/ui/prefs.svelte';
   import { ui } from '$lib/ui/ui.svelte';
+  import { haptic } from '$lib/features/pwa.svelte';
   import ConfigureLink from '$lib/ui/ConfigureLink.svelte';
 
   /** Lançamentos (o "analítico"): o mês escolhido em saldo, entradas, saídas por categoria e balanço.
@@ -110,7 +111,7 @@
   {/if}
   <ConfigureLink href="#/transacoes/configurar" />
 </div>
-<button class="fab" aria-label="Novo lançamento" onclick={() => (ui.newEntryOpen = true)} use:hint={['Novo lançamento', 'Anote à mão um gasto ou uma entrada (dinheiro, Pix de alguém…).']}><Icon name="plus" size={24} stroke={2.4} /></button>
+<button class="fab" aria-label="Novo lançamento" onclick={() => { haptic(); ui.newEntryOpen = true; }} use:hint={['Novo lançamento', 'Anote à mão um gasto ou uma entrada (dinheiro, Pix de alguém…).']}><Icon name="plus" size={24} stroke={2.4} /></button>
 <ChartsSheet bind:open={chartsOpen} focus="cost" month={future ? current : month} {entries} {accounts} />
 
 <style>

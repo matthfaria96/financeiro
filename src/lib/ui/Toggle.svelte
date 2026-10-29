@@ -1,8 +1,9 @@
 <script lang="ts">
+  import { haptic } from '$lib/features/pwa.svelte';
   let { checked = $bindable(), label, onchange }: { checked: boolean; label: string; onchange?: (checked: boolean) => void } = $props();
 </script>
 
-<button type="button" role="switch" aria-checked={checked} aria-label={label} class="toggle" class:on={checked} onclick={() => { checked = !checked; onchange?.(checked); }}>
+<button type="button" role="switch" aria-checked={checked} aria-label={label} class="toggle" class:on={checked} onclick={() => { checked = !checked; haptic(); onchange?.(checked); }}>
   <span></span>
 </button>
 

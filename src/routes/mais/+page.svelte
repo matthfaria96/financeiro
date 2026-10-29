@@ -8,6 +8,8 @@
   import FamilySheet from '$lib/screens/settings/FamilySheet.svelte';
   import { exitDemo } from '$lib/data/demoMode';
   import { ui } from '$lib/ui/ui.svelte';
+  import { pwa } from '$lib/features/pwa.svelte';
+  import InstallCard from '$lib/ui/InstallCard.svelte';
   import ProfileAvatar from '$lib/ui/ProfileAvatar.svelte';
   import { profileName } from '$lib/features/profile';
 
@@ -43,6 +45,11 @@
     <MoreRow href="#/mais/compartilhar" title="Espaços compartilhados" detail="O que a família vê junto: listas, desejos, carro." icon="share" color="#FF8FAB" />
   </div>
 
+  {#if pwa.canInstall || pwa.standalone}
+    <SectionTitle title="App no celular" />
+    {#if pwa.standalone}<div class="card row small installed"><Icon name="check-circle" size={18} />Você está usando o app instalado.</div>{:else}<InstallCard />{/if}
+  {/if}
+
   <SectionTitle title="Conta" />
   <div class="card flush list">
     <MoreRow href="#/mais/ajustes" title="Conta e preferências" detail="Senha, código da casa, painéis avançados, manutenção e demonstração." icon="settings" color="#8E8E93" />
@@ -60,6 +67,8 @@
   .avatar { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; flex: none; font-weight: 700; background: rgba(255, 143, 171, 0.18); color: #ff8fab; }
   .avatar.plus { background: var(--accent-soft); color: var(--accent); }
   .add-row { color: var(--accent); }
+  .installed { gap: 10px; color: var(--text-2); }
+  .installed :global(svg) { color: var(--accent); }
   .signout { margin-top: 22px; color: var(--negative); }
   .pill.full { color: var(--accent); background: var(--accent-soft); }
   .pill.notes { color: #ff8fab; background: rgba(255, 143, 171, 0.14); }

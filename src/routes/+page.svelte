@@ -13,6 +13,7 @@
   import { dayMonth } from '$lib/core/dates';
   import ProfileAvatar from '$lib/ui/ProfileAvatar.svelte';
   import ConfigureLink from '$lib/ui/ConfigureLink.svelte';
+  import InstallCard from '$lib/ui/InstallCard.svelte';
   import { profileName } from '$lib/features/profile';
   import { inScope, inScopeAccount } from '$lib/features/model';
   import { analyzeMonth } from '$lib/features/analytics';
@@ -53,6 +54,7 @@
       <PanoramaCard {month} {analysis} {entries} {accounts} {stale} />
       <ForecastCard {accounts} />
     </div>
+    <InstallCard dismissible />
     <ConfigureLink href="#/configurar" />
   {/if}
 
