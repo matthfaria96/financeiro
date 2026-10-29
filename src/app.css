@@ -35,13 +35,15 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  /* Mesma cor do fundo atrás das barras do Safari (antes aparecia uma faixa preta sólida embaixo). */
+  background: #060a09;
   -webkit-tap-highlight-color: transparent;
 }
 
 body {
   margin: 0;
   min-height: 100dvh;
-  background: #060a09;
+  background: transparent;
   color: var(--text);
   font: 400 16px/1.35 var(--font);
   font-feature-settings: 'tnum' 0;
@@ -51,7 +53,8 @@ body {
 
 /* Luzes de fundo (fixas, pintadas uma vez): dão a cor que o vidro dos cartões deixa passar. */
 body::before {
-  content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  /* 100lvh: cobre também a área atrás da barra do Safari quando ela encolhe. */
+  content: ''; position: fixed; left: 0; right: 0; top: 0; height: 100lvh; z-index: -1; pointer-events: none;
   background:
     radial-gradient(700px 380px at 50% -6%, rgba(43, 212, 164, 0.16), transparent 70%),
     radial-gradient(900px 600px at 12% -8%, rgba(43, 212, 164, 0.20), transparent 62%),

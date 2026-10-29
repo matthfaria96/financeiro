@@ -54,6 +54,7 @@
   $effect(() => {
     document.documentElement.classList.toggle('bar-compact', compact);
     document.documentElement.classList.toggle('bar-gone', compact && !pwa.standalone);
+    document.documentElement.classList.toggle('standalone', pwa.standalone);
   });
   afterNavigate(({ from }) => {
     if (from) ui.navigations++;
@@ -127,7 +128,7 @@
     <button class="btn primary" onclick={() => location.reload()}>Tentar de novo</button>
   </div>
 {:else}
-  <div class="statusbar" class:on={scrolled} aria-hidden="true"></div>
+  {#if pwa.standalone}<div class="statusbar" class:on={scrolled} aria-hidden="true"></div>{/if}
   {#if !pwa.online}<div class="offline" role="status"><Icon name="cloud" size={14} />Sem internet · mostrando o que está salvo</div>{/if}
   {#if updated.current}
     <div class="update glass" role="status"><Icon name="sparkles" size={16} /><span class="grow">Versão nova do app pronta.</span><button class="btn sm primary" onclick={() => location.reload()}>Atualizar</button></div>
@@ -203,7 +204,9 @@
     background: rgba(18, 30, 26, 0.55); backdrop-filter: blur(14px) saturate(1.5); -webkit-backdrop-filter: blur(14px) saturate(1.5);
     border-bottom: 1px solid rgba(255, 255, 255, 0.06); opacity: 0; transition: opacity 0.3s; }
   .statusbar.on { opacity: 1; }
-  main { padding-top: calc(env(safe-area-inset-top) + 14px); }
+  /* Só o app instalado ganha folga extra abaixo do relógio; no navegador o Safari já cuida do topo. */
+  main { padding-top: env(safe-area-inset-top); }
+  :global(html.standalone) main { padding-top: calc(env(safe-area-inset-top) + 14px); }
   @media (min-width: 960px) { main { padding-top: 0; } }
   .offline { position: fixed; z-index: 70; top: calc(8px + env(safe-area-inset-top)); left: 0; right: 0; margin: 0 auto; width: fit-content; max-width: calc(100% - 24px); display: flex; align-items: center; gap: 6px;
     padding: 6px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: #ffd28a; background: rgba(60, 40, 10, 0.85); border: 1px solid rgba(255, 166, 61, 0.35);
