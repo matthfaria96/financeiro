@@ -59,8 +59,15 @@
 
   function close() {
     open = false;
-    trigger?.focus();
+    trigger?.focus({ preventScroll: true });
   }
+  // Rolar a tela ou a janela por trás fecha a lista (senão ela fica solta, longe do botão). Rolar a própria lista, não.
+  $effect(() => {
+    if (!open) return;
+    const onScroll = (e: Event) => { if (!(e.target instanceof Element && e.target.closest('.select-pop'))) close(); };
+    addEventListener('scroll', onScroll, true);
+    return () => removeEventListener('scroll', onScroll, true);
+  });
 
   function choose(option: Option<T>) {
     value = option.value;
@@ -124,7 +131,7 @@
   i { width: 9px; height: 9px; border-radius: 3px; flex: none; }
   :global(.select-back) { position: fixed; inset: 0; z-index: 300; }
   :global(.select-pop) { position: fixed; z-index: 301; display: flex; flex-direction: column; overflow: hidden; border-radius: 14px; padding: 6px;
-    background: #1a221f; border: 1px solid var(--stroke-strong); box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+    background: #1a221f; border: 1px solid var(--stroke-strong); box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55); will-change: transform, opacity;
     animation: pop 0.22s cubic-bezier(0.22, 1, 0.36, 1); transform-origin: top center; }
   :global(.select-pop.up) { transform: translateY(-100%); animation-name: pop-up; }
   @keyframes pop { from { opacity: 0; transform: translateY(-6px) scale(0.98); } }

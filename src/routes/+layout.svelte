@@ -144,7 +144,7 @@
   .tabbar {
     position: fixed; z-index: 50; left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom));
     display: grid; grid-template-columns: repeat(3, 1fr); height: 66px; border-radius: 30px; padding: 0 6px;
-    background: rgba(28, 36, 33, 0.66); backdrop-filter: blur(24px) saturate(1.8); -webkit-backdrop-filter: blur(24px) saturate(1.8);
+    background: rgba(24, 32, 29, 0.78); backdrop-filter: blur(16px) saturate(1.6); -webkit-backdrop-filter: blur(16px) saturate(1.6);
     border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
   }
   .tabbar a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; margin: 6px 0; color: var(--text-2); font-size: 10.5px; font-weight: 600; border-radius: 24px; transition: color 0.25s, background 0.3s, transform 0.2s cubic-bezier(0.22, 1, 0.36, 1); }
@@ -163,7 +163,7 @@
   .demo-bar b { color: var(--warning); }
   .demo-bar :global(svg) { color: var(--warning); flex: none; }
   .demo-bar .btn.sm { height: 30px; padding: 0 12px; font-size: 13px; }
-  @media (min-width: 960px) { .demo-bar { margin: 12px auto 0; max-width: 1108px; width: calc(100% - 72px); } }
+  @media (min-width: 960px) { .demo-bar { margin: 12px auto 0; max-width: 908px; width: calc(100% - 72px); } }
   /* App instalado no iPhone: a barra de status fica por cima do conteúdo; esta faixa de vidro a mantém legível. */
   .statusbar { position: fixed; z-index: 60; top: 0; left: 0; right: 0; height: env(safe-area-inset-top); pointer-events: none;
     background: rgba(6, 10, 9, 0.72); backdrop-filter: blur(16px) saturate(1.6); -webkit-backdrop-filter: blur(16px) saturate(1.6); }

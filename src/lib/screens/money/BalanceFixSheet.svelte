@@ -23,7 +23,9 @@
   /** Saques das contas desde o último fechamento: entraram na carteira (não são gasto). */
   const withdrawals = (from: Day, to: Day) => store.entries.filter((e) => e.category_id === saqueId && e.amount_cents < 0 && e.date > from && e.date <= to).reduce((s, e) => s - e.amount_cents, 0);
   /** Quanto o app espera em cada conta no dia escolhido (na carteira: + os saques do período). */
-  const expected = (a: Account) => balanceOf(a, day) + (a.kind === 'cash' && a.anchor_date ? withdrawals(a.anchor_date, day) : 0);
+  // Calculado uma vez ao abrir (ou ao trocar o dia), não a cada tecla: somar todos os lançamentos por conta pesava.
+  const expectedById = $derived(open ? new Map(accounts.map((a) => [a.id, balanceOf(a, day) + (a.kind === 'cash' && a.anchor_date ? withdrawals(a.anchor_date, day) : 0)])) : new Map<string, number>());
+  const expected = (a: Account) => expectedById.get(a.id) ?? 0;
   const lastMonth = addMonths(monthOf(today()), -1);
   let when = $state<'month' | 'today'>('month');
   const day = $derived<Day>(when === 'month' ? lastDay(lastMonth) : today());
@@ -142,7 +144,7 @@
 <style>
   .intro { margin: 12px 4px; line-height: 1.45; }
   .block { display: block; }
-  .amount { max-width: 120px; }
+  .amount { flex: 0 0 112px; max-width: 112px; }
   textarea.field { padding: 10px 16px; }
   .fix { align-items: center; gap: 8px; }
   .fix .btn { height: 32px; padding: 0 10px; font-size: 13.5px; }

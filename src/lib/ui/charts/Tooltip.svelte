@@ -12,7 +12,7 @@
 <style>
   .tip { position: absolute; z-index: 5; pointer-events: none; transform: translate(12px, -50%); min-width: 150px; padding: 9px 11px; border-radius: 12px;
     background: rgba(28, 36, 33, 0.94); border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
-    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; }
+    display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; }
   .tip.flip { transform: translate(calc(-100% - 12px), -50%); }
   .title { color: var(--text-2); font-weight: 600; margin-bottom: 1px; }
   .line { display: flex; align-items: center; gap: 7px; white-space: nowrap; }

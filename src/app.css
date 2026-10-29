@@ -198,9 +198,10 @@ select.field option { background: #18201d; color: var(--text); }
 .section-title { display: flex; align-items: baseline; justify-content: space-between; margin: 14px 4px 0; }
 .section-title h2 { margin: 0; font: 600 20px/1.2 var(--font-display); letter-spacing: -0.01em; }
 
+/* Computador: todas as telas com a mesma largura (só a planilha, .wide, usa mais). */
 @media (min-width: 960px) {
-  .page { max-width: 1180px; padding: 22px 36px 56px; gap: 16px; }
-  .page.narrow { max-width: 820px; }
+  .page, .page.narrow { max-width: 980px; padding: 22px 36px 56px; gap: 16px; }
+  .page.wide { max-width: 1240px; }
 }
 
 /* Painéis do computador: 2 ou 3 colunas que viram uma no celular. */

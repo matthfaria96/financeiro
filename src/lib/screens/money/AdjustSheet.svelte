@@ -73,6 +73,6 @@
 <style>
   .intro { margin: 12px 4px; line-height: 1.45; }
   .block { display: block; font-weight: 400; }
-  .amount { max-width: 130px; }
+  .amount { flex: 0 0 116px; max-width: 116px; }
   textarea.field { padding: 12px 16px; }
 </style>
