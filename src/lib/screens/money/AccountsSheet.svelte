@@ -10,7 +10,7 @@
 
   /** Configurar o Início: quais contas, investimentos e dinheiro entram no Saldo (vale para a casa toda). */
   let { open = $bindable() }: { open: boolean } = $props();
-  const accounts = $derived(store.accounts.filter((a) => a.kind !== 'creditCard' && !a.archived && inScopeAccount(a)).toSorted((a, b) => a.sort_order - b.sort_order));
+  const accounts = $derived(store.accounts.filter((a) => !a.archived && inScopeAccount(a)).toSorted((a, b) => a.sort_order - b.sort_order));
   const hidden = $derived(store.household?.settings.home_hidden ?? []);
 
   function set(id: string, visible: boolean) {
@@ -26,7 +26,7 @@
       {@const visible = !hidden.includes(account.id)}
       <div class="form-row">
         <BankCard {account} width={40} />
-        <span class="grow"><span class="block">{account.name}</span><span class="caption">{money(balanceOf(account))}</span></span>
+        <span class="grow"><span class="block">{account.name}</span><span class="caption">{account.kind === 'creditCard' ? `Cartão · ${money(Math.max(0, -balanceOf(account)))} em aberto` : money(balanceOf(account))}</span></span>
         <Toggle label="Mostrar {account.name}" checked={visible} onchange={(v) => set(account.id, v)} />
       </div>
     {:else}

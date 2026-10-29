@@ -6,12 +6,18 @@
   import { hint } from '$lib/ui/hint';
   import BalanceFixSheet from './BalanceFixSheet.svelte';
   import type { MonthAnalysis } from '$lib/features/analytics';
+  import { store } from '$lib/data/store.svelte';
+  import { bankGroups, type BankGroup } from '$lib/features/bankGroups';
 
   /** Saldo financeiro: cada conta e o total. Conta sem saldo de referência aparece como estimada. */
   let { analysis, onconfig, hidden = [], title = 'Saldo financeiro' }: { analysis: MonthAnalysis; onconfig?: () => void; hidden?: string[]; title?: string } = $props();
   const shown = $derived(analysis.balances.filter((b) => !hidden.includes(b.account.id)));
   const total = $derived(shown.reduce((s, b) => s + b.cents, 0));
   const estimated = $derived(shown.filter((b) => b.estimated).length);
+  // Uma linha por banco: saldo da conta (e caixinha) com o cartão do mesmo banco embaixo.
+  const groups = $derived(bankGroups(store.accounts.filter((a) => !a.archived && !hidden.includes(a.id))).filter((g) => g.accounts.some((a) => a.kind !== 'creditCard') || g.cardOpen > 0));
+  const isEstimated = (g: BankGroup) => g.accounts.some((a) => shown.find((b) => b.account.id === a.id)?.estimated);
+  const cardsOpen = $derived(groups.reduce((s, g) => s + g.cardOpen, 0));
   let fixOpen = $state(false);
 </script>
 
@@ -28,14 +34,19 @@
     </button>
   {/if}
   <div class="rows">
-    {#each shown as { account, cents, estimated: guess } (account.id)}
-      <a class="row item" href="#/contas/{account.id}"><BankCard {account} width={38} /><span class="grow ellipsis">{account.name}</span>
-        {#if guess}<span class="pill guess">estimado</span>{/if}<span class="num" class:neg={cents < 0} class:faint={guess}>{money(cents)}</span></a>
+    {#each groups as group (group.key)}
+      {@const guess = isEstimated(group)}
+      {@const hasMoney = group.accounts.some((a) => a.kind !== 'creditCard')}
+      <a class="row item" href="#/contas/{group.main.id}"><BankCard account={group.main} width={38} />
+        <span class="grow" style="min-width: 0"><span class="ellipsis block">{group.name}</span>{#if group.cardOpen > 0}<span class="caption">{hasMoney ? 'Cartão' : 'Só cartão'}: {money(group.cardOpen, { cents: false })} em aberto</span>{/if}</span>
+        {#if guess}<span class="pill guess">estimado</span>{/if}
+        {#if hasMoney}<span class="num" class:neg={group.balance < 0} class:faint={guess}>{money(group.balance)}</span>{:else}<span class="num faint">—</span>{/if}</a>
     {:else}
       <a class="muted small" href="#/mais/contas">{analysis.balances.length ? 'Todas as contas estão escondidas.' : 'Cadastre suas contas para ver o saldo.'}</a>
     {/each}
   </div>
   <div class="row between total"><span class="muted">Total{estimated ? ' (estimado)' : ''}</span><b class="num">{money(total)}</b></div>
+  {#if cardsOpen > 0}<div class="row between cards"><span class="caption">Em aberto nos cartões (vai para as faturas)</span><span class="num caption">{money(cardsOpen, { cents: false })}</span></div>{/if}
 </section>
 <BalanceFixSheet bind:open={fixOpen} />
 
@@ -47,6 +58,8 @@
   .item { gap: 12px; padding: 8px 0; color: inherit; font-size: 15px; }
   .item + .item { border-top: 1px solid var(--stroke); }
   .guess { color: var(--warning); background: rgba(255, 166, 61, 0.12); }
+  .block { display: block; }
+  .cards { margin-top: 6px; }
   .total { margin-top: 8px; padding-top: 12px; border-top: 1px solid var(--stroke-strong); }
   .total b { font: 600 22px var(--font-display); }
 </style>
