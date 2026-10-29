@@ -10,6 +10,8 @@
   import type { MonthAnalysis } from '$lib/features/analytics';
   import { store } from '$lib/data/store.svelte';
   import { bankGroups, type BankGroup } from '$lib/features/bankGroups';
+  import { balanceFixReason, lastBalanceFix } from '$lib/features/balanceFix';
+  import { dayMonth } from '$lib/core/dates';
 
   /**
    * Seu dinheiro: em destaque o que está LIVRE (contas + caixinhas + dinheiro, menos as faturas do cartão que ainda vão sair),
@@ -30,6 +32,7 @@
   // Divisão do dinheiro por banco (só o que é positivo), na cor de cada banco.
   const slices = $derived(groups.map((g) => ({ key: g.key, name: g.name, cents: Math.max(0, groupBalance(g)), color: bankColor(g.main) })).filter((s) => s.cents > 0));
   let fixOpen = $state(false);
+  const fix = $derived(lastBalanceFix());
 </script>
 
 <section class="card">
@@ -49,6 +52,7 @@
     {:else if informed !== null}
       <span class="caption">informado no ajuste do mês</span>
     {/if}
+    {#if fix && current}<button class="fixed" onclick={() => (fixOpen = true)}><Icon name="pencil" size={11} />Corrigido à mão em {dayMonth(fix.day)} · {balanceFixReason[fix.reason].toLowerCase()}{fix.note ? `: ${fix.note}` : ''}</button>{/if}
   </div>
 
   {#if slices.length > 1}
@@ -85,6 +89,8 @@
   .math { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: 13px; color: var(--text-2); }
   .math b { color: var(--text); font-weight: 600; }
   .minus { color: var(--text-3); }
+  .fixed { align-self: flex-start; display: inline-flex; align-items: center; gap: 5px; margin-top: 4px; padding: 0; border: 0; background: none; font-size: 12px; color: var(--text-3); text-align: left; }
+  .fixed:hover { color: var(--text-2); }
   .split { display: flex; gap: 3px; height: 8px; margin: 14px 0 4px; border-radius: 4px; overflow: hidden; }
   .split span { display: block; min-width: 4px; transform-origin: left; animation: grow 0.9s var(--spring) both; transition: flex-grow 0.6s var(--spring); }
   @keyframes grow { from { transform: scaleX(0); } }

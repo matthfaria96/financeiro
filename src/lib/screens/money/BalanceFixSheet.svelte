@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import { store } from '$lib/data/store.svelte';
   import { centsToInput, money, parseCents } from '$lib/core/money';
   import { addMonths, lastDay, monthOf, monthTitle, today, type Day } from '$lib/core/dates';
@@ -7,9 +8,12 @@
   import BankCard from '$lib/ui/BankCard.svelte';
   import { balanceOf, savingsInside } from '$lib/features/model';
   import { blankEntry, reconcileMirrors } from '$lib/features/mirrors';
-  import type { Account } from '$lib/data/types';
+  import type { Account, BalanceFix } from '$lib/data/types';
+  import { dayMonth } from '$lib/core/dates';
+  import { balanceFixReason, balanceFixes, undoLastBalanceFix } from '$lib/features/balanceFix';
 
   /**
+   * Corrigir saldos (lápis do Seu dinheiro), no mesmo padrão do Ajustar o mês: valores, motivo, observação e desfazer.
    * Fechar o mês: o usuário digita quanto tinha (conta + caixinha). Sem saldo de referência, o valor vira a
    * referência. Com referência, a diferença para o calculado entra como "Rendimento da caixinha" (juros).
    */
@@ -24,9 +28,19 @@
   let when = $state<'month' | 'today'>('month');
   const day = $derived<Day>(when === 'month' ? lastDay(lastMonth) : today());
   let values = $state<Record<string, string>>({});
+  let reason = $state<BalanceFix['reason']>('rendimento');
+  let note = $state('');
+  let confirmUndo = $state(false);
+  // Só ao abrir: sem untrack, salvar (que muda as contas) zerava os campos no meio do caminho.
   $effect(() => {
-    if (open) values = Object.fromEntries(accounts.map((a) => [a.id, '']));
+    if (!open) return;
+    untrack(() => {
+      values = Object.fromEntries(accounts.map((a) => [a.id, '']));
+      reason = 'rendimento'; note = ''; confirmUndo = false;
+    });
   });
+  const history = $derived(balanceFixes().toReversed());
+  const typedAny = $derived(Object.values(values).some((v) => v.trim()));
 
   /** Já fechado à mão antes? (saldo digitado, não o que veio de um extrato). Só então a diferença é rendimento. */
   const closedBefore = (a: Account) => a.anchor_balance_cents !== null && a.anchor_batch_id === null;
@@ -40,11 +54,16 @@
 
   async function save() {
     const rendimentos = store.categoryByKey.get('rendimentos')?.id ?? null;
+    const changes: BalanceFix['changes'] = [];
+    const typedAll = Object.fromEntries(accounts.map((a) => [a.id, values[a.id]?.trim() ? parseCents(values[a.id]) : null]));
+    const why = { reason, note: note.trim() };
     for (const account of accounts) {
-      const typed = values[account.id]?.trim() ? parseCents(values[account.id]) : null;
+      const typed = typedAll[account.id];
       if (typed === null) continue;
+      const before = { anchor_balance_cents: account.anchor_balance_cents, anchor_date: account.anchor_date, anchor_batch_id: account.anchor_batch_id, prev_anchor_balance_cents: account.prev_anchor_balance_cents, prev_anchor_date: account.prev_anchor_date };
       if (!closedBefore(account)) {
         await store.update('accounts', account.id, { prev_anchor_balance_cents: account.anchor_balance_cents, prev_anchor_date: account.anchor_date, anchor_balance_cents: typed, anchor_date: day, anchor_batch_id: null });
+        changes.push({ account_id: account.id, before, anchored: true });
         continue;
       }
       const diff = typed - expected(account);
@@ -55,20 +74,34 @@
       const category = cash ? store.categoryByKey.get(diff < 0 ? 'outros' : 'outras-receitas')?.id ?? null : rendimentos;
       const key = `${cash ? 'carteira' : 'juros'}:${account.id}:${monthOf(day)}`;
       const existing = (store.entriesByAccount.get(account.id) ?? []).find((e) => e.import_key === key);
-      if (existing) await store.update('entries', existing.id, { amount_cents: existing.amount_cents + diff, title });
-      else await store.insert('entries', [{ ...blankEntry(), account_id: account.id, date: day, amount_cents: diff, title, original_title: title,
-        import_key: key, category_id: category, person_id: account.default_person_id, user_edited: true }]);
+      let entryId = existing?.id;
+      const notes = why.note ? `${balanceFixReason[why.reason]}: ${why.note}` : balanceFixReason[why.reason];
+      if (existing) await store.update('entries', existing.id, { amount_cents: existing.amount_cents + diff, title, notes });
+      else [{ id: entryId }] = await store.insert('entries', [{ ...blankEntry(), account_id: account.id, date: day, amount_cents: diff, title, original_title: title,
+        import_key: key, category_id: category, person_id: account.default_person_id, user_edited: true, notes }]);
       // Na carteira os saques não viram lançamento: o valor digitado passa a ser a referência.
       if (cash) await store.update('accounts', account.id, { prev_anchor_balance_cents: account.anchor_balance_cents, prev_anchor_date: account.anchor_date, anchor_balance_cents: typed, anchor_date: day, anchor_batch_id: null });
+      changes.push({ account_id: account.id, before, anchored: cash, entry_id: entryId, entry_created: !existing, entry_delta: diff });
+    }
+    if (changes.length) {
+      const fix: BalanceFix = { id: crypto.randomUUID(), day, created_at: new Date().toISOString(), ...why, changes };
+      await store.updateSettings({ balance_fixes: [...balanceFixes(), fix].slice(-20) });
     }
     await reconcileMirrors();
-    store.toast('Mês fechado.');
+    store.toast(changes.length ? 'Saldos corrigidos.' : 'Nada mudou.');
     open = false;
   }
+
+  async function undo() {
+    await undoLastBalanceFix();
+    store.toast('Correção desfeita.');
+    confirmUndo = false;
+  }
+  const namesOf = (fix: BalanceFix) => fix.changes.map((c) => store.accountById.get(c.account_id)?.name ?? 'conta apagada').join(', ');
 </script>
 
 <Sheet bind:open title="Corrigir saldos">
-  {#snippet actions()}<button class="btn primary" onclick={save}>Salvar</button>{/snippet}
+  {#snippet actions()}<button class="btn primary" disabled={!typedAny} onclick={save}>Salvar</button>{/snippet}
   <p class="muted small intro">Digite quanto tinha em cada lugar: na conta <b>somando a caixinha</b>, no investimento o valor de hoje, na carteira o dinheiro vivo. Mover dinheiro entre eles nunca é gasto nem entrada. A diferença vira <b>rendimento</b> (ou perda) no banco e no investimento, e <b>gastos em dinheiro</b> na carteira.</p>
   <Segmented label="Quando" bind:value={when} options={[{ value: 'month', label: `Fim de ${monthTitle(lastMonth).split(' ')[0].toLowerCase()}` }, { value: 'today', label: 'Hoje' }]} />
   <div class="form-group" style="margin-top: 12px">
@@ -82,10 +115,35 @@
       </label>
     {/each}
   </div>
+
+  <div class="form-title">Motivo</div>
+  <Segmented label="Motivo" bind:value={reason} options={[{ value: 'rendimento', label: 'Rendimento' }, { value: 'banco', label: 'Banco' }, { value: 'dinheiro', label: 'Dinheiro' }, { value: 'outro', label: 'Outro' }]} />
+  <div class="form-title">Observação</div>
+  <div class="form-group"><textarea class="field" rows="2" placeholder="ex.: o extrato de setembro veio sem o saldo" bind:value={note}></textarea></div>
+
+  {#if history.length}
+    <div class="form-title">Correções feitas</div>
+    <div class="form-group">
+      {#each history.slice(0, 5) as fix, i (fix.id)}
+        <div class="form-row fix">
+          <span class="grow"><span class="block">{balanceFixReason[fix.reason]} · {dayMonth(fix.day)}</span>
+            <span class="caption block">{namesOf(fix)}{fix.note ? ` — ${fix.note}` : ''}</span></span>
+          {#if i === 0}
+            {#if confirmUndo}<button class="btn danger" onclick={undo}>Desfazer</button><button class="btn ghost" onclick={() => (confirmUndo = false)}>Não</button>
+            {:else}<button class="btn ghost danger" onclick={() => (confirmUndo = true)}>Desfazer</button>{/if}
+          {/if}
+        </div>
+      {/each}
+    </div>
+    <p class="form-footer">Desfazer volta os saldos de antes e tira o lançamento de diferença que a correção criou. Só a mais recente pode ser desfeita.</p>
+  {/if}
 </Sheet>
 
 <style>
   .intro { margin: 12px 4px; line-height: 1.45; }
   .block { display: block; }
   .amount { max-width: 120px; }
+  textarea.field { padding: 10px 16px; }
+  .fix { align-items: center; gap: 8px; }
+  .fix .btn { height: 32px; padding: 0 10px; font-size: 13.5px; }
 </style>

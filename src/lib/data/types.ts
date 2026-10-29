@@ -15,7 +15,29 @@ export interface Household {
   settings: { forecast_months?: number; workspaces_enabled?: boolean; /** Contas escondidas do Saldo do Início. */ home_hidden?: string[]; /** Notas: cartões desligados e a ordem ('nb:<id>', 'desejos', 'transporte'). */ notes_hidden?: string[]; notes_order?: string[];
     /** Cadernos que o app criou (Mercado, Farmácia, Petshop): não podem ser apagados. */ notes_system?: string[];
     /** Ajuste manual por mês (YYYY-MM): diferença nas entradas/saídas, saldo final, motivo e observação. */
-    adjustments?: Record<string, MonthAdjustment> };
+    adjustments?: Record<string, MonthAdjustment>;
+    /** Correções de saldo feitas à mão (Seu dinheiro › lápis), da mais antiga à mais nova; guardam o necessário para desfazer. */
+    balance_fixes?: BalanceFix[] };
+}
+
+export interface BalanceFix {
+  id: string;
+  /** Dia a que os saldos se referem. */
+  day: string;
+  created_at: string;
+  reason: 'rendimento' | 'banco' | 'dinheiro' | 'outro';
+  note: string;
+  changes: {
+    account_id: string;
+    /** O saldo que estava antes (para voltar). */
+    before: Pick<Account, 'anchor_balance_cents' | 'anchor_date' | 'anchor_batch_id' | 'prev_anchor_balance_cents' | 'prev_anchor_date'>;
+    /** Saldo de referência mudou nesta correção. */
+    anchored: boolean;
+    /** Lançamento de diferença (rendimento, gastos em dinheiro…): criado nesta correção ou somado a um que já existia. */
+    entry_id?: string;
+    entry_created?: boolean;
+    entry_delta?: number;
+  }[];
 }
 
 export interface MonthAdjustment {
