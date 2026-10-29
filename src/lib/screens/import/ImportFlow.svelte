@@ -23,6 +23,8 @@
   let input: HTMLInputElement | undefined = $state();
   let creating = $state(false);
   let reading = $state(false);
+  let dragOver = $state(false);
+  let manual = $state(false);
 
   // Abriu: começa do zero (com conta e arquivos pré-escolhidos, se vieram).
   $effect(() => {
@@ -48,11 +50,31 @@
       }
     }
     reading = false;
-    drafts = loaded;
-    step = loaded.length ? { type: 'review', index: 0 } : { type: 'choose' };
+    // Grava direto o que o app tem certeza (conta reconhecida, banco conhecido, sem repetidos de outro formato);
+    // só pede revisão do que for duvidoso.
+    const sure = loaded.filter(isSure);
+    const unsure = loaded.filter((d) => !isSure(d));
+    if (sure.length) {
+      drafts = sure;
+      await commitAll(false);
+    }
+    drafts = unsure;
+    step = unsure.length ? { type: 'review', index: 0 } : outcomes.length || failures.length ? { type: 'done' } : { type: 'choose' };
   }
 
-  async function commitAll() {
+  function isSure(draft: ImportDraft): boolean {
+    if (draft.targetAccount) return draft.possibleCount === 0 && !draft.otherAccountMatches.length && draft.investment.type !== 'new';
+    return draft.statement.bank !== 'other' && draft.possibleCount === 0;
+  }
+
+  function pick(event: DragEvent) {
+    event.preventDefault();
+    dragOver = false;
+    const files = [...(event.dataTransfer?.files ?? [])];
+    if (files.length) void load(files);
+  }
+
+  async function commitAll(finish = true) {
     step = { type: 'saving' };
     progress = 0;
     for (const draft of drafts) {
@@ -63,7 +85,7 @@
       }
       progress++;
     }
-    step = { type: 'done' };
+    if (finish) step = { type: 'done' };
   }
 
   function skip(index: number) {
@@ -79,27 +101,33 @@
 <Sheet bind:open={ui.importOpen} {title} wide>
   {#if step.type === 'choose'}
     <div class="stack" style="padding-top: 8px">
-      <div class="step-title"><span>1</span>Para qual conta vai este extrato?</div>
-      <div class="stack-sm">
-        <button class="option" class:on={chosen === null} onclick={() => (chosen = null)} use:hint={['Descobrir pelo arquivo', 'O app escolhe a conta pelo banco e pelo número da conta no arquivo.']}>
-          <span class="wand"><Icon name="wand" size={22} /></span>
-          <span class="grow"><b>Descobrir pelo arquivo</b><span class="caption">Pelo banco e pelo número da conta. Você confere antes de gravar.</span></span>
-          <Icon name={chosen === null ? 'check-circle' : 'circle'} size={22} />
-        </button>
-        {#each options as account (account.id)}
-          {@const last = lastEntryDate(account)}
-          <button class="option" class:on={chosen === account.id} onclick={() => (chosen = account.id)}>
-            <BankCard {account} width={56} />
-            <span class="grow"><b>{account.name}</b><span class="caption">{last ? `Extrato até ${dayMonth(last)}` : 'Nenhum extrato ainda'}</span></span>
-            <Icon name={chosen === account.id ? 'check-circle' : 'circle'} size={22} />
-          </button>
-        {/each}
-        <button class="btn ghost" style="justify-content: flex-start" onclick={() => (creating = true)}><Icon name="plus" size={16} />Cadastrar nova conta</button>
-      </div>
-      <div class="step-title"><span>2</span>Escolha o arquivo do banco</div>
       <input bind:this={input} type="file" multiple accept=".ofx,.csv,.pdf,.txt,text/csv,application/pdf" hidden onchange={(e) => load([...(e.currentTarget.files ?? [])])} />
-      <button class="btn primary lg block" disabled={reading} onclick={() => input?.click()}><Icon name="folder" size={18} />{reading ? 'Lendo…' : 'Escolher arquivos…'}</button>
-      <p class="caption center">No computador, dá para arrastar os arquivos para a janela. O arquivo é lido aqui mesmo: só os lançamentos vão para a nuvem.</p>
+      <button class="drop" class:over={dragOver} disabled={reading} onclick={() => input?.click()}
+        ondragover={(e) => { e.preventDefault(); dragOver = true; }} ondragleave={() => (dragOver = false)} ondrop={pick}>
+        <span class="ico"><Icon name="import" size={30} /></span>
+        <b>{reading ? 'Lendo e gravando…' : 'Solte os extratos aqui'}</b>
+        <span class="caption">ou toque para escolher · OFX, CSV ou PDF · vários de uma vez</span>
+      </button>
+      <p class="caption center">O app descobre o banco e a conta pelo arquivo, separa por categoria e grava. Só pergunta se tiver dúvida. Dá para desfazer em Configuração › Importações.</p>
+      <button class="btn ghost manual" onclick={() => (manual = !manual)}><Icon name={manual ? 'chevron-up' : 'chevron-down'} size={15} />Escolher a conta manualmente</button>
+      {#if manual}
+        <div class="stack-sm">
+          <button class="option" class:on={chosen === null} onclick={() => (chosen = null)}>
+            <span class="wand"><Icon name="wand" size={22} /></span>
+            <span class="grow"><b>Descobrir pelo arquivo</b><span class="caption">Pelo banco e pelo número da conta.</span></span>
+            <Icon name={chosen === null ? 'check-circle' : 'circle'} size={22} />
+          </button>
+          {#each options as account (account.id)}
+            {@const last = lastEntryDate(account)}
+            <button class="option" class:on={chosen === account.id} onclick={() => (chosen = account.id)}>
+              <BankCard {account} width={56} />
+              <span class="grow"><b>{account.name}</b><span class="caption">{last ? `Extrato até ${dayMonth(last)}` : 'Nenhum extrato ainda'}</span></span>
+              <Icon name={chosen === account.id ? 'check-circle' : 'circle'} size={22} />
+            </button>
+          {/each}
+          <button class="btn ghost" style="justify-content: flex-start" onclick={() => (creating = true)}><Icon name="plus" size={16} />Cadastrar nova conta</button>
+        </div>
+      {/if}
       {#if failures.length}
         <div class="card stack-sm">{#each failures as failure}<div class="row" style="align-items: flex-start"><Icon name="alert" size={18} color="var(--negative)" /><div><b class="small">{failure.name}</b><div class="caption">{failure.message}</div></div></div>{/each}</div>
       {/if}
@@ -126,10 +154,11 @@
           {#if outcome.skipped}<span class="caption">{outcome.skipped} pulados (já importados ou desmarcados).</span>{/if}
           {#if outcome.mirrored}<span class="caption">{outcome.mirrored} aplicações/resgates acompanhados no investimento.</span>{/if}
           {#if outcome.balanceAdjusted}<span class="caption">Saldo da conta ajustado para bater com o extrato.</span>{/if}
+          {#if outcome.firstDate}<span class="caption">Período: {dayMonth(outcome.firstDate)} a {dayMonth(outcome.lastDate!)}{outcome.income ? ` · ${outcome.income} entradas` : ''}</span>{/if}
         </div>
       {/each}
       {#each failures as failure}<div class="card small neg">{failure.name}: {failure.message}</div>{/each}
-      <p class="caption">Os relatórios já estão atualizados. Para desfazer, use Mais › Importações.</p>
+      <p class="caption">Os relatórios já estão atualizados. Para desfazer, use Configuração › Importações.</p>
       <div class="row between">
         {#if uncategorized}<a class="btn" href="#/transacoes/todos?semcategoria=1" onclick={() => (ui.importOpen = false)}>Revisar {uncategorized} sem categoria</a>{:else}<span></span>{/if}
         <button class="btn primary" onclick={() => (ui.importOpen = false)}>Concluir</button>
@@ -141,8 +170,11 @@
 <AccountEditor bind:open={creating} onsaved={(account) => (chosen = account.id)} />
 
 <style>
-  .step-title { display: flex; align-items: center; gap: 10px; font-weight: 600; margin-top: 6px; }
-  .step-title span { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 14px; background: var(--accent-soft); color: var(--accent); }
+  .drop { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 34px 16px; border-radius: 20px; border: 2px dashed rgba(43, 212, 164, 0.45); background: rgba(43, 212, 164, 0.06); color: var(--text); transition: background 0.2s, border-color 0.2s; }
+  .drop.over, .drop:hover { background: rgba(43, 212, 164, 0.14); border-color: var(--accent); }
+  .drop b { font: 600 18px var(--font-display); }
+  .drop .ico { width: 60px; height: 60px; border-radius: 18px; display: grid; place-items: center; color: var(--accent); background: var(--accent-soft); margin-bottom: 4px; }
+  .manual { align-self: center; }
   .option { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 16px; border: 1px solid var(--stroke); background: var(--card); text-align: left; color: var(--text-3); transition: background 0.2s, border-color 0.2s; }
   .option .grow { display: flex; flex-direction: column; gap: 2px; color: var(--text); }
   .option.on { background: var(--accent-soft); border-color: rgba(43, 212, 164, 0.5); color: var(--accent); }

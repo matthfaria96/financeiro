@@ -9,7 +9,7 @@ import { store } from '$lib/data/store.svelte';
 import type { Account, AccountKind, Entry } from '$lib/data/types';
 import { makeCategorizer, merchantIdOf } from './rules';
 import { blankEntry, reconcileMirrors } from './mirrors';
-import { inScopeAccount } from './model';
+import { savingsInside, inScopeAccount } from './model';
 
 export interface ImportRow {
   index: number;
@@ -210,6 +210,9 @@ export interface ImportOutcome {
   uncategorized: number;
   balanceAdjusted: boolean;
   mirrored: number;
+  firstDate: Day | null;
+  lastDate: Day | null;
+  income: number;
 }
 
 export async function commitDraft(draft: ImportDraft): Promise<ImportOutcome> {
@@ -250,7 +253,8 @@ export async function commitDraft(draft: ImportDraft): Promise<ImportOutcome> {
   const adjusted = await applyBalance(account.id, draft.closingBalance, batch.id);
   if (!account.external_id && draft.statement.accountId) await store.update('accounts', account.id, { external_id: draft.statement.accountId });
   const mirrored = await reconcileMirrors();
-  return { fileName: draft.fileName, accountName: account.name, added: rows.length, skipped: draft.rows.length - rows.length, uncategorized, balanceAdjusted: adjusted, mirrored };
+  return { fileName: draft.fileName, accountName: account.name, added: rows.length, skipped: draft.rows.length - rows.length, uncategorized, balanceAdjusted: adjusted, mirrored,
+    firstDate: range?.[0] ?? null, lastDate: range?.[1] ?? null, income: rows.filter((r) => (r.amount_cents ?? 0) > 0 && store.categoryById.get(r.category_id ?? '')?.kind === 'income').length };
 }
 
 async function resolveAccount(draft: ImportDraft): Promise<Account> {
@@ -292,6 +296,8 @@ async function applyBalance(accountId: string, closing: { cents: number; date: D
   const account = store.accountById.get(accountId);
   if (!account || !closing) return false;
   if (account.anchor_date && closing.date < account.anchor_date) return false;
+  // Conta com caixinha junto e saldo fechado à mão: o do extrato é só da conta (sem a caixinha), então não substitui.
+  if (savingsInside(account) && account.anchor_balance_cents !== null && account.anchor_batch_id === null) return false;
   await store.update('accounts', accountId, {
     prev_anchor_balance_cents: account.anchor_balance_cents, prev_anchor_date: account.anchor_date,
     anchor_balance_cents: closing.cents, anchor_date: closing.date, anchor_batch_id: batchId

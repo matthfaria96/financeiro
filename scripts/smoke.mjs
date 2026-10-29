@@ -98,7 +98,7 @@ await step('Importações', go('#/mais/importacoes'), 'csv');
 await step('Compartilhar', go('#/mais/compartilhar'), 'Nós dois');
 await step('Conta e preferências', go('#/mais/ajustes'), 'Painéis avançados');
 await step('Voltar ao início', go('#/'), 'Saldo financeiro');
-await step('Importar (folha)', () => click('Importar'), 'Para qual conta');
+await step('Importar (folha)', () => click('Importar'), 'Solte os extratos');
 await closeSheet();
 await step('Aviso de demonstração com Sair', () => ev(`document.querySelector('.demo-bar button') ? 'ok' : 'NÃO ACHEI'`), '');
 console.log(report.join('\n'));

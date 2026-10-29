@@ -7,6 +7,7 @@
   import BankCard from '$lib/ui/BankCard.svelte';
   import { balanceOf, savingsInside } from '$lib/features/model';
   import { blankEntry, reconcileMirrors } from '$lib/features/mirrors';
+  import type { Account } from '$lib/data/types';
 
   /**
    * Fechar o mês: o usuário digita quanto tinha (conta + caixinha). Sem saldo de referência, o valor vira a
@@ -22,10 +23,13 @@
     if (open) values = Object.fromEntries(accounts.map((a) => [a.id, '']));
   });
 
+  /** Já fechado à mão antes? (saldo digitado, não o que veio de um extrato). Só então a diferença é rendimento. */
+  const closedBefore = (a: Account) => a.anchor_balance_cents !== null && a.anchor_batch_id === null;
+
   const preview = (id: string) => {
     const account = accounts.find((a) => a.id === id)!;
     const typed = values[id]?.trim() ? parseCents(values[id]) : null;
-    if (typed === null || account.anchor_balance_cents === null) return null;
+    if (typed === null || !closedBefore(account)) return null;
     return typed - balanceOf(account, day);
   };
 
@@ -34,8 +38,8 @@
     for (const account of accounts) {
       const typed = values[account.id]?.trim() ? parseCents(values[account.id]) : null;
       if (typed === null) continue;
-      if (account.anchor_balance_cents === null) {
-        await store.update('accounts', account.id, { prev_anchor_balance_cents: null, prev_anchor_date: null, anchor_balance_cents: typed, anchor_date: day, anchor_batch_id: null });
+      if (!closedBefore(account)) {
+        await store.update('accounts', account.id, { prev_anchor_balance_cents: account.anchor_balance_cents, prev_anchor_date: account.anchor_date, anchor_balance_cents: typed, anchor_date: day, anchor_batch_id: null });
         continue;
       }
       const diff = typed - balanceOf(account, day);
@@ -62,8 +66,8 @@
       <label class="form-row">
         <BankCard {account} width={40} />
         <span class="grow"><span class="block">{account.name}{savingsInside(account) ? ' + caixinha' : ''}</span>
-          <span class="caption">{account.anchor_balance_cents === null ? 'Primeira vez: vira o ponto de partida' : diff === null ? `Calculado: ${money(balanceOf(account, day))}` : diff ? `Rendimento: ${money(diff)}` : 'Igual ao calculado'}</span></span>
-        <input class="field num amount" inputmode="decimal" placeholder={account.anchor_balance_cents === null ? '0,00' : centsToInput(balanceOf(account, day))} bind:value={values[account.id]} />
+          <span class="caption">{!closedBefore(account) ? 'Primeira vez: vira o ponto de partida (conta + caixinha)' : diff === null ? `Calculado: ${money(balanceOf(account, day))}` : diff ? `Rendimento: ${money(diff)}` : 'Igual ao calculado'}</span></span>
+        <input class="field num amount" inputmode="decimal" placeholder={!closedBefore(account) ? '0,00' : centsToInput(balanceOf(account, day))} bind:value={values[account.id]} />
       </label>
     {/each}
   </div>
