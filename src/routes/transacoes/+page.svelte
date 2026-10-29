@@ -20,6 +20,9 @@
   import Segmented from '$lib/ui/Segmented.svelte';
   import Tally from '$lib/ui/Tally.svelte';
   import { prefs } from '$lib/ui/prefs.svelte';
+  import { ui } from '$lib/ui/ui.svelte';
+  import ConfigureLink from '$lib/ui/ConfigureLink.svelte';
+  import EntriesSettings from '$lib/screens/money/EntriesSettings.svelte';
 
   /** Lançamentos (o "analítico"): o mês escolhido em saldo, entradas, saídas por categoria e balanço.
    *  Meses futuros mostram o que já está previsto (faturas e contas fixas). */
@@ -40,6 +43,7 @@
   }
   const forecast = $derived(future ? forecastMonth(month, accounts) : null);
   let chartsOpen = $state(false);
+  let settingsOpen = $state(false);
 
   function search() {
     filter.set({ month });
@@ -92,18 +96,24 @@
       <CategoryDonut title="Saídas" groups={analysis.expenses} total={analysis.expenseTotal} empty="Nenhuma saída neste mês." />
     </div>
     <EntryListCard title="Entradas" entries={analysis.income.flatMap((g) => g.entries)} total={analysis.incomeTotal} tone="pos" />
-    <section class="out">
-      <div class="row between out-head"><h3>Saídas <span class="caption">· <Tally cents={analysis.expenseTotal} /></span></h3>
-        <div class="mode" role="radiogroup" aria-label="Visualização">
-          <button role="radio" aria-checked={outView === 'categories'} class:on={outView === 'categories'} onclick={() => setOutView('categories')} aria-label="Por categoria"><Icon name="reports" size={15} /></button>
-          <button role="radio" aria-checked={outView === 'list'} class:on={outView === 'list'} onclick={() => setOutView('list')} aria-label="Lista"><Icon name="list" size={15} /></button>
+    <section class="card flush out">
+      <div class="card-head pad"><h3>Saídas <span class="caption">· {analysis.expenses.reduce((n, g) => n + g.entries.length, 0)}</span></h3>
+        <div class="row" style="gap: 12px"><b class="num"><Tally cents={-analysis.expenseTotal} /></b>
+          <div class="mode" role="radiogroup" aria-label="Visualização">
+            <span class="pill-bg" class:right={outView === 'list'} aria-hidden="true"></span>
+            <button role="radio" aria-checked={outView === 'categories'} class:on={outView === 'categories'} onclick={() => setOutView('categories')} aria-label="Por categoria" use:hint={['Por categoria', 'Agrupa as saídas por categoria; toque para abrir.']}><Icon name="reports" size={15} /></button>
+            <button role="radio" aria-checked={outView === 'list'} class:on={outView === 'list'} onclick={() => setOutView('list')} aria-label="Lista" use:hint={['Lista', 'Todas as saídas, das mais novas para as mais antigas.']}><Icon name="list" size={15} /></button>
+          </div>
         </div>
       </div>
-      {#if outView === 'categories'}<CategoryRows groups={analysis.expenses} previous={previous.expenses} />
-      {:else}<EntryListCard title="Saídas" entries={analysis.expenses.flatMap((g) => g.entries)} total={-analysis.expenseTotal} />{/if}
+      {#if outView === 'categories'}<CategoryRows flat groups={analysis.expenses} previous={previous.expenses} />
+      {:else}<EntryListCard bare entries={analysis.expenses.flatMap((g) => g.entries)} />{/if}
     </section>
   {/if}
+  <ConfigureLink onclick={() => (settingsOpen = true)} />
 </div>
+<button class="fab" aria-label="Novo lançamento" onclick={() => (ui.newEntryOpen = true)} use:hint={['Novo lançamento', 'Anote à mão um gasto ou uma entrada (dinheiro, Pix de alguém…).']}><Icon name="plus" size={24} stroke={2.4} /></button>
+<EntriesSettings bind:open={settingsOpen} />
 <ChartsSheet bind:open={chartsOpen} focus="cost" month={future ? current : month} {entries} {accounts} />
 
 <style>
@@ -112,12 +122,24 @@
   .icon-btn:disabled { opacity: 0.3; }
   .layout { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); align-items: stretch; }
   @media (min-width: 1000px) { .layout:not(.single) { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-  .out { display: flex; flex-direction: column; gap: 10px; }
-  .out-head h3 { margin: 6px 4px 0; font: 600 18px var(--font-display); }
-  .mode { display: flex; gap: 2px; padding: 3px; border-radius: 10px; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--stroke); }
-  .mode button { width: 32px; height: 28px; border: 0; border-radius: 8px; background: none; color: var(--text-3); display: grid; place-items: center; transition: background 0.25s, color 0.2s; }
+  .pad { padding: 16px 18px 10px; margin: 0; }
+  .out .card-head b { font-size: 16px; }
+  .mode { position: relative; display: flex; gap: 2px; padding: 3px; border-radius: 10px; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--stroke); isolation: isolate; }
+  .pill-bg { position: absolute; z-index: -1; left: 3px; top: 3px; width: 32px; height: 28px; border-radius: 8px; background: rgba(255, 255, 255, 0.14); transition: transform 0.4s var(--spring); }
+  .pill-bg.right { transform: translateX(34px); }
+  .mode button { width: 32px; height: 28px; border: 0; border-radius: 8px; background: none; color: var(--text-3); display: grid; place-items: center; transition: color 0.2s; }
   .mode button:hover:not(.on) { color: var(--text-2); }
-  .mode button.on { background: rgba(255, 255, 255, 0.14); color: var(--text); }
+  .mode button.on { color: var(--text); }
+  /* Botão flutuante (novo lançamento): vidro, fixo no canto; no celular fica acima da barra de abas. */
+  .fab { position: fixed; z-index: 45; right: 22px; bottom: calc(96px + env(safe-area-inset-bottom)); width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center;
+    color: var(--accent); border: 1px solid rgba(255, 255, 255, 0.16); background: rgba(30, 46, 40, 0.55);
+    backdrop-filter: blur(22px) saturate(1.8); -webkit-backdrop-filter: blur(22px) saturate(1.8);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 14px 36px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(43, 212, 164, 0.12);
+    animation: fab-in 0.5s var(--spring) 0.2s backwards; transition: transform 0.25s var(--spring), background 0.2s, color 0.2s; }
+  .fab:hover { transform: translateY(-2px) scale(1.04); background: rgba(43, 212, 164, 0.22); color: #b8ffe6; }
+  .fab:active { transform: scale(0.92); }
+  @keyframes fab-in { from { opacity: 0; transform: scale(0.6) translateY(12px); } }
+  @media (min-width: 960px) { .fab { right: 32px; bottom: 32px; width: 60px; height: 60px; } }
   .credit-mode { display: flex; flex-direction: column; gap: 6px; }
   .credit-mode :global(.seg) { max-width: 460px; }
   .totals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }

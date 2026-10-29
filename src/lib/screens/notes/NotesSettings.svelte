@@ -2,28 +2,56 @@
   import Sheet from '$lib/ui/Sheet.svelte';
   import Toggle from '$lib/ui/Toggle.svelte';
   import Icon from '$lib/ui/Icon.svelte';
-  import { allNoteCards, hiddenNotes, moveNote, setNoteVisible } from '$lib/features/notes';
+  import { slide } from 'svelte/transition';
+  import { cubicOut } from 'svelte/easing';
+  import { store } from '$lib/data/store.svelte';
+  import { allNoteCards, deleteNotebook, hiddenNotes, isSystemCard, moveNote, setNoteVisible } from '$lib/features/notes';
 
-  /** Configurar Notas: o que aparece e em que ordem (vale para a casa toda). */
+  /** Configurar Notas: o que aparece, em que ordem e apagar as listas criadas por você (as do app ficam). */
   let { open = $bindable() }: { open: boolean } = $props();
   const cards = $derived(allNoteCards());
   const hidden = $derived(hiddenNotes());
+  let confirming = $state<string | null>(null);
+  let busy = $state(false);
+  $effect(() => {
+    if (!open) confirming = null;
+  });
+  async function remove(id: string, name: string) {
+    busy = true;
+    try {
+      await deleteNotebook(id);
+      store.toast(`"${name}" apagada.`);
+      confirming = null;
+    } finally {
+      busy = false;
+    }
+  }
 </script>
 
 <Sheet bind:open title="Configurar Notas">
-  <p class="muted small intro">Desligue o que não usa e mude a ordem com as setas. Desligar não apaga nada.</p>
+  <p class="muted small intro">Desligue o que não usa e mude a ordem com as setas. Desligar não apaga nada. As listas que você criou podem ser apagadas na lixeira.</p>
   <div class="form-group">
     {#each cards as card, index (card.key)}
+      <div class="item">
       <div class="form-row" class:off={hidden.includes(card.key)}>
         <span class="emoji">{card.emoji}</span>
-        <span class="grow">{card.name}</span>
+        <span class="grow">{card.name}{#if isSystemCard(card)}<span class="caption block">Do app</span>{/if}</span>
+        {#if !isSystemCard(card)}<button class="icon-btn mini trash" class:on={confirming === card.key} aria-label="Apagar {card.name}" onclick={() => (confirming = confirming === card.key ? null : card.key)}><Icon name="trash" size={14} /></button>{/if}
         <button class="icon-btn mini" aria-label="Subir {card.name}" disabled={index === 0} onclick={() => moveNote(card.key, -1)}><Icon name="chevron-up" size={15} /></button>
         <button class="icon-btn mini" aria-label="Descer {card.name}" disabled={index === cards.length - 1} onclick={() => moveNote(card.key, 1)}><Icon name="chevron-down" size={15} /></button>
         <Toggle label="Mostrar {card.name}" checked={!hidden.includes(card.key)} onchange={(v) => setNoteVisible(card.key, v)} />
       </div>
+      {#if confirming === card.key && card.notebookId}
+        <div class="confirm" transition:slide={{ duration: 260, easing: cubicOut }}>
+          <span class="grow small">Apagar <b>{card.name}</b> e todo o histórico dela? Não dá para desfazer.</span>
+          <button class="btn" onclick={() => (confirming = null)}>Cancelar</button>
+          <button class="btn danger-fill" disabled={busy} onclick={() => remove(card.notebookId!, card.name)}>Apagar</button>
+        </div>
+      {/if}
+      </div>
     {/each}
   </div>
-  <a class="general" href="#/mais" onclick={() => (open = false)}>Configurações gerais</a>
+  <a class="general" href="#/mais" onclick={() => (open = false)}>Todas as configurações</a>
 </Sheet>
 
 <style>
@@ -32,5 +60,13 @@
   .off .grow, .off .emoji { opacity: 0.4; }
   .mini { width: 30px; height: 30px; }
   .mini:disabled { opacity: 0.25; }
+  .block { display: block; }
+  .trash { color: var(--text-3); }
+  .trash:hover, .trash.on { color: var(--negative); border-color: rgba(255, 107, 91, 0.4); background: rgba(255, 107, 91, 0.1); }
+  .confirm { display: flex; align-items: center; gap: 8px; padding: 10px 16px 12px; background: rgba(255, 107, 91, 0.07); border-top: 1px solid rgba(255, 107, 91, 0.2); }
+  .confirm .btn { height: 34px; padding: 0 12px; font-size: 13.5px; }
+  .danger-fill { background: var(--negative); color: #fff; border-color: transparent; }
+  .danger-fill:hover { background: #ff8273; }
+  @media (max-width: 520px) { .confirm { flex-wrap: wrap; } .confirm .grow { flex-basis: 100%; } }
   .general { display: block; text-align: center; margin-top: 22px; font-size: 12px; color: var(--text-3); }
 </style>

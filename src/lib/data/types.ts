@@ -13,6 +13,7 @@ export interface Household {
   /** 'personal': o financeiro de alguém. 'shared': espaço compartilhado (carro, casa, listas). */
   kind?: 'personal' | 'shared';
   settings: { forecast_months?: number; workspaces_enabled?: boolean; /** Contas escondidas do Saldo do Início. */ home_hidden?: string[]; /** Notas: cartões desligados e a ordem ('nb:<id>', 'desejos', 'transporte'). */ notes_hidden?: string[]; notes_order?: string[];
+    /** Cadernos que o app criou (Mercado, Farmácia, Petshop): não podem ser apagados. */ notes_system?: string[];
     /** Ajuste manual por mês (YYYY-MM): diferença nas entradas/saídas, saldo final, motivo e observação. */
     adjustments?: Record<string, MonthAdjustment> };
 }

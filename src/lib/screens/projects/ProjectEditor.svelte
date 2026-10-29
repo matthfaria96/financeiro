@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { goto } from '$app/navigation';
   import { organizer } from '$lib/data/organizer.svelte';
   import type { Project } from '$lib/data/organizerTypes';
   import { centsToInput, parseCents } from '$lib/core/money';
@@ -57,7 +58,7 @@
     <div class="form-group" style="margin-top: 12px">
       <label class="form-row"><span class="field-label grow">Arquivado (concluído)</span><input type="checkbox" bind:checked={archived} /></label>
     </div>
-    <DeleteRow label="Apagar projeto e itens" question="Apagar o projeto com todos os itens?" ondelete={async () => { await organizer.remove('projects', [project!.id]); open = false; location.hash = '#/mais/projetos'; }} />
+    <DeleteRow label="Apagar projeto e itens" question="Apagar o projeto com todos os itens?" ondelete={async () => { await organizer.remove('projects', [project!.id]); open = false; goto('#/mais/projetos'); }} />
   {/if}
 </Sheet>
 

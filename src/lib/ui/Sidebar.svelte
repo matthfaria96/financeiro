@@ -5,17 +5,20 @@
   import Icon from './Icon.svelte';
   import { hint } from './hint';
   import { sectionOf, sections } from './nav';
+  import ProfileAvatar from './ProfileAvatar.svelte';
+  import { profileName } from '$lib/features/profile';
 
-  /** Menu lateral fino do computador: Início, Lançamentos e Notas; Configuração e Importar embaixo. */
+  /** Menu lateral fino do computador: Início, Lançamentos e Notas; Importar e o perfil (com as configurações) embaixo. */
   const active = $derived(sectionOf(page.route.id ?? '/'));
-  const ordered = $derived([sections[1], sections[0], sections[2], sections[3]]);
+  const ordered = $derived([sections[1], sections[0], sections[2]]);
+  const onProfile = $derived((page.route.id ?? '').startsWith('/mais') && !/^\/mais\/(carro|projetos|compras)/.test(page.route.id ?? ''));
 </script>
 
 <nav class="sidebar glass" aria-label="Seções">
   <div class="brand"><span class="logo"><Icon name="trending-up" size={17} stroke={2.6} /></span>Financeiro</div>
   <div class="links">
     {#each ordered as s (s.id)}
-      <a href={s.href} class="link" class:on={active === s.id} aria-current={active === s.id ? 'page' : undefined}>
+      <a href={s.href} class="link" class:on={active === s.id && !onProfile} aria-current={active === s.id && !onProfile ? "page" : undefined}>
         <span class="ico" style:--c={s.color}><Icon name={s.icon} size={17} stroke={2.2} /></span>{s.label}
       </a>
     {/each}
@@ -24,7 +27,9 @@
     <button class="btn primary block import" onclick={() => ui.startImport()} use:hint={['Importar extrato', 'Escolha a conta e o arquivo do banco (OFX, CSV ou PDF). Também dá para arrastar o arquivo para a janela.']}>
       <Icon name="import" size={17} />Importar extrato
     </button>
-    <div class="who caption ellipsis">{store.demo ? '' : store.userEmail}</div>
+    <a class="who" class:on={onProfile} href="#/mais" use:hint={['Perfil', 'Família, contas, categorias e todas as configurações.']}>
+      <ProfileAvatar size={30} /><span class="grow ellipsis"><b class="line ellipsis">{profileName()}</b><span class="caption ellipsis line">{store.demo ? 'Demonstração' : store.userEmail}</span></span><Icon name="chevron-right" size={14} class="faint" />
+    </a>
   </div>
 </nav>
 
@@ -42,6 +47,8 @@
   .ico { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; flex: none; color: #fff; background: linear-gradient(160deg, var(--c), color-mix(in srgb, var(--c) 62%, black)); box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.2); }
   .bottom { display: flex; flex-direction: column; gap: 10px; padding-top: 10px; border-top: 1px solid var(--stroke); }
   .import { box-shadow: 0 6px 20px rgba(43, 212, 164, 0.25); background: linear-gradient(180deg, #3fe3b4, #20b98d); }
-  .who { padding: 0 4px; }
+  .who { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 12px; color: inherit; font-size: 14px; transition: background 0.2s; }
+  .who:hover, .who.on { background: rgba(255, 255, 255, 0.07); }
+  .line { display: block; }
 
 </style>

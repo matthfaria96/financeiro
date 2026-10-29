@@ -9,7 +9,7 @@
   import { accountOf, categoryOf, costOf, kindOf } from '$lib/features/model';
   import { prefs } from '$lib/ui/prefs.svelte';
 
-  let { entry, onclick, selected = null, compact = false, lead }: { entry: Entry; onclick?: () => void; selected?: boolean | null; compact?: boolean; /** Algo antes do avatar (ex.: a data), dentro da mesma linha clicável. */ lead?: import('svelte').Snippet } = $props();
+  let { entry, onclick, selected = null, compact = false, when = '' }: { entry: Entry; onclick?: () => void; selected?: boolean | null; compact?: boolean; /** Data curta ("01 out") à direita, antes do valor. */ when?: string } = $props();
   const category = $derived(categoryOf(entry));
   const merchant = $derived(entry.merchant_id ? store.merchantById.get(entry.merchant_id) : undefined);
   const person = $derived(entry.person_id ? store.personById.get(entry.person_id) : undefined);
@@ -19,8 +19,7 @@
   const showPerson = $derived(!compact && person && (prefs.full || person.id !== account?.default_person_id));
 </script>
 
-<button class="entry" class:has-lead={!!lead} {onclick} aria-pressed={selected ?? undefined}>
-  {#if lead}{@render lead()}{/if}
+<button class="entry" {onclick} aria-pressed={selected ?? undefined}>
   {#if selected !== null}
     <span class="check" class:on={selected}><Icon name={selected ? 'check-circle' : 'circle'} size={22} /></span>
   {/if}
@@ -33,6 +32,7 @@
       {#if prefs.full && kindOf(entry) === 'expense' && costOf(entry) === 'fixed'}<span class="pill fixed">Fixo</span>{/if}
     </span>
   </span>
+  {#if when}<span class="when">{when}</span>{/if}
   <span class="right">
     <Money cents={entry.amount_cents} muted={transfer} class="amount" />
     <span class="row" style="gap: 6px">
@@ -45,7 +45,7 @@
 
 <style>
   .entry { display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; padding: 11px 16px; border: 0; background: none; transition: background 0.2s, transform 0.2s var(--ease); }
-  .entry.has-lead { padding-left: 8px; gap: 12px; }
+  .when { flex: none; min-width: 42px; text-align: right; font-size: 12.5px; color: var(--text-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
   .entry:hover { background: rgba(255, 255, 255, 0.045); }
   .entry:active { background: rgba(255, 255, 255, 0.07); transform: scale(0.995); }
   :global(.entries) > :global(.entry + .entry) { border-top: 1px solid var(--stroke); }

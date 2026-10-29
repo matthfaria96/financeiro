@@ -131,3 +131,9 @@ export function shortDate(day: Day): string {
   const { year, month, day: date } = parts(day);
   return `${String(date).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`;
 }
+
+/** "01 out": dia e mês curto, para listas. */
+export function shortDay(day: Day): string {
+  const months = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+  return `${day.slice(8, 10)} ${months[Number(day.slice(5, 7)) - 1]}`;
+}

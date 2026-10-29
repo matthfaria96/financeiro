@@ -7,8 +7,10 @@
   import MoreRow from '$lib/screens/more/MoreRow.svelte';
   import FamilySheet from '$lib/screens/settings/FamilySheet.svelte';
   import { inScopeAccount } from '$lib/features/model';
+  import ProfileAvatar from '$lib/ui/ProfileAvatar.svelte';
+  import { profileName } from '$lib/features/profile';
 
-  /** Configuração: família e o resto do que não é do dia a dia. */
+  /** Perfil (abre pelo avatar do Início): quem é você, a família e todas as configurações. */
   let familyOpen = $state(false);
   const fullAccess = $derived(store.members);
   const sharedMembers = $derived(organizer.shared.flatMap((space) => organizer.members.filter((m) => m.household_id === space.id).map((m) => ({ ...m, space: space.name }))));
@@ -16,7 +18,12 @@
 </script>
 
 <div class="page narrow">
-  <h1 class="title">Configuração</h1>
+  <header class="me">
+    <a class="icon-btn back" href="#/" aria-label="Voltar ao Início"><Icon name="chevron-left" /></a>
+    <ProfileAvatar size={72} />
+    <div class="who"><h1>{profileName()}</h1><span class="muted small">{store.demo ? 'Demonstração · dados fictícios' : store.userEmail}</span>
+      <a class="link small" href="#/mais/pessoas" use:hint={['Foto', 'A foto do perfil é a da pessoa “Eu”, em De quem é cada gasto.']}>Trocar foto</a></div>
+  </header>
 
   <SectionTitle title="Família"><button class="btn ghost" onclick={() => (familyOpen = true)}><Icon name="plus" size={15} />Adicionar</button></SectionTitle>
   <div class="card flush list">
@@ -51,7 +58,11 @@
 <FamilySheet bind:open={familyOpen} />
 
 <style>
-  .title { margin: 6px 4px; font: 700 30px var(--font-display); letter-spacing: -0.02em; }
+  .me { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 14px 0 8px; text-align: center; }
+  .me .back { position: absolute; left: 0; top: 8px; }
+  .who { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .who h1 { margin: 4px 0 0; font: 700 26px var(--font-display); letter-spacing: -0.02em; }
+  .who .link { margin-top: 4px; }
   .avatar { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; flex: none; font-weight: 700; background: rgba(255, 143, 171, 0.18); color: #ff8fab; }
   .avatar.plus { background: var(--accent-soft); color: var(--accent); }
   .add-row { color: var(--accent); }

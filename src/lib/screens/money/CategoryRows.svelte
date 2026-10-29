@@ -1,6 +1,6 @@
 <script lang="ts">
   import { money, percent } from '$lib/core/money';
-  import { dayMonth } from '$lib/core/dates';
+  import { shortDay } from '$lib/core/dates';
   import { ui } from '$lib/ui/ui.svelte';
   import Icon from '$lib/ui/Icon.svelte';
   import CategoryIcon from '$lib/ui/CategoryIcon.svelte';
@@ -10,8 +10,9 @@
   import { slide } from 'svelte/transition';
   import { cubicOut } from 'svelte/easing';
 
-  /** Categorias expansíveis: barra de fundo com a fatia, % e valor, variação para o mês anterior; toque abre os lançamentos. */
-  let { groups, previous = [] }: { groups: Group[]; previous?: Group[] } = $props();
+  /** Categorias expansíveis: barra de fundo com a fatia, % e valor, variação para o mês anterior; toque abre os lançamentos.
+   *  `flat`: linhas dentro de um cartão (separadas por linha fina), em vez de cartõezinhos soltos. */
+  let { groups, previous = [], flat = false }: { groups: Group[]; previous?: Group[]; flat?: boolean } = $props();
   let open = $state<Set<string>>(new Set());
   const before = $derived(new Map(previous.map((g) => [g.key, g.cents])));
   const change = (g: Group) => { const old = before.get(g.key); return old ? (g.cents - old) / old : null; };
@@ -22,7 +23,7 @@
   }
 </script>
 
-<div class="rows">
+<div class="rows" class:flat>
   {#each groups as g, n (g.key)}
     {@const expanded = open.has(g.key)}
     <div class="group" class:expanded style:--c={g.color} style:--d="{Math.min(n, 10) * 35}ms">
@@ -36,7 +37,7 @@
       {#if expanded}
         <div class="inner entries" transition:slide={{ duration: 320, easing: cubicOut }}>
           {#each g.entries as entry (entry.id)}
-            <EntryRow {entry} compact onclick={() => ui.editEntry(entry.id)}>{#snippet lead()}<span class="day caption">{dayMonth(entry.date).slice(0, 5)}</span>{/snippet}</EntryRow>
+            <EntryRow {entry} compact when={shortDay(entry.date)} onclick={() => ui.editEntry(entry.id)} />
           {/each}
         </div>
       {/if}
@@ -63,5 +64,13 @@
   .chev { display: grid; color: var(--text-3); transition: transform 0.35s var(--ease), color 0.2s; }
   .expanded .chev { transform: rotate(180deg); color: var(--text-2); }
   .inner { border-top: 1px solid var(--stroke); background: rgba(0, 0, 0, 0.12); }
-  .day { width: 40px; flex: none; text-align: right; font-variant-numeric: tabular-nums; }
+  .flat { gap: 0; }
+  .flat .group { border: 0; border-radius: 0; background: none; animation: none; }
+  .flat .group + .group { border-top: 1px solid var(--stroke); }
+  .flat .group:hover { background: rgba(255, 255, 255, 0.03); }
+  .flat .group.expanded { box-shadow: none; background: rgba(255, 255, 255, 0.025); }
+  .flat .slice { padding: 12px 18px; }
+  .flat .bar { opacity: 0.85; }
+  .flat .inner { background: rgba(0, 0, 0, 0.16); }
+  .flat > .muted { padding: 14px 18px; margin: 0; }
 </style>

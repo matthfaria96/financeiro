@@ -35,7 +35,7 @@
   </div>
   <div class="row between links">
     <button class="btn ghost" onclick={() => { open = false; ui.newAccountOpen = true; }}><Icon name="plus" size={15} />Cadastrar conta ou dinheiro</button>
-    <a class="btn ghost muted-link" href="#/mais" onclick={() => (open = false)}>Configurações gerais</a>
+    <a class="btn ghost muted-link" href="#/mais" onclick={() => (open = false)}>Todas as configurações</a>
   </div>
 </Sheet>
 

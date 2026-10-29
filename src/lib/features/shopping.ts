@@ -1,5 +1,6 @@
 import { defaultNotebooks, duplicateItems, newestFirst } from '$lib/core/shopping';
 import { organizer } from '$lib/data/organizer.svelte';
+import { store } from '$lib/data/store.svelte';
 import type { Notebook, ShoppingList } from '$lib/data/organizerTypes';
 
 /** Cadernos de lista (Mercado, Farmácia…): a lista mais nova é a atual; as outras são o histórico. */
@@ -34,6 +35,7 @@ export async function ensureNotebooks() {
   ensuring = true;
   try {
     const created = await organizer.insert('notebooks', defaultNotebooks.map((n, index) => ({ ...n, sort_order: index })));
+    if (!store.demo) await store.updateSettings({ notes_system: created.map((n) => n.id) });
     const market = created[0];
     for (const list of organizer.shopping_lists.filter((l) => !l.notebook_id && l.household_id === market.household_id)) {
       await organizer.update('shopping_lists', list.id, { notebook_id: market.id });

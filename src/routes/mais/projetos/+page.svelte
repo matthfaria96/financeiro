@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { goto } from '$app/navigation';
   import { organizer } from '$lib/data/organizer.svelte';
   import { money } from '$lib/core/money';
   import type { Project, ProjectItem } from '$lib/data/organizerTypes';
@@ -62,7 +63,7 @@
   {/if}
   {#if archivedCount}<button class="btn ghost" onclick={() => (showArchived = !showArchived)}>{showArchived ? 'Esconder arquivados' : `Mostrar arquivados (${archivedCount})`}</button>{/if}
 </div>
-<ProjectEditor bind:open={creating} onsaved={(p) => (location.hash = `#/mais/projetos/${p.id}`)} />
+<ProjectEditor bind:open={creating} onsaved={(p) => goto(`#/mais/projetos/${p.id}`)} />
 {#if editing}<ItemEditor bind:open={itemOpen} project={editing.project} item={editing.item} />{/if}
 
 <style>

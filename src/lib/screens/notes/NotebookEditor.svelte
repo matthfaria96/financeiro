@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { goto } from '$app/navigation';
+  import { systemNotebookIds } from '$lib/features/notes';
   import { organizer } from '$lib/data/organizer.svelte';
   import type { Notebook } from '$lib/data/organizerTypes';
   import Sheet from '$lib/ui/Sheet.svelte';
@@ -45,7 +47,7 @@
   <div class="picks">{#each emojis as e (e)}<button class="emo" class:on={emoji === e} onclick={() => (emoji = e)} aria-label={e}>{e}</button>{/each}</div>
   <div class="picks" style="margin-top: 10px">{#each palette.slice(0, 12) as c (c)}<button class="swatch" class:on={color === c} style:background={c} aria-label="Cor" onclick={() => (color = c)}></button>{/each}</div>
   <div class="form-group" style="margin-top: 14px"><SpacePicker bind:value={space} /></div>
-  {#if notebook}<DeleteRow label="Apagar esta lista e o histórico" question="Apagar a lista e todas as listas antigas dela?" ondelete={async () => { await organizer.remove('notebooks', [notebook!.id]); open = false; location.hash = '#/notas'; }} />{/if}
+  {#if notebook && !systemNotebookIds().includes(notebook.id)}<DeleteRow label="Apagar esta lista e o histórico" question="Apagar a lista e todas as listas antigas dela?" ondelete={async () => { await organizer.remove('notebooks', [notebook!.id]); open = false; goto('#/notas'); }} />{/if}
 </Sheet>
 
 <style>

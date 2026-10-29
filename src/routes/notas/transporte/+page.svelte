@@ -45,10 +45,10 @@
   {/if}
   {#if vehicles.length > 1}
     <h3 class="sub">Últimos gastos</h3>
-    {#each vehicles as v (v.id)}<div class="caption">{v.name}</div><LogList vehicle={v} onedit={() => (location.hash = `#/mais/carro/${v.id}`)} />{/each}
+    {#each vehicles as v (v.id)}<div class="caption">{v.name}</div><LogList vehicle={v} onedit={() => goto(`#/mais/carro/${v.id}`)} />{/each}
   {/if}
 </div>
-<VehicleEditor bind:open={creating} onsaved={(v) => (location.hash = `#/mais/carro/${v.id}`)} />
+<VehicleEditor bind:open={creating} onsaved={(v) => goto(`#/mais/carro/${v.id}`)} />
 
 <style>
   .sums { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }

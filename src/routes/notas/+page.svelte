@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { goto } from '$app/navigation';
   import { organizer } from '$lib/data/organizer.svelte';
   import { money } from '$lib/core/money';
   import { itemEmoji } from '$lib/core/shopping';
@@ -8,7 +9,8 @@
   import SharedBadge from '$lib/screens/organizer/SharedBadge.svelte';
   import NotebookEditor from '$lib/screens/notes/NotebookEditor.svelte';
   import NotesSettings from '$lib/screens/notes/NotesSettings.svelte';
-  import { visibleNoteCards } from '$lib/features/notes';
+  import { rememberSystemNotebooks, visibleNoteCards } from '$lib/features/notes';
+  import ConfigureLink from '$lib/ui/ConfigureLink.svelte';
   import { currentList, ensureNotebooks, itemsOf, notebooks } from '$lib/features/shopping';
   import { dueText, logsOf, planOf } from '$lib/features/car';
 
@@ -17,6 +19,7 @@
   let configuring = $state(false);
   $effect(() => {
     if (organizer.loadedFor && !organizer.notebooks.length) void ensureNotebooks();
+    else if (organizer.loadedFor) rememberSystemNotebooks();
   });
   const cards = $derived(visibleNoteCards());
   const bookById = $derived(new Map(notebooks().map((n) => [n.id, n])));
@@ -58,10 +61,10 @@
     {/if}
     {/each}
   </div>
-  <button class="configure" onclick={() => (configuring = true)}><Icon name="settings" size={12} />Configurar</button>
+  <ConfigureLink onclick={() => (configuring = true)} />
 </div>
 <NotesSettings bind:open={configuring} />
-<NotebookEditor bind:open={creating} onsaved={(n) => (location.hash = `#/notas/lista/${n.id}`)} />
+<NotebookEditor bind:open={creating} onsaved={(n) => goto(`#/notas/lista/${n.id}`)} />
 
 <style>
   .top h1 { margin: 6px 4px; font: 700 30px var(--font-display); letter-spacing: -0.02em; }
@@ -77,7 +80,5 @@
   .strip span { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; font-size: 16px; background: rgba(255, 255, 255, 0.05); }
   .strip .more { width: auto; padding: 0 8px; font-size: 12px; color: var(--text-2); }
   .wish { display: flex; flex-direction: column; gap: 4px; font-size: 13.5px; color: var(--text-2); position: relative; }
-  .configure { align-self: center; display: inline-flex; align-items: center; gap: 5px; margin-top: 12px; padding: 4px 10px; border: 0; background: none; font-size: 12px; color: var(--text-3); }
-  .configure:hover { color: var(--text-2); }
   .alert { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--warning); position: relative; }
 </style>

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { goto } from '$app/navigation';
   import { organizer } from '$lib/data/organizer.svelte';
   import type { Vehicle } from '$lib/data/organizerTypes';
   import { centsToInput, parseCents } from '$lib/core/money';
@@ -50,7 +51,7 @@
     if (!vehicle) return;
     await organizer.remove('vehicles', [vehicle.id]);
     open = false;
-    location.hash = '#/mais/carro';
+    goto('#/mais/carro');
   }
 </script>
 
