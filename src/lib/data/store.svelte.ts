@@ -61,7 +61,8 @@ class Store {
   workspacesEnabled = $derived(Boolean(this.household?.settings.workspaces_enabled));
   forecastMonths = $derived(this.household?.settings.forecast_months ?? 6);
   /** Área aberta válida (uma apagada volta para Tudo). */
-  scopeId = $derived(this.workspacesEnabled && this.workspaces.some((w) => w.id === this.selectedWorkspace) ? this.selectedWorkspace : '');
+  // Ambientes (áreas de trabalho) estão desligados por enquanto: ver docs/ideias/ambientes.md.
+  scopeId = $derived('');
 
   // Início ---------------------------------------------------------------------------------------
   async start() {

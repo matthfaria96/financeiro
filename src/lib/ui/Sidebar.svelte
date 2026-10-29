@@ -5,7 +5,6 @@
   import Icon from './Icon.svelte';
   import { hint } from './hint';
   import { sectionOf, sections } from './nav';
-  import WorkspaceBar from './WorkspaceBar.svelte';
 
   /** Menu lateral fino do computador: Início, Lançamentos e Notas; Configuração e Importar embaixo. */
   const active = $derived(sectionOf(page.route.id ?? '/'));
@@ -14,7 +13,6 @@
 
 <nav class="sidebar glass" aria-label="Seções">
   <div class="brand"><span class="logo"><Icon name="trending-up" size={17} stroke={2.6} /></span>Financeiro</div>
-  <div class="ambient"><WorkspaceBar compact={false} /></div>
   <div class="links">
     {#each ordered as s (s.id)}
       <a href={s.href} class="link" class:on={active === s.id} aria-current={active === s.id ? 'page' : undefined}>
@@ -42,7 +40,5 @@
   .bottom { display: flex; flex-direction: column; gap: 10px; padding-top: 10px; border-top: 1px solid var(--stroke); }
   .import { box-shadow: 0 6px 20px rgba(43, 212, 164, 0.25); background: linear-gradient(180deg, #3fe3b4, #20b98d); }
   .who { padding: 0 4px; }
-  .ambient { margin: -8px 0 14px; }
-  .ambient :global(.switch) { flex-direction: column; }
-  .ambient :global(.switch button) { flex: none; justify-content: flex-start; height: 34px; padding: 0 10px; }
+
 </style>

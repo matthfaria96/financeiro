@@ -1,6 +1,5 @@
 <script lang="ts">
   import { organizer } from '$lib/data/organizer.svelte';
-  import { store } from '$lib/data/store.svelte';
   import type { Notebook } from '$lib/data/organizerTypes';
   import Sheet from '$lib/ui/Sheet.svelte';
   import { palette } from '$lib/ui/look';
@@ -28,8 +27,7 @@
       await organizer.move('notebooks', notebook.id, space);
       saved = organizer.notebooks.find((n) => n.id === notebook!.id)!;
     } else {
-      const ambient = store.workspaceById.get(store.scopeId);
-      [saved] = await organizer.insert('notebooks', [{ ...fields, sort_order: organizer.notebooks.length, workspace_id: ambient?.kind === 'business' ? ambient.id : null }], space);
+      [saved] = await organizer.insert('notebooks', [{ ...fields, sort_order: organizer.notebooks.length }], space);
       await organizer.insert('shopping_lists', [{ notebook_id: saved.id, name: saved.name, done_at: null, total_cents: null }]);
     }
     open = false;

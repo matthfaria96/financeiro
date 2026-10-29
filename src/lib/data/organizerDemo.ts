@@ -51,9 +51,7 @@ export function buildOrganizerDemo(personal: string): OrgSnapshot {
   const notebooks: Notebook[] = [
     { ...base('nb-mercado', shared), name: 'Mercado', emoji: '🛒', color: '#2BD4A4', sort_order: 0 },
     { ...base('nb-farmacia', personal), name: 'Farmácia', emoji: '💊', color: '#FF6B6B', sort_order: 1 },
-    { ...base('nb-pet', shared), name: 'Petshop', emoji: '🐾', color: '#FF9F1C', sort_order: 2 },
-    { ...base('nb-nf', personal), name: 'Notas fiscais a emitir', emoji: '🧾', color: '#7C8CF8', sort_order: 3, workspace_id: 'w-esposa' },
-    { ...base('nb-cobrar', personal), name: 'Clientes a cobrar', emoji: '💼', color: '#2BD4A4', sort_order: 4, workspace_id: 'w-esposa' }
+    { ...base('nb-pet', shared), name: 'Petshop', emoji: '🐾', color: '#FF9F1C', sort_order: 2 }
   ];
   const list = (id: string, notebook: Notebook, offset: number, done: number | null, cents: number | null): ShoppingList =>
     ({ ...base(id, notebook.household_id, addDays(now, offset)), notebook_id: notebook.id, name: notebook.name, done_at: done === null ? null : stamp(addDays(now, done)), total_cents: cents });
@@ -62,9 +60,7 @@ export function buildOrganizerDemo(personal: string): OrgSnapshot {
     list('list-old', notebooks[0], -9, -8, 41_230),
     list('list-now', notebooks[0], -1, null, null),
     list('list-farm', notebooks[1], -3, null, null),
-    list('list-pet', notebooks[2], -12, null, null),
-    list('list-nf', notebooks[3], -2, null, null),
-    list('list-cobrar', notebooks[4], -2, null, null)
+    list('list-pet', notebooks[2], -12, null, null)
   ];
   // [nome, quantidade, repete]
   const contents: Record<string, [string, string, boolean][]> = {

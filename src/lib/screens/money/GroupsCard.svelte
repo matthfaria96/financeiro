@@ -41,7 +41,8 @@
   .line { width: 100%; gap: 10px; padding: 10px 18px 6px 14px; background: none; border: 0; text-align: left; font-size: 15px; }
   .line:hover { background: rgba(255, 255, 255, 0.03); }
   .share { width: 44px; text-align: right; }
-  .value { min-width: 96px; text-align: right; }
+  .value { min-width: 96px; text-align: right; white-space: nowrap; }
+  @media (max-width: 600px) { .share { display: none; } .value { min-width: 0; } .bar { margin-left: 56px; } .inner { margin-left: 12px; } }
   .bar { height: 3px; margin: 0 18px 4px 70px; border-radius: 2px; background: rgba(255, 255, 255, 0.05); overflow: hidden; }
   .bar span { display: block; height: 100%; border-radius: 2px; }
   .inner { margin: 4px 12px 10px 40px; border-left: 2px solid var(--stroke); }

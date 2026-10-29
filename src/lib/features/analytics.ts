@@ -5,7 +5,6 @@ import type { Account, Category, Entry } from '$lib/data/types';
 import { accountOf, balanceOf, categoryOf, kindOf, rootOf } from './model';
 import { payableGroups } from './payables';
 import { billInMonth, onCard } from './bills';
-import { payerOf } from './ambient';
 
 /**
  * A conta do mês usada no Início e em Lançamentos (sempre a mesma, para os números baterem):
@@ -54,29 +53,10 @@ function group(entries: Entry[], keyOf: (entry: Entry) => Category | undefined, 
   return { groups, total };
 }
 
-/** Entradas por cliente (modo Empresa): quem pagou, pelo estabelecimento reconhecido ou pelo nome no Pix/TED. */
-function byPayer(entries: Entry[]): { groups: Group[]; total: number } {
-  const palette = ['#2BD4A4', '#3987E5', '#9085E9', '#38D9F5', '#FF9F1C', '#FF8FAB', '#A3D977', '#FFD60A'];
-  const map = new Map<string, Group>();
-  for (const entry of entries) {
-    const merchant = entry.merchant_id ? store.merchantById.get(entry.merchant_id)?.name : undefined;
-    const label = merchant ?? payerOf(entry.title);
-    const key = label.toLowerCase();
-    const row = map.get(key) ?? { key, label, color: palette[map.size % palette.length], icon: 'briefcase', cents: 0, share: 0, entries: [] };
-    row.cents += entry.amount_cents;
-    row.entries.push(entry);
-    map.set(key, row);
-  }
-  const groups = [...map.values()].filter((g) => g.cents > 0).toSorted((a, b) => b.cents - a.cents);
-  const total = groups.reduce((s, g) => s + g.cents, 0);
-  for (const g of groups) g.share = total ? g.cents / total : 0;
-  return { groups, total };
-}
-
-export function analyzeMonth(month: Month, entries: Entry[], accounts: Account[], clients = false): MonthAnalysis {
+export function analyzeMonth(month: Month, entries: Entry[], accounts: Account[]): MonthAnalysis {
   const inMonth = entries.filter((e) => !e.is_mirror && monthOf(e.date) === month);
   const incoming = inMonth.filter((e) => kindOf(e) === 'income' && ['checking', 'cash'].includes(accountOf(e)?.kind ?? ''));
-  const income = clients ? byPayer(incoming) : group(incoming, categoryOf, 1);
+  const income = group(incoming, categoryOf, 1);
   const expenses = group(inMonth.filter((e) => kindOf(e) === 'expense'), (e) => rootOf(categoryOf(e)), -1);
   const now = today();
   const end = lastDay(month) < now ? lastDay(month) : now;

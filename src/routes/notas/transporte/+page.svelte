@@ -23,7 +23,7 @@
 
 <div class="page narrow">
   <SubHeader title="🚗 Transporte" back="#/notas">
-    <button class="btn" onclick={() => (creating = true)} use:hint={['Cadastrar veículo', 'Carro, moto… cada um com seus gastos e revisões.']}><Icon name="plus" size={16} />Veículo</button>
+    <button class="btn" onclick={() => (creating = true)} use:hint={['Cadastrar veículo', 'Carro, moto… cada um com seus gastos e revisões.']}><Icon name="plus" size={16} /><span class="hide-m">Veículo</span></button>
   </SubHeader>
   {#if vehicles.length > 1}
     <section class="card sums">

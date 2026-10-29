@@ -7,7 +7,6 @@
   import Icon from '$lib/ui/Icon.svelte';
   import BankCard from '$lib/ui/BankCard.svelte';
   import Avatar from '$lib/ui/Avatar.svelte';
-  import WorkspaceBar from '$lib/ui/WorkspaceBar.svelte';
   import ChartButton from '$lib/ui/ChartButton.svelte';
   import { hint } from '$lib/ui/hint';
   import BalanceCard from '$lib/screens/money/BalanceCard.svelte';
@@ -17,7 +16,6 @@
   import { filter } from '$lib/screens/transactions/filter.svelte';
   import { inScope, inScopeAccount } from '$lib/features/model';
   import { analyzeMonth, forecastMonth } from '$lib/features/analytics';
-  import { isBusiness } from '$lib/features/ambient';
 
   /** Lançamentos (o "analítico"): o mês escolhido em saldo, entradas, saídas por categoria e balanço.
    *  Meses futuros mostram o que já está previsto (faturas e contas fixas). */
@@ -28,8 +26,7 @@
   const first = $derived(entries.map((e) => monthOf(e.date)).sort()[0] ?? current);
   const options = $derived(Array.from({ length: 64 }, (_, i) => addMonths(current, 3 - i)).filter((m) => m >= first || m >= current));
   const future = $derived(month > current);
-  const business = $derived(isBusiness());
-  const analysis = $derived(analyzeMonth(month, entries, accounts, business));
+  const analysis = $derived(analyzeMonth(month, entries, accounts));
   const forecast = $derived(future ? forecastMonth(month, accounts) : null);
   let chartsOpen = $state(false);
 
@@ -51,7 +48,6 @@
       <ChartButton icon="search" label="Buscar" detail="Todos os lançamentos deste mês, com busca e filtros." onclick={search} />
     </div>
   </header>
-  <WorkspaceBar />
 
   {#if forecast}
     <section class="card">
@@ -70,7 +66,7 @@
     <div class="layout">
       <div class="col">
         <BalanceCard {analysis} title={month === current ? 'Saldo financeiro' : 'Saldo no fim do mês'} />
-        <GroupsCard title={business ? 'Entradas por cliente' : 'Entradas'} groups={analysis.income} total={analysis.incomeTotal} tone="pos" />
+        <GroupsCard title="Entradas" groups={analysis.income} total={analysis.incomeTotal} tone="pos" />
         <section class="card balance">
           <div class="card-head"><h3>Balanço</h3></div>
           <div class="row between"><span class="muted">Entradas</span><span class="num pos">{money(analysis.incomeTotal)}</span></div>

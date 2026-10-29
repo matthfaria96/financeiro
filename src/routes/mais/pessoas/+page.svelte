@@ -52,7 +52,7 @@
 </script>
 
 <div class="page">
-  <SubHeader title="Pessoas"><button class="btn primary" onclick={() => edit(null)}><Icon name="plus" size={16} />Nova pessoa</button></SubHeader>
+  <SubHeader title="Pessoas"><button class="btn primary" onclick={() => edit(null)}><Icon name="plus" size={16} /><span class="hide-m">Nova pessoa</span></button></SubHeader>
   <div class="layout">
     <div class="people">
       {#each people as person (person.id)}
@@ -90,13 +90,15 @@
 <style>
   .layout { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); align-items: start; }
   @media (min-width: 1100px) { .layout { grid-template-columns: minmax(0, 1fr) 340px; } }
-  .people { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+  .people { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
   .person { display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: center; padding: 20px 16px 14px; }
   .person:hover { border-color: var(--stroke-strong); transform: translateY(-2px); }
   .photo { width: 76px; height: 76px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; margin-bottom: 8px; color: var(--c);
     background: radial-gradient(circle at 30% 25%, color-mix(in srgb, var(--c) 40%, transparent), color-mix(in srgb, var(--c) 10%, transparent)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 35%, transparent), 0 10px 26px rgba(0, 0, 0, 0.3); }
   .photo img { width: 100%; height: 100%; object-fit: cover; }
-  .month { width: 100%; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--stroke); text-align: left; }
+  .month { width: 100%; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--stroke); text-align: left; flex-wrap: wrap; gap: 6px; }
+  .month .num { white-space: nowrap; font-weight: 600; }
+  @media (max-width: 600px) { .month :global(svg) { display: none; } }
   .side { display: flex; flex-direction: column; gap: 14px; }
   .center { display: grid; place-items: center; }
   i { width: 9px; height: 9px; border-radius: 3px; display: inline-block; }

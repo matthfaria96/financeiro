@@ -6,7 +6,6 @@
   import { sheetCSV, type SheetRow } from '$lib/core/sheet';
   import Icon from '$lib/ui/Icon.svelte';
   import Segmented from '$lib/ui/Segmented.svelte';
-  import WorkspaceBar from '$lib/ui/WorkspaceBar.svelte';
   import { hint } from '$lib/ui/hint';
   import SubHeader from '$lib/screens/more/SubHeader.svelte';
   import BarChart from '$lib/ui/charts/BarChart.svelte';
@@ -101,7 +100,6 @@
   <SubHeader title="Mês a mês" back="#/relatorios">
     <button class="icon-btn" aria-label="Baixar planilha" onclick={download} use:hint={['Baixar planilha', 'Salva esta tabela em CSV para abrir no Excel, Numbers ou Google Planilhas.']}><Icon name="export" /></button>
   </SubHeader>
-  <WorkspaceBar />
   <div class="controls">
     <Segmented label="Agrupar" bind:value={grouping} options={[{ value: 'category', label: 'Por categoria' }, { value: 'person', label: 'Por pessoa' }]} />
     <Segmented label="Crédito" bind:value={creditMonth} options={[{ value: 'bill', label: 'Crédito no mês da fatura' }, { value: 'purchase', label: 'No mês da compra' }]} />

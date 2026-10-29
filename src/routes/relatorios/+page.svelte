@@ -4,7 +4,6 @@
   import { money } from '$lib/core/money';
   import Icon from '$lib/ui/Icon.svelte';
   import Segmented from '$lib/ui/Segmented.svelte';
-  import WorkspaceBar from '$lib/ui/WorkspaceBar.svelte';
   import { hint } from '$lib/ui/hint';
   import { inScope, inScopeAccount } from '$lib/features/model';
   import MonthSummary from '$lib/screens/reports/MonthSummary.svelte';
@@ -27,15 +26,14 @@
 </script>
 
 <div class="page">
-  <header class="row between top">
+  <header class="row between top" style="gap: 10px">
     <h1>Relatórios</h1>
     <div class="row" style="gap: 8px">
-      <a class="btn" href="#/relatorios/planilha" use:hint={['Mês a mês', 'Tabela com todos os meses lado a lado: entradas, crédito, débito, balanço e saldo — como numa planilha.']}><Icon name="table" size={16} />Mês a mês</a>
+      <a class="btn" href="#/relatorios/planilha" use:hint={['Mês a mês', 'Tabela com todos os meses lado a lado: entradas, crédito, débito, balanço e saldo — como numa planilha.']}><Icon name="table" size={16} /><span class="hide-m">Mês a mês</span></a>
       <button class="icon-btn" aria-label="Imprimir ou salvar PDF" onclick={() => print()} use:hint={['PDF', 'Abre a impressão: escolha "Salvar como PDF" para guardar o relatório deste mês.']}><Icon name="file" /></button>
       <button class="icon-btn" aria-label="Exportar planilha" onclick={() => exportCSV(month, entries)} use:hint={['Planilha CSV', 'Baixa os lançamentos do mês para abrir no Excel, Numbers ou Google Planilhas.']}><Icon name="export" /></button>
     </div>
   </header>
-  <WorkspaceBar />
   {#if prefs.full}<div class="no-print"><FlowCard {history} selected={month} title="Últimos 12 meses" onselect={(m) => (month = m)} /></div>{/if}
   <div class="row between monthbar">
     <button class="icon-btn" aria-label="Mês anterior" onclick={() => (month = addMonths(month, -1))}><Icon name="chevron-left" /></button>

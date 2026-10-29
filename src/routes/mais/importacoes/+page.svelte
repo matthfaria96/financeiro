@@ -50,8 +50,9 @@
 </div>
 
 <style>
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 14px; }
-  @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(420px, 100%), 1fr)); gap: 14px; }
+  .batch { min-width: 0; }
+  .batch :global(.row) { flex-wrap: wrap; }
   .nocard { width: 92px; height: 58px; border-radius: 9px; display: grid; place-items: center; background: rgba(255, 255, 255, 0.05); color: var(--text-3); flex: none; }
   .fmt { font-size: 10.5px; font-weight: 800; letter-spacing: 0.04em; padding: 2px 6px; border-radius: 5px; background: rgba(57, 135, 229, 0.18); color: #8fc0ff; flex: none; }
   .fmt.ofx { background: rgba(43, 212, 164, 0.16); color: var(--accent); }

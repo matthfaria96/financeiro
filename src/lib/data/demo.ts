@@ -27,7 +27,7 @@ export function buildDemo(): Snapshot {
     { id: 'w-esposa', household_id: household, name: 'Ateliê (MEI)', symbol: 'briefcase', color: '#7C8CF8', sort_order: 1, kind: 'business' }
   ];
   return {
-    household: { id: household, name: 'Casa de demonstração', invite_code: 'DEMO1234', settings: { forecast_months: 6, workspaces_enabled: true } },
+    household: { id: household, name: 'Casa de demonstração', invite_code: 'DEMO1234', settings: { forecast_months: 6, workspaces_enabled: false } },
     members: [{ household_id: household, user_id: 'demo', display_name: 'Você' }],
     people, workspaces, categories, merchants, accounts: [], import_batches: [], entries: [], bills: []
   };

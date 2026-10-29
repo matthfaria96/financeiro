@@ -5,7 +5,6 @@
   import Icon from '$lib/ui/Icon.svelte';
   import BankCard from '$lib/ui/BankCard.svelte';
   import PersonChip from '$lib/ui/PersonChip.svelte';
-  import WorkspaceBar from '$lib/ui/WorkspaceBar.svelte';
   import SectionTitle from '$lib/ui/SectionTitle.svelte';
   import { hint } from '$lib/ui/hint';
   import { kindName } from '$lib/ui/look';
@@ -25,8 +24,7 @@
 </script>
 
 <div class="page">
-  <SubHeader title="Contas e cartões"><button class="btn primary" onclick={() => (creating = true)} use:hint={['Cadastrar', 'Conta, cartão, investimento ou dinheiro de qualquer banco.']}><Icon name="plus" size={16} />Cadastrar</button></SubHeader>
-  <WorkspaceBar />
+  <SubHeader title="Contas e cartões"><button class="btn primary" onclick={() => (creating = true)} use:hint={['Cadastrar', 'Conta, cartão, investimento ou dinheiro de qualquer banco.']}><Icon name="plus" size={16} /><span class="hide-m">Cadastrar</span></button></SubHeader>
   {#each groups as group (group.kind)}
     {@const sum = total(group.kind)}
     <SectionTitle title={group.title}><span class="muted num small">{group.kind === 'creditCard' ? `${money(Math.max(0, -sum), { cents: false })} em aberto` : money(sum, { cents: false })}</span></SectionTitle>

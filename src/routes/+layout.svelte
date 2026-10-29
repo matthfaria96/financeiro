@@ -80,7 +80,7 @@
     <main>
       {#if store.demo}
         <div class="demo-bar glass" role="status">
-          <Icon name="sparkles" size={16} /><span class="grow"><b>Demonstração</b> · dados fictícios, nada é salvo e nada mexe na sua conta</span>
+          <Icon name="sparkles" size={16} /><span class="grow"><b>Demonstração</b> · dados fictícios<span class="hide-m">, nada é salvo e nada mexe na sua conta</span></span>
           <button class="btn sm" onclick={exitDemo}>Sair</button>
         </div>
       {/if}
@@ -117,7 +117,7 @@
   }
   .tabbar a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: var(--text-2); font-size: 10.5px; font-weight: 600; border-radius: 24px; transition: color 0.2s; }
   .tabbar a.on { color: var(--accent); }
-  .tabbar a span { white-space: nowrap; }
+  .tabbar a span { white-space: nowrap; font-size: 10px; letter-spacing: -0.01em; }
   @media (min-width: 960px) {
     .shell { display: grid; grid-template-columns: 220px minmax(0, 1fr); }
     .tabbar { display: none; }

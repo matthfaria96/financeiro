@@ -49,12 +49,12 @@
     <div class="form-row"><span class="field-label">Nome</span><span class="field">{store.household?.name}</span></div>
     <div class="form-row"><span class="field-label">Quem participa</span><span class="field">{store.members.map((m) => m.display_name || 'sem nome').join(', ')}</span></div>
     <div class="form-row" use:hint={['Acesso total', 'Quem tiver uma conta e este código entra na sua casa e vê TODO o financeiro. Para mostrar só carro, casa e listas, use Mais › Compartilhar.']}>
-      <span class="field-label">Código de acesso total</span><span class="field num code">{store.household?.invite_code}</span>
+      <span class="field-label">Código</span><span class="field num code">{store.household?.invite_code}</span>
       <button class="btn" onclick={copyCode}><Icon name={copied ? 'check' : 'copy'} size={15} />{copied ? 'Copiado' : 'Copiar'}</button>
     </div>
     <button class="form-row plain" onclick={() => store.rotateInvite()} use:hint={['Trocar código', 'O código antigo deixa de valer (quem já entrou continua).']}><Icon name="refresh" size={16} />Gerar código novo</button>
   </div>
-  <p class="form-footer">Este código dá acesso a todo o seu financeiro. Para compartilhar só carro, casa e listas de compras, use <a class="link" href="#/mais/compartilhar">Mais › Compartilhar</a>.</p>
+  <p class="form-footer">Este código dá acesso a todo o seu financeiro. Para mostrar só as Notas (listas, desejos, carro), use <a class="link" href="#/mais">Configuração › Família</a>.</p>
 
   <SectionTitle title="Previsão" />
   <div class="form-group">
@@ -110,5 +110,5 @@
 
 <style>
   .plain { background: none; border: 0; width: 100%; text-align: left; }
-  .code { letter-spacing: 0.12em; font-weight: 600; }
+  .code { letter-spacing: 0.08em; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>

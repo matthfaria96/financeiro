@@ -97,13 +97,12 @@
 </div>
 
 <style>
-  .chart { display: flex; flex-direction: column; gap: 10px; }
+  .chart { position: relative; display: flex; flex-direction: column; gap: 10px; }
   .plot { position: relative; width: 100%; }
   svg { display: block; overflow: visible; }
   .tick { font-size: 11px; fill: var(--text-3); font-variant-numeric: tabular-nums; }
   .tick.now { fill: var(--text); font-weight: 600; }
   .hit:focus { outline: none; }
-  :global(.sr-only) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   path { transition: opacity 0.2s; }
   svg :global(text) { user-select: none; }
 </style>

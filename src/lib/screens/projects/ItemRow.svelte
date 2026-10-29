@@ -44,4 +44,5 @@
   .plain { background: none; border: 0; text-align: left; padding: 0; color: inherit; }
   .prio { width: 22px; height: 22px; border-radius: 7px; display: grid; place-items: center; font-size: 12px; font-weight: 800; flex: none; color: var(--c); background: color-mix(in srgb, var(--c) 16%, transparent); }
   .icon-btn.small { width: 30px; height: 30px; }
+  @media (max-width: 600px) { .icon-btn.small, .thumb { display: none; } .list-row { gap: 10px; } }
 </style>

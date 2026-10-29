@@ -108,7 +108,7 @@
 </div>
 
 <style>
-  .chart { display: flex; flex-direction: column; gap: 10px; }
+  .chart { position: relative; display: flex; flex-direction: column; gap: 10px; }
   .plot { position: relative; width: 100%; touch-action: pan-y; }
   svg { display: block; overflow: visible; }
   .tick { font-size: 11px; fill: var(--text-3); font-variant-numeric: tabular-nums; user-select: none; }

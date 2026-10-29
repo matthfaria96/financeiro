@@ -65,9 +65,9 @@
   <button class="card row batch" onclick={openBatch} use:hint={['Buscar logos', 'Busca de uma vez o logo dos estabelecimentos que têm site e ainda não têm imagem.']}>
     <Icon name="sparkles" size={20} color="var(--accent)" /><span class="grow"><b>Buscar logos dos que não têm imagem</b><div class="caption">{store.merchants.filter((m) => m.image_url || m.image_data).length} com imagem · fotos ocupam {kilobytes(photoBytes)}; logos são só links</div></span><Icon name="chevron-right" size={15} class="faint" />
   </button>
-  <div class="row" style="gap: 10px">
+  <div class="tools">
     <label class="search grow"><Icon name="search" size={17} class="faint" /><input placeholder="Buscar estabelecimento" bind:value={search} /></label>
-    <div style="width: 230px"><Segmented label="Ordem" bind:value={order} options={[{ value: 'used', label: 'Mais gasto' }, { value: 'name', label: 'A–Z' }]} /></div>
+    <div class="order"><Segmented label="Ordem" bind:value={order} options={[{ value: 'used', label: 'Mais gasto' }, { value: 'name', label: 'A–Z' }]} /></div>
   </div>
   <div class="grid">
     {#each sorted as merchant (merchant.id)}
@@ -103,7 +103,11 @@
 </Sheet>
 
 <style>
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 12px; }
+  .tools { display: flex; gap: 10px; flex-wrap: wrap; }
+  .tools .search { min-width: 200px; }
+  .order { width: 230px; }
+  @media (max-width: 600px) { .order { width: 100%; } }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
   .merchant { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; padding: 18px 12px 14px; min-width: 0; }
   .merchant:hover { border-color: var(--stroke-strong); transform: translateY(-2px); }
   .merchant :global(.avatar) { margin-bottom: 8px; }

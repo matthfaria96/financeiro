@@ -67,6 +67,15 @@ a.link { color: var(--accent); }
 ::selection { background: rgba(43, 212, 164, 0.35); }
 
 .num { font-variant-numeric: tabular-nums; }
+/* Só para leitores de tela (tabelas dos gráficos): não ocupa espaço nenhum. */
+.sr-only { position: absolute !important; left: 0; top: 0; display: block; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
+
+/* Celular: o texto de botões com ícone some (fica só o ícone) e nada pode empurrar a página para o lado. */
+@media (max-width: 600px) {
+  .hide-m { display: none !important; }
+  .page { overflow-x: clip; }
+  .page h1 { font-size: 24px !important; }
+}
 .muted { color: var(--text-2); }
 .faint { color: var(--text-3); }
 .pos { color: var(--positive); }

@@ -24,11 +24,13 @@
     {@const date = clampedDay(month, day)}
     {@const due = bills.filter((b) => parts(dueDate(b, month)).day === day)}
     {@const cards = faturas.filter((g) => g.due === date)}
+    {@const total = cards.length + due.length}
     <div class="cell" class:today={date === now} class:past={date < now}>
       <span class="d">{day}</span>
       <span class="marks">
-        {#each cards as g (g.account.id)}<span class:done={paid.has(`f:${g.account.id}:${g.due}`)}><BankCard account={g.account} width={30} /></span>{/each}
-        {#each due.slice(0, 2) as b (b.id)}<span class:done={paid.has(`b:${b.id}`)}><Avatar merchant={merchantForBill(b) ?? null} category={store.categoryById.get(b.category_id ?? '') ?? null} name={b.name} size={24} /></span>{/each}
+        {#each cards.slice(0, 2) as g (g.account.id)}<span class:done={paid.has(`f:${g.account.id}:${g.due}`)}><BankCard account={g.account} width={26} /></span>{/each}
+        {#each due.slice(0, Math.max(0, 2 - cards.length)) as b (b.id)}<span class:done={paid.has(`b:${b.id}`)}><Avatar merchant={merchantForBill(b) ?? null} category={store.categoryById.get(b.category_id ?? '') ?? null} name={b.name} size={22} /></span>{/each}
+        {#if total > 2}<span class="more">+{total - 2}</span>{/if}
       </span>
     </div>
   {/each}
@@ -44,4 +46,7 @@
   .d { font-size: 13px; }
   .marks { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; }
   .done { opacity: 0.35; }
+  .more { font-size: 10.5px; font-weight: 700; color: var(--text-2); }
+  .cell { min-width: 0; overflow: hidden; }
+  @media (max-width: 600px) { .cal { gap: 4px; } .cell { min-height: 58px; border-radius: 9px; } .marks { flex-direction: column; align-items: center; gap: 2px; } }
 </style>

@@ -103,11 +103,3 @@ describe('Figurinhas da lista', () => {
   });
 });
 
-import { payerOf } from '../src/lib/features/ambient';
-describe('Cliente que pagou (modo Empresa)', () => {
-  it('pega o nome no Pix/TED', () => {
-    expect(payerOf('Transferência recebida pelo Pix - EMPRESA EXEMPLO LTDA - 12.345.678/0001-90 - BCO DO BRASIL')).toBe('EMPRESA EXEMPLO LTDA');
-    expect(payerOf('Escola Aprender Ltda')).toBe('Escola Aprender Ltda');
-    expect(payerOf('Pix recebido - Loja Bela')).toBe('Loja Bela');
-  });
-});

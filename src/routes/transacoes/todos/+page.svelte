@@ -6,7 +6,6 @@
   import { money } from '$lib/core/money';
   import { dayHeader, shortMonth } from '$lib/core/dates';
   import Icon from '$lib/ui/Icon.svelte';
-  import WorkspaceBar from '$lib/ui/WorkspaceBar.svelte';
   import { hint } from '$lib/ui/hint';
   import EntryRow from '$lib/screens/EntryRow.svelte';
   import MoveSheet from '$lib/screens/transactions/MoveSheet.svelte';
@@ -74,7 +73,7 @@
 
 <div class="page" class:narrow={!prefs.full}>
   <header class="row between top">
-    <span class="row" style="gap: 10px"><a class="icon-btn" href="#/transacoes" aria-label="Voltar"><Icon name="chevron-left" /></a><h1>Todos os lançamentos</h1></span>
+    <span class="row" style="gap: 10px"><a class="icon-btn" href="#/transacoes" aria-label="Voltar"><Icon name="chevron-left" /></a><h1>Todos<span class="hide-m"> os lançamentos</span></h1></span>
     <div class="row" style="gap: 8px">
       {#if selecting}
         <button class="btn" onclick={() => { selecting = false; selected = new Set(); }}>Concluir</button>
@@ -92,7 +91,6 @@
       {/if}
     </div>
   </header>
-  <WorkspaceBar />
   <label class="search"><Icon name="search" size={17} class="faint" /><input placeholder="Pesquisar" bind:value={filter.search} /></label>
 
   <div class="filters">

@@ -31,7 +31,7 @@
 
 <div class="page narrow">
   <SubHeader title="⭐ Lista de desejos" back="#/notas">
-    <button class="btn primary" onclick={add}><Icon name="plus" size={16} />Desejo</button>
+    <button class="btn primary" onclick={add}><Icon name="plus" size={16} /><span class="hide-m">Desejo</span></button>
   </SubHeader>
   {#if projects.length > 1}
     <div class="scroll-x">
