@@ -7,7 +7,9 @@
   import Welcome from '$lib/screens/home/Welcome.svelte';
   import BalanceCard from '$lib/screens/money/BalanceCard.svelte';
   import MonthCard from '$lib/screens/money/MonthCard.svelte';
-  import ForecastCard from '$lib/screens/money/ForecastCard.svelte';
+  import ScaleCard from '$lib/screens/money/ScaleCard.svelte';
+  import { lastEntryDate } from '$lib/features/model';
+  import { dayMonth } from '$lib/core/dates';
   import AccountsSheet from '$lib/screens/money/AccountsSheet.svelte';
   import ChartsSheet from '$lib/screens/money/ChartsSheet.svelte';
   import { inScope, inScopeAccount } from '$lib/features/model';
@@ -20,13 +22,16 @@
   const analysis = $derived(analyzeMonth(month, entries, accounts));
   const empty = $derived(!store.accounts.length || !store.entries.length);
   let chartsOpen = $state(false);
-  let chartFocus = $state<'balance' | 'flow'>('flow');
-  function charts(focus: 'balance' | 'flow') {
+  let chartFocus = $state<'cost' | 'flow'>('cost');
+  function charts(focus: 'cost' | 'flow') {
     chartFocus = focus;
     chartsOpen = true;
   }
 
   let configOpen = $state(false);
+  // Contas cujo extrato ainda não chegou neste mês (as entradas do mês parecem zeradas por isso).
+  const stale = $derived(accounts.filter((a) => a.kind === 'checking').map((a) => ({ account: a, last: lastEntryDate(a) })).filter((x) => x.last && x.last < `${month}-01`)
+    .map((x) => `${x.account.name} até ${dayMonth(x.last!)}`));
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
 </script>
@@ -44,9 +49,9 @@
     <Welcome />
   {:else}
     <div class="cards">
-      <BalanceCard {analysis} hidden={store.household?.settings.home_hidden ?? []} onconfig={() => (configOpen = true)} onchart={() => charts('balance')} />
-      <MonthCard {analysis} title={monthTitle(month)} link="#/transacoes" onchart={() => charts('flow')} />
-      <ForecastCard {accounts} />
+      <BalanceCard {analysis} hidden={store.household?.settings.home_hidden ?? []} onconfig={() => (configOpen = true)} />
+      <MonthCard {analysis} title={monthTitle(month)} link="#/transacoes" onchart={() => charts('cost')} {stale} />
+      <ScaleCard {entries} {accounts} />
     </div>
   {/if}
 

@@ -12,15 +12,15 @@
   import { merchantForBill } from '$lib/screens/bills/billLook';
 
   /** Previsão dos próximos meses: faturas já comprometidas (compras e parcelas) + contas fixas. Toque no mês para ver. */
-  let { accounts }: { accounts: Account[] } = $props();
+  let { accounts, oncalendar }: { accounts: Account[]; oncalendar?: () => void } = $props();
   const now = monthOf(today());
-  const months = $derived([1, 2, 3, 4].map((i) => addMonths(now, i)).map((m) => ({ month: m, ...forecastMonth(m, accounts) })));
+  const months = $derived([1, 2, 3, 4, 5, 6].map((i) => addMonths(now, i)).map((m) => ({ month: m, ...forecastMonth(m, accounts) })));
   const top = $derived(Math.max(1, ...months.map((n) => n.total)));
   let open = $state('');
 </script>
 
 <section class="card">
-  <div class="card-head"><h3>Previsão dos próximos meses</h3><ChartButton icon="calendar" label="Contas fixas" detail="Contas fixas do mês ou do ano, e o calendário." onclick={() => (ui.billsOpen = true)} /></div>
+  <div class="card-head"><h3>Previsão dos próximos meses</h3><ChartButton icon="calendar" label="Calendário" detail="Contas fixas do mês ou do ano, e o calendário." onclick={() => (oncalendar ? oncalendar() : (ui.billsOpen = true))} /></div>
   <div class="months">
     {#each months as n (n.month)}
       <button class="bar-row" onclick={() => (open = open === n.month ? '' : n.month)} aria-expanded={open === n.month}>

@@ -196,7 +196,8 @@ export function configureInvestment(draft: ImportDraft) {
   }
   const source = draft.targetAccount;
   const tracker = source ? store.accounts.find((a) => a.kind === 'savings' && a.investment_source_id === source.id) : undefined;
-  draft.investment = tracker ? { type: 'existing', id: tracker.id } : { type: 'new' };
+  // Padrão: caixinha é o mesmo dinheiro da conta (não cria conta separada); só acompanha se já existir.
+  draft.investment = tracker && !tracker.archived ? { type: 'existing', id: tracker.id } : { type: 'none' };
   const bank = source?.bank ?? draft.statement.bank;
   draft.newInvestmentName = bank === 'nubank' ? 'Nubank Caixinhas' : `${bank === 'other' ? 'Meus' : bankName[bank]} investimentos`;
 }

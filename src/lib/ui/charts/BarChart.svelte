@@ -15,7 +15,7 @@
     values: number[];
     stack?: string;
   }
-  let { labels, series, height = 220, format = (v: number) => money(v, { cents: false }), current = -1, faded = () => false, onselect, title = 'Gráfico de colunas' }: {
+  let { labels, series, height = 220, format = (v: number) => money(v, { cents: false }), current = -1, faded = () => false, onselect, title = 'Gráfico de colunas', reference = null }: {
     labels: string[];
     series: Series[];
     height?: number;
@@ -24,6 +24,8 @@
     faded?: (index: number) => boolean;
     onselect?: (index: number) => void;
     title?: string;
+    /** Linha de referência (ex.: média), com rótulo à direita. */
+    reference?: { value: number; label: string } | null;
   } = $props();
 
   let width = $state(600);
@@ -32,7 +34,7 @@
 
   const stacks = $derived([...new Set(series.map((s) => s.stack ?? s.id))]);
   const totals = $derived(labels.map((_, i) => stacks.map((stack) => series.filter((s) => (s.stack ?? s.id) === stack).reduce((sum, s) => sum + Math.max(0, s.values[i] ?? 0), 0))));
-  const ticks = $derived(niceTicks(Math.max(1, ...totals.flat())));
+  const ticks = $derived(niceTicks(Math.max(1, ...totals.flat(), reference?.value ?? 0)));
   const top = $derived(ticks.at(-1)!);
   const plotW = $derived(Math.max(10, width - pad.l - pad.r));
   const plotH = $derived(height - pad.t - pad.b);
@@ -78,6 +80,10 @@
       {#each bars as bar (bar.key)}
         <path d={bar.d} fill={bar.color} opacity={faded(bar.i) ? 0.38 : hovered === null || hovered === bar.i ? 1 : 0.55} />
       {/each}
+      {#if reference}
+        <line x1={pad.l} x2={width - pad.r} y1={y(reference.value)} y2={y(reference.value)} stroke="rgba(255,255,255,0.55)" stroke-width="1.5" />
+        <text x={width - pad.r} y={y(reference.value) - 6} text-anchor="end" class="ref">{reference.label}</text>
+      {/if}
       {#each labels as label, i (i)}
         {#if i === current || (i % every === 0 && Math.abs(i - current) >= every * 0.6) || (current < 0 && i % every === 0)}
           <text x={pad.l + band * i + band / 2} y={height - 8} text-anchor="middle" class="tick" class:now={i === current}>{label}</text>
@@ -101,6 +107,7 @@
   .plot { position: relative; width: 100%; }
   svg { display: block; overflow: visible; }
   .tick { font-size: 11px; fill: var(--text-3); font-variant-numeric: tabular-nums; }
+  .ref { font-size: 11px; fill: var(--text-2); font-weight: 600; }
   .tick.now { fill: var(--text); font-weight: 600; }
   .hit:focus { outline: none; }
   path { transition: opacity 0.2s; }

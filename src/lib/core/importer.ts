@@ -9,7 +9,7 @@ export function looksLikePDF(bytes: Uint8Array): boolean {
   return bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46;
 }
 
-/** O Nubank põe o número da conta no nome do arquivo: "NU_42584364_01SET2026_30SET2026.csv". */
+/** O Nubank põe o número da conta no nome do arquivo: "NU_12345678_01SET2026_30SET2026.csv". */
 export function accountNumberInFileName(name: string): string | undefined {
   return name.match(/^NU_(\d{5,})_/)?.[1];
 }

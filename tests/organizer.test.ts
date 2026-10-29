@@ -103,3 +103,12 @@ describe('Figurinhas da lista', () => {
   });
 });
 
+
+import { payerOf } from '../src/lib/features/analytics';
+describe('Quem pagou', () => {
+  it('pega o nome no Pix/TED', () => {
+    expect(payerOf('Transferência recebida pelo Pix - EMPRESA EXEMPLO LTDA - 12.345.678/0001-90 - BCO EXEMPLO S.A. (0000) Agência: 1 Conta: 1234-5')).toBe('EMPRESA EXEMPLO LTDA');
+    expect(payerOf('Transferência Recebida - FULANO DE TAL - •••.111.222-•• - BCO EXEMPLO S.A.')).toBe('FULANO DE TAL');
+    expect(payerOf('Escola Aprender Ltda')).toBe('Escola Aprender Ltda');
+  });
+});

@@ -1,5 +1,5 @@
 import { BillCycle } from '$lib/core/billCycle';
-import { CARD_PAYMENT, UNCATEGORIZED, type CategoryKind, type CostType } from '$lib/core/catalog';
+import { CARD_PAYMENT, INVESTMENT, UNCATEGORIZED, type CategoryKind, type CostType } from '$lib/core/catalog';
 import type { Day } from '$lib/core/dates';
 import { store } from '$lib/data/store.svelte';
 import type { Account, Bill, Category, Entry } from '$lib/data/types';
@@ -63,10 +63,20 @@ export const isCardPayment = (entry: Entry) => categoryOf(entry)?.key === CARD_P
 
 // Saldo -------------------------------------------------------------------------------------------
 
+/** Conta corrente sem investimento separado acompanhando: guardar/resgatar da caixinha é o mesmo dinheiro
+ *  (não muda o saldo). O rendimento entra como lançamento de "Rendimentos" quando o usuário fecha o mês. */
+export function savingsInside(account: Account): boolean {
+  return account.kind === 'checking' && !store.accounts.some((a) => a.kind === 'savings' && !a.archived && a.investment_source_id === account.id);
+}
+
+export function isInternalMove(account: Account, entry: Entry): boolean {
+  return entry.category_id !== null && entry.category_id === store.categoryByKey.get(INVESTMENT)?.id && savingsInside(account);
+}
+
 /** Saldo de uma conta ao fim de `day` (ou com tudo, se omitido). Com saldo de referência (X ao fim do dia D),
  *  saldo(t) = X + Σ lançamentos em (D, t] − Σ lançamentos em (t, D]. Sem referência, soma tudo até t. */
 export function balanceOf(account: Account, day?: Day): number {
-  const entries = store.entriesByAccount.get(account.id) ?? [];
+  const entries = (store.entriesByAccount.get(account.id) ?? []).filter((e) => !isInternalMove(account, e));
   if (account.anchor_date !== null && account.anchor_balance_cents !== null) {
     const anchor = account.anchor_date;
     let total = account.anchor_balance_cents;
