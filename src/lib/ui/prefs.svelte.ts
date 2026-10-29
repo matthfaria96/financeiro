@@ -12,8 +12,28 @@ function read(): boolean {
   }
 }
 
+const PURCHASE_KEY = 'financeiro.cartao-pela-compra';
+function readPurchase(): boolean {
+  try {
+    return localStorage.getItem(PURCHASE_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
 class Prefs {
   full = $state(typeof localStorage === 'undefined' ? false : read());
+  /** Compras no cartão contam no mês da compra (padrão: no mês em que a fatura vence, quando o dinheiro sai). */
+  creditByPurchase = $state(typeof localStorage === 'undefined' ? false : readPurchase());
+
+  setCreditByPurchase(on: boolean) {
+    this.creditByPurchase = on;
+    try {
+      localStorage.setItem(PURCHASE_KEY, on ? '1' : '0');
+    } catch {
+      // aba privada: vale até fechar
+    }
+  }
 
   setFull(on: boolean) {
     this.full = on;

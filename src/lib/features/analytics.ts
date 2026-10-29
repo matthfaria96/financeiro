@@ -2,7 +2,8 @@ import { UNCATEGORIZED } from '$lib/core/catalog';
 import { addMonths, lastDay, monthOf, today, type Month } from '$lib/core/dates';
 import { store } from '$lib/data/store.svelte';
 import type { Account, Category, Entry } from '$lib/data/types';
-import { accountOf, balanceOf, categoryOf, kindOf, rootOf } from './model';
+import { accountOf, balanceOf, billDueOf, categoryOf, kindOf, rootOf } from './model';
+import { prefs } from '$lib/ui/prefs.svelte';
 import { payableGroups } from './payables';
 import { billInMonth, onCard } from './bills';
 
@@ -92,17 +93,29 @@ export function spendingScale(entries: Entry[], accounts: Account[], count = 6) 
   const now = monthOf(today());
   const months = Array.from({ length: count }, (_, i) => addMonths(now, i - count + 1));
   const values = months.map((m) => analyzeMonth(m, entries, accounts).expenseTotal);
-  const first = entries.filter((e) => !e.is_mirror && kindOf(e) === 'expense').map((e) => monthOf(e.date)).sort()[0];
+  const first = entries.filter((e) => !e.is_mirror && kindOf(e) === 'expense').map(spendMonth).sort()[0];
   const past = values.slice(0, -1).filter((_, i) => first && months[i] >= first);
   const average = past.length ? Math.round(past.reduce((a, b) => a + b, 0) / past.length) : null;
   return { months, values, average, current: values.at(-1) ?? 0, monthsInAverage: past.length };
+}
+
+/**
+ * Mês em que um gasto pesa no bolso: no cartão, o mês em que a fatura vence (parcelas já vêm uma por fatura);
+ * nas contas e no dinheiro, a data do lançamento. Com a preferência "pela compra", sempre a data da compra.
+ */
+export function spendMonth(entry: Entry): Month {
+  if (!prefs.creditByPurchase && accountOf(entry)?.kind === 'creditCard') {
+    const due = billDueOf(entry);
+    if (due) return monthOf(due);
+  }
+  return monthOf(entry.date);
 }
 
 export function analyzeMonth(month: Month, entries: Entry[], accounts: Account[]): MonthAnalysis {
   const inMonth = entries.filter((e) => !e.is_mirror && monthOf(e.date) === month);
   const incoming = inMonth.filter((e) => kindOf(e) === 'income' && ['checking', 'cash'].includes(accountOf(e)?.kind ?? ''));
   const income = groupIncome(incoming);
-  const expenses = group(inMonth.filter((e) => kindOf(e) === 'expense'), (e) => rootOf(categoryOf(e)), -1);
+  const expenses = group(entries.filter((e) => !e.is_mirror && kindOf(e) === 'expense' && spendMonth(e) === month), (e) => rootOf(categoryOf(e)), -1);
   const now = today();
   const end = lastDay(month) < now ? lastDay(month) : now;
   const balances = accounts.filter((a) => a.kind !== 'creditCard' && !a.archived).map((account) => ({ account, cents: balanceOf(account, end), estimated: account.kind !== 'cash' && account.anchor_balance_cents === null }));

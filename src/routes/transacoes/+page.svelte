@@ -16,6 +16,8 @@
   import { filter } from '$lib/screens/transactions/filter.svelte';
   import { inScope, inScopeAccount } from '$lib/features/model';
   import { analyzeMonth, forecastMonth } from '$lib/features/analytics';
+  import Segmented from '$lib/ui/Segmented.svelte';
+  import { prefs } from '$lib/ui/prefs.svelte';
 
   /** Lançamentos (o "analítico"): o mês escolhido em saldo, entradas, saídas por categoria e balanço.
    *  Meses futuros mostram o que já está previsto (faturas e contas fixas). */
@@ -68,6 +70,11 @@
       <div><span class="caption">Saídas</span><b class="num">{money(analysis.expenseTotal)}</b></div>
       <div><span class="caption">Balanço</span><b class="num" class:pos={analysis.balance >= 0} class:neg={analysis.balance < 0}>{money(analysis.balance)}</b></div>
     </section>
+    <div class="credit-mode">
+      <Segmented label="Compras no cartão" value={prefs.creditByPurchase ? 'purchase' : 'bill'} options={[{ value: 'bill', label: 'Cartão no mês da fatura' }, { value: 'purchase', label: 'No mês da compra' }]}
+        onchange={(v) => prefs.setCreditByPurchase(v === 'purchase')} />
+      <span class="caption">{prefs.creditByPurchase ? 'Compras no cartão contam no dia em que foram feitas.' : 'Compras no cartão contam quando a fatura vence (parceladas: só a parcela do mês).'}</span>
+    </div>
     <div class="layout">
       <CategoryDonut title="Saídas" groups={analysis.expenses} total={analysis.expenseTotal} empty="Nenhuma saída neste mês." />
       <CategoryDonut title="Entradas" groups={analysis.income} total={analysis.incomeTotal} tone="pos" empty="Nenhuma entrada neste mês. Importe o extrato da conta." />
@@ -84,6 +91,8 @@
   .icon-btn:disabled { opacity: 0.3; }
   .layout { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); align-items: start; }
   @media (min-width: 1000px) { .layout { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .credit-mode { display: flex; flex-direction: column; gap: 6px; }
+  .credit-mode :global(.seg) { max-width: 460px; }
   .totals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
   .totals > div { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
   .totals b { font: 600 clamp(15px, 4vw, 22px) var(--font-display); white-space: nowrap; }

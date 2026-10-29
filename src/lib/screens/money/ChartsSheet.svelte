@@ -12,7 +12,7 @@
   import { seriesColor } from '$lib/ui/charts/scale';
   import BillRow from '$lib/screens/bills/BillRow.svelte';
   import ForecastCard from './ForecastCard.svelte';
-  import { analyzeMonth } from '$lib/features/analytics';
+  import { analyzeMonth, spendMonth } from '$lib/features/analytics';
   import { balanceOf, costOf, kindOf, inScopeBill } from '$lib/features/model';
   import { billInMonth, billStatus } from '$lib/features/bills';
 
@@ -28,7 +28,7 @@
 
   const months = $derived(Array.from({ length: 6 }, (_, i) => addMonths(month, i - 5)));
   const labels = $derived(months.map((m) => shortMonth(m).slice(0, 3)));
-  const expensesOf = (m: Month) => entries.filter((e) => !e.is_mirror && monthOf(e.date) === m && kindOf(e) === 'expense');
+  const expensesOf = (m: Month) => entries.filter((e) => !e.is_mirror && spendMonth(e) === m && kindOf(e) === 'expense');
   const sum = (list: Entry[]) => -list.reduce((s, e) => s + e.amount_cents, 0);
   const fixed = $derived(open ? months.map((m) => sum(expensesOf(m).filter((e) => costOf(e) === 'fixed'))) : []);
   const variable = $derived(open ? months.map((m) => sum(expensesOf(m).filter((e) => costOf(e) === 'variable'))) : []);
