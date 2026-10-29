@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { onDestroy, untrack } from 'svelte';
+  import { cubicOut } from 'svelte/easing';
   import { money, percent } from '$lib/core/money';
   /** Rosca em SVG puro. Passar o mouse numa fatia mostra nome, valor e % no centro. */
   let { slices, size = 220, thickness = 0.32, labels = false, center = '', caption = '', format = (v: number) => money(v, { cents: false }) }: {
@@ -12,18 +14,48 @@
   } = $props();
 
   let hovered = $state<string | null>(null);
-  const total = $derived(slices.reduce((s, x) => s + Math.max(0, x.value), 0));
+  // As fatias crescem ao aparecer e se transformam umas nas outras quando os valores mudam (troca de mês).
+  // Animação própria (por id da fatia): fatias novas nascem do zero, as que saem encolhem até sumir.
+  const reduce = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let shown = $state<Record<string, number>>({});
+  let frame = 0;
+  let last = '';
+  $effect(() => {
+    const target = Object.fromEntries(slices.map((x) => [x.id, Math.max(0, x.value)]));
+    const key = JSON.stringify(target);
+    if (key === last) return;
+    last = key;
+    untrack(() => {
+      cancelAnimationFrame(frame);
+      const from = { ...shown };
+      if (reduce) return void (shown = target);
+      const start = performance.now();
+      const step = (now: number) => {
+        const t = Math.min(1, (now - start) / 750);
+        const k = cubicOut(t);
+        const ids = new Set([...Object.keys(from), ...Object.keys(target)]);
+        shown = Object.fromEntries([...ids].map((id) => [id, (from[id] ?? 0) + ((target[id] ?? 0) - (from[id] ?? 0)) * k]));
+        if (t < 1) frame = requestAnimationFrame(step);
+      };
+      frame = requestAnimationFrame(step);
+    });
+  });
+  onDestroy(() => cancelAnimationFrame(frame));
+  const values = $derived(slices.map((x) => shown[x.id] ?? 0));
+  const goal = $derived(slices.reduce((s, x) => s + Math.max(0, x.value), 0));
+  const total = $derived(Math.max(goal, values.reduce((a, b) => a + b, 0)));
   const arcs = $derived.by(() => {
     const r = 50;
     const inner = r * (1 - thickness);
-    const visible = slices.filter((s) => s.value > 0);
+    const visible = slices.map((slice, i) => ({ ...slice, value: values[i] })).filter((s) => s.value > 0);
     const gap = visible.length > 1 ? 0.014 : 0;
     let angle = -Math.PI / 2;
     return visible.map((slice) => {
       const share = slice.value / (total || 1);
+      const real = slices.find((x) => x.id === slice.id)!.value;
       const sweep = share * Math.PI * 2;
       const a0 = angle + gap;
-      const a1 = angle + sweep - gap;
+      const a1 = Math.max(a0 + 0.002, angle + sweep - gap);
       angle += sweep;
       const large = a1 - a0 > Math.PI ? 1 : 0;
       const p = (a: number, radius: number) => `${(50 + radius * Math.cos(a)).toFixed(2)} ${(50 + radius * Math.sin(a)).toFixed(2)}`;
@@ -31,7 +63,7 @@
         ? `M ${p(0, r)} A ${r} ${r} 0 1 1 ${p(Math.PI, r)} A ${r} ${r} 0 1 1 ${p(0, r)} M ${p(0, inner)} A ${inner} ${inner} 0 1 0 ${p(Math.PI, inner)} A ${inner} ${inner} 0 1 0 ${p(0, inner)} Z`
         : `M ${p(a0, r)} A ${r} ${r} 0 ${large} 1 ${p(a1, r)} L ${p(a1, inner)} A ${inner} ${inner} 0 ${large} 0 ${p(a0, inner)} Z`;
       const mid = (a0 + a1) / 2;
-      return { ...slice, path, share, labelAt: p(mid, (r + inner) / 2).split(' ').map(Number) };
+      return { ...slice, value: real, share: real / (goal || 1), path, labelAt: p(mid, (r + inner) / 2).split(' ').map(Number) };
     });
   });
   const focus = $derived(arcs.find((a) => a.id === hovered));

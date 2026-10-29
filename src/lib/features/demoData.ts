@@ -19,12 +19,25 @@ export async function seedDemo() {
       [8, -129.9, 'Pagamento de boleto efetuado - VIVO FIBRA'], [10, -(1450 + i * 60), 'Pagamento de fatura'], [12, -42.5, 'Compra no débito - PADARIA PAO QUENTE'],
       [14, -200, 'Saque 24h - Banco24Horas'], [18, -300, 'Transferência enviada pelo Pix - JOAO PEREIRA - •••.111.222-•• - BCO'], [25, -500, 'Aplicação RDB']
     ];
-    for (const [d, v, t] of rows) if (past(m, d)) nubankConta.push(`${day(m, d).split('-').reverse().join('/')},${v.toFixed(2)},demo-nu-${++id},"${t}"`);
+    // Cada mês tem algo diferente: freela, 13º, reembolso, presente… (para o Início mudar de verdade entre os meses).
+    const extra = ([
+      [[20, 1350, 'Transferência recebida pelo Pix - ESTUDIO FREELA DESIGN']], [[22, -680, 'Pagamento de boleto efetuado - OFICINA MECANICA BOA VIAGEM']], [],
+      [[19, 2100, 'Transferência recebida pelo Pix - ESTUDIO FREELA DESIGN'], [23, -450, 'Pagamento de boleto efetuado - CLINICA ODONTO SORRISO']], [[17, 320, 'Reembolso recebido - PLANO SAUDE']],
+      [[21, -1200, 'Transferência enviada pelo Pix - CVC VIAGENS']], [[20, 900, 'Transferência recebida pelo Pix - ESTUDIO FREELA DESIGN']], [[16, -260, 'Pagamento de boleto efetuado - IPTU PARCELA']], []
+    ] as [number, number, string][][])[i] ?? [];
+    if (m.endsWith('-12')) extra.push([20, 7800, 'Transferência recebida pelo Pix - EMPRESA EXEMPLO LTDA - 13 SALARIO']);
+    for (const [d, v, t] of [...rows, ...extra].toSorted((a, b) => a[0] - b[0])) if (past(m, d)) nubankConta.push(`${day(m, d).split('-').reverse().join('/')},${v.toFixed(2)},demo-nu-${++id},"${t}"`);
   });
   const nubankCard = ['date,title,amount'];
   const merchants: [number, string, number][] = [[2, 'Ifd*Restaurante Sabor', 64.9], [3, 'Netflix.Com', 55.9], [4, 'Uber* Trip', 23.4], [7, 'Carrefour Hiper', 612.35], [9, 'Spotify', 34.9], [11, 'Posto Shell Centro', 250], [14, 'Drogasil', 87.2], [16, 'Amazon Marketplace', 159.9], [19, 'Uber* Trip', 31.8], [21, 'Ifd*Pizzaria Bella', 92], [23, 'Smart Fit', 119.9], [26, 'Assai Atacadista', 433.1]];
   months.forEach((m, i) => {
     for (const [d, t, v] of merchants) if (past(m, d)) nubankCard.push(`${day(m, d)},${t},${(/Netflix|Spotify|Smart/.test(t) ? v : v + (((i * 7 + d) % 9) - 4) * 3.1).toFixed(2)}`);
+    const extras = ([
+      [[13, 'Renner Shopping', 289.9], [24, 'Cinemark', 86]], [[6, 'Magazine Luiza', 1299, ], [18, 'Ifd*Sushi House', 148]], [[12, 'Amazon Marketplace', 349.9]],
+      [[9, 'Zara Brasil', 459.8], [20, 'Outback', 236.5]], [], [[5, 'Latam Airlines', 1840.3], [8, 'Booking.com', 960]],
+      [[15, 'Drogasil', 72.4]], [[11, 'Leroy Merlin', 612.8], [22, 'Ifd*Hamburgueria', 98]], [[4, 'Fast Shop', 2199], [17, 'Petz', 230]]
+    ] as [number, string, number][][])[i] ?? [];
+    for (const [d, t, v] of extras) if (past(m, d)) nubankCard.push(`${day(m, d)},${t},${v.toFixed(2)}`);
     if (past(m, 10)) nubankCard.push(`${day(m, 10)},Pagamento recebido,-${(1450 + i * 60).toFixed(2)}`);
   });
   const interConta = ['Extrato Conta Corrente', 'Conta ;98765432', '', 'Data Lançamento;Histórico;Descrição;Valor;Saldo'];

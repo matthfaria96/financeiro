@@ -9,7 +9,7 @@
   import { accountOf, categoryOf, costOf, kindOf } from '$lib/features/model';
   import { prefs } from '$lib/ui/prefs.svelte';
 
-  let { entry, onclick, selected = null, compact = false }: { entry: Entry; onclick?: () => void; selected?: boolean | null; compact?: boolean } = $props();
+  let { entry, onclick, selected = null, compact = false, lead }: { entry: Entry; onclick?: () => void; selected?: boolean | null; compact?: boolean; /** Algo antes do avatar (ex.: a data), dentro da mesma linha clicável. */ lead?: import('svelte').Snippet } = $props();
   const category = $derived(categoryOf(entry));
   const merchant = $derived(entry.merchant_id ? store.merchantById.get(entry.merchant_id) : undefined);
   const person = $derived(entry.person_id ? store.personById.get(entry.person_id) : undefined);
@@ -19,7 +19,8 @@
   const showPerson = $derived(!compact && person && (prefs.full || person.id !== account?.default_person_id));
 </script>
 
-<button class="entry" {onclick} aria-pressed={selected ?? undefined}>
+<button class="entry" class:has-lead={!!lead} {onclick} aria-pressed={selected ?? undefined}>
+  {#if lead}{@render lead()}{/if}
   {#if selected !== null}
     <span class="check" class:on={selected}><Icon name={selected ? 'check-circle' : 'circle'} size={22} /></span>
   {/if}
@@ -43,9 +44,10 @@
 </button>
 
 <style>
-  .entry { display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; padding: 11px 16px; border: 0; background: none; transition: background 0.15s; }
-  .entry:hover { background: rgba(255, 255, 255, 0.035); }
-  .entry:active { background: rgba(255, 255, 255, 0.06); }
+  .entry { display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; padding: 11px 16px; border: 0; background: none; transition: background 0.2s, transform 0.2s var(--ease); }
+  .entry.has-lead { padding-left: 8px; gap: 12px; }
+  .entry:hover { background: rgba(255, 255, 255, 0.045); }
+  .entry:active { background: rgba(255, 255, 255, 0.07); transform: scale(0.995); }
   :global(.entries) > :global(.entry + .entry) { border-top: 1px solid var(--stroke); }
   .text { display: flex; flex-direction: column; gap: 3px; }
   .title { font-size: 15.5px; }

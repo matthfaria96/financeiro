@@ -6,8 +6,8 @@
 <script lang="ts">
   import { untrack, type Snippet } from 'svelte';
   import Icon from './Icon.svelte';
-  import { fade, fly } from 'svelte/transition';
-  import { cubicOut } from 'svelte/easing';
+  import { fade } from 'svelte/transition';
+  import { cubicOut, quintOut } from 'svelte/easing';
 
   /**
    * Folha: sobe de baixo no celular e abre centralizada no computador. Esc ou toque fora fecham.
@@ -48,15 +48,22 @@
   }
 
   const isMobile = () => typeof matchMedia !== 'undefined' && matchMedia('(max-width: 720px)').matches;
+  /** Celular: sobe de baixo. Computador: surge crescendo um pouco, como as janelas do macOS. */
+  function present(node: HTMLElement) {
+    const base = getComputedStyle(node).transform;
+    const from = base === 'none' ? '' : base;
+    if (isMobile()) return { duration: 420, easing: quintOut, css: (_t: number, u: number) => `transform: ${from} translateY(${u * 100}%)` };
+    return { duration: 280, easing: cubicOut, css: (t: number, u: number) => `opacity: ${t}; transform: ${from} translateY(${u * 10}px) scale(${0.965 + 0.035 * t})` };
+  }
 </script>
 
 <svelte:window onkeydown={keydown} />
 
 {#if open}
   <div use:portal>
-  <div class="backdrop" class:nested={depth > 0} transition:fade={{ duration: depth > 0 ? 0 : 180 }} onclick={close} role="presentation"></div>
+  <div class="backdrop" class:nested={depth > 0} transition:fade={{ duration: depth > 0 ? 0 : 220 }} onclick={close} role="presentation"></div>
   <div class="sheet" class:wide class:under role="dialog" aria-hidden={under} aria-modal="true" aria-label={title}
-    transition:fly={{ y: isMobile() ? 600 : 24, duration: 320, easing: cubicOut, opacity: isMobile() ? 1 : 0 }}>
+    transition:present>
     <div class="grabber" aria-hidden="true"></div>
     <header>
       <button class="btn ghost" onclick={close}>{#if depth > 0}<Icon name="chevron-left" size={16} />Voltar{:else}Fechar{/if}</button>

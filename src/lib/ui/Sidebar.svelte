@@ -33,8 +33,11 @@
   .brand { display: flex; align-items: center; gap: 10px; font: 700 17px var(--font-display); padding: 4px 6px 22px; }
   .logo { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; color: #b8ffe6; background: linear-gradient(160deg, #1d7a5e, #06140f); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12), 0 4px 14px rgba(43, 212, 164, 0.25); }
   .links { display: flex; flex-direction: column; gap: 4px; flex: 1; }
-  .link { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 6px 10px; border-radius: 12px; color: var(--text); font-size: 15.5px; font-weight: 500; transition: background 0.15s; }
+  .link { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 6px 10px; border-radius: 12px; color: var(--text); font-size: 15.5px; font-weight: 500; transition: background 0.2s, transform 0.2s cubic-bezier(0.22, 1, 0.36, 1); }
   .link:hover { background: rgba(255, 255, 255, 0.055); }
+  .link:active { transform: scale(0.97); }
+  .ico { transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1); }
+  .link:hover .ico { transform: scale(1.06); }
   .link.on { background: rgba(255, 255, 255, 0.11); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06); }
   .ico { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; flex: none; color: #fff; background: linear-gradient(160deg, var(--c), color-mix(in srgb, var(--c) 62%, black)); box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.2); }
   .bottom { display: flex; flex-direction: column; gap: 10px; padding-top: 10px; border-top: 1px solid var(--stroke); }

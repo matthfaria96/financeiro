@@ -18,7 +18,9 @@
   <div class="entries">
     {#each sorted.slice(0, limit) as entry (entry.id)}
       {@const due = !prefs.creditByPurchase && entry.bill_due_date ? entry.bill_due_date : null}
-      <div class="dated"><span class="day caption" title={due ? `Comprado em ${dayMonth(entry.date)}` : ''}>{dayMonth(entry.date).slice(0, 5)}{#if due}<span class="due">fatura {dayMonth(due).slice(0, 5)}</span>{/if}</span><EntryRow {entry} compact onclick={() => ui.editEntry(entry.id)} /></div>
+      <EntryRow {entry} compact onclick={() => ui.editEntry(entry.id)}>
+        {#snippet lead()}<span class="day caption" title={due ? `Comprado em ${dayMonth(entry.date)}` : ''}>{dayMonth(entry.date).slice(0, 5)}{#if due}<span class="due">fatura {dayMonth(due).slice(0, 5)}</span>{/if}</span>{/snippet}
+      </EntryRow>
     {:else}
       <p class="muted small padded">Nada neste mês.</p>
     {/each}
@@ -29,11 +31,8 @@
 <style>
   .pad { padding: 18px 18px 6px; margin: 0; }
   .padded { padding: 12px 18px; margin: 0; }
-  .dated { display: flex; align-items: center; }
-  .dated + .dated { border-top: 1px solid var(--stroke); }
   .due { display: block; font-size: 10px; color: #b388ff; white-space: nowrap; }
-  .day { width: 64px; flex: none; text-align: right; padding-right: 0; font-variant-numeric: tabular-nums; }
-  .dated :global(.entry) { flex: 1; min-width: 0; padding-left: 12px; }
-  @media (max-width: 600px) { .day { width: 44px; } .dated :global(.entry) { padding-left: 8px; } }
+  .day { width: 50px; flex: none; text-align: right; font-variant-numeric: tabular-nums; }
+  @media (max-width: 600px) { .day { width: 40px; } }
   .more { margin: 6px 16px 16px; width: calc(100% - 32px); }
 </style>

@@ -34,7 +34,8 @@ async function step(name, action, expect) {
 }
 const go = (hash) => () => ev(`location.hash = ${JSON.stringify(hash)}`);
 const closeSheet = () => ev(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))`).then(() => sleep(700));
-await step('Início', go('#/'), 'Panorama mensal');
+await step('Início', go('#/'), 'Panorama de');
+await step('Início › mês anterior muda o Panorama', () => ev(`(async () => { const t = () => document.querySelector('.carousel')?.innerText; const a = t(); document.querySelector('main [aria-label="Mês anterior"]').click(); await new Promise((r) => setTimeout(r, 1200)); const b = t(); document.querySelector('main .today')?.click(); return a !== b ? 'ok' : 'NÃO MUDOU'; })()`), 'Panorama de');
 await step('Panorama › bolinha 2', () => ev(`document.querySelectorAll('main .dots button')[1].click(); 'ok'`), 'média');
 await step('Ajustar o mês (janela)', () => { ev(`document.querySelectorAll('main .dots button')[0].click()`); return new Promise((r) => setTimeout(() => r(click('Ajustar')), 800)); }, 'Antecipação de fatura');
 await closeSheet();
@@ -42,7 +43,7 @@ await step('Mês anterior no topo', () => ev(`document.querySelector('main [aria
 await step('Voltar para o mês atual', () => click('Voltar para'), 'Saldo financeiro');
 await step('Fechar o mês (janela)', () => click('Fechar o mês'), 'somando a caixinha');
 await closeSheet();
-await step('Início › escolher contas', () => ev(`document.querySelector('main [aria-label="Escolher contas"]').click(); 'ok'`), 'Contas no Início');
+await step('Início › Configurações', () => click('Configurações'), 'Configurações do Início');
 await step('Esconder uma conta', () => ev(`document.querySelector('[role=dialog]:not([aria-hidden=true]) [role=switch]').click(); 'ok'`), 'Esconder não apaga');
 await closeSheet();
 await step('Lançamentos › análise', () => { ev(`location.hash = '#/transacoes'`); return new Promise((r) => setTimeout(() => r(ev(`document.querySelector('main [aria-label="Análise"]').click(); 'ok'`)), 1200)); }, 'Contas fixas do mês');

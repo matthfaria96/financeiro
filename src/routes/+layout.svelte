@@ -115,8 +115,11 @@
     background: rgba(28, 36, 33, 0.66); backdrop-filter: blur(24px) saturate(1.8); -webkit-backdrop-filter: blur(24px) saturate(1.8);
     border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
   }
-  .tabbar a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: var(--text-2); font-size: 10.5px; font-weight: 600; border-radius: 24px; transition: color 0.2s; }
-  .tabbar a.on { color: var(--accent); }
+  .tabbar a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; margin: 6px 0; color: var(--text-2); font-size: 10.5px; font-weight: 600; border-radius: 24px; transition: color 0.25s, background 0.3s, transform 0.2s cubic-bezier(0.22, 1, 0.36, 1); }
+  .tabbar a.on { color: var(--accent); background: rgba(255, 255, 255, 0.07); }
+  .tabbar a:active { transform: scale(0.92); }
+  .tabbar a :global(svg) { transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1); }
+  .tabbar a.on :global(svg) { transform: translateY(-1px) scale(1.08); }
   .tabbar a span { white-space: nowrap; font-size: 10px; letter-spacing: -0.01em; }
   @media (min-width: 960px) {
     .shell { display: grid; grid-template-columns: 220px minmax(0, 1fr); }

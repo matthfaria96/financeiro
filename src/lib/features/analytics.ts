@@ -156,6 +156,13 @@ export function monthEndTotal(month: Month, accounts: Account[]) {
   return accounts.filter((a) => a.kind !== 'creditCard' && !a.archived).reduce((s, a) => s + balanceOf(a, end), 0);
 }
 
+/** Entrada esperada num mês futuro: a média dos últimos 3 meses fechados que tiveram entrada. */
+export function expectedIncome(entries: Entry[], accounts: Account[]) {
+  const now = monthOf(today());
+  const past = [1, 2, 3, 4, 5, 6].map((i) => analyzeMonth(addMonths(now, -i), entries, accounts).incomeTotal).filter((v) => v > 0).slice(0, 3);
+  return past.length ? Math.round(past.reduce((a, b) => a + b, 0) / past.length) : 0;
+}
+
 /** O que já se sabe que vai sair num mês futuro: faturas (compras feitas + parcelas) e contas fixas fora do cartão. */
 export function forecastMonth(month: Month, accounts: Account[]) {
   const faturas = payableGroups(accounts.filter((a) => a.kind === 'creditCard'))

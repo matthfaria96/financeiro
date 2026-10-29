@@ -1,12 +1,13 @@
 <script lang="ts">
   import { store } from '$lib/data/store.svelte';
   import { fly } from 'svelte/transition';
+  import { backOut, cubicIn } from 'svelte/easing';
   import Icon from './Icon.svelte';
 </script>
 
 <div class="toasts" aria-live="polite">
   {#each store.toasts as toast (toast.id)}
-    <div class="toast {toast.tone}" transition:fly={{ y: 20, duration: 260 }}>
+    <div class="toast {toast.tone}" in:fly={{ y: 24, duration: 420, easing: backOut }} out:fly={{ y: 12, duration: 200, easing: cubicIn }}>
       <Icon name={toast.tone === 'error' ? 'alert' : toast.tone === 'info' ? 'info' : 'check-circle'} size={18} />
       <span>{toast.text}</span>
     </div>

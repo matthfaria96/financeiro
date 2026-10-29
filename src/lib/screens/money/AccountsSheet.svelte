@@ -19,7 +19,7 @@
   }
 </script>
 
-<Sheet bind:open title="Contas no Início">
+<Sheet bind:open title="Configurações do Início">
   <p class="muted small intro">Escolha o que aparece no Saldo financeiro. Esconder não apaga nada.</p>
   <div class="form-group">
     {#each accounts as account (account.id)}

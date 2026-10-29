@@ -124,13 +124,15 @@ a.card:hover { border-color: var(--stroke-strong); }
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   height: 40px; padding: 0 16px; border-radius: 12px; border: 1px solid var(--stroke-strong);
   background: rgba(255, 255, 255, 0.07); font-weight: 600; font-size: 15px;
-  transition: transform 0.15s var(--ease), background 0.2s;
+  transition: transform 0.2s var(--spring), background 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s, opacity 0.2s;
   white-space: nowrap;
 }
-.btn:hover { background: rgba(255, 255, 255, 0.11); }
-.btn:active { transform: scale(0.97); }
+.btn:hover { background: rgba(255, 255, 255, 0.11); border-color: rgba(255, 255, 255, 0.2); }
+.btn:active { transform: scale(0.96); transition-duration: 0.08s; }
 .btn.primary { background: var(--accent); color: #04140e; border-color: transparent; }
-.btn.primary:hover { background: #3fe3b4; }
+.btn.primary { box-shadow: 0 4px 16px rgba(43, 212, 164, 0.22); }
+.btn.primary:hover { background: #3fe3b4; box-shadow: 0 6px 22px rgba(43, 212, 164, 0.32); }
+.btn.ghost:hover { background: rgba(43, 212, 164, 0.08); border-color: transparent; }
 .btn.danger { color: var(--negative); }
 .btn.ghost { background: transparent; border-color: transparent; color: var(--accent); padding: 0 8px; }
 .btn.lg { height: 48px; font-size: 16px; border-radius: 14px; }
@@ -139,10 +141,10 @@ a.card:hover { border-color: var(--stroke-strong); }
 .icon-btn {
   width: 38px; height: 38px; border-radius: 50%; display: inline-grid; place-items: center;
   border: 1px solid var(--stroke); background: rgba(255, 255, 255, 0.06);
-  transition: background 0.2s, transform 0.15s var(--ease);
+  transition: background 0.2s, transform 0.2s var(--spring), border-color 0.2s, opacity 0.2s;
 }
-.icon-btn:hover { background: rgba(255, 255, 255, 0.11); }
-.icon-btn:active { transform: scale(0.94); }
+.icon-btn:hover { background: rgba(255, 255, 255, 0.11); border-color: var(--stroke-strong); }
+.icon-btn:active { transform: scale(0.9); transition-duration: 0.08s; }
 
 /* Formulários (padrão "lista agrupada" do iOS) */
 .form-group {
@@ -177,8 +179,10 @@ select.field option { background: #18201d; color: var(--text); }
 .chip {
   display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: 12px;
   border: 1px solid var(--stroke); background: var(--card-2); font-size: 14.5px; font-weight: 500; white-space: nowrap;
-  transition: background 0.2s;
+  transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.2s var(--spring);
 }
+.chip:hover { background: rgba(255, 255, 255, 0.08); border-color: var(--stroke-strong); }
+.chip:active { transform: scale(0.95); }
 .chip.active { color: var(--accent); background: var(--accent-soft); border-color: rgba(43, 212, 164, 0.35); }
 .pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
 
@@ -209,11 +213,29 @@ select.field option { background: #18201d; color: var(--text); }
 /* Lista de linhas dentro de um cartão */
 .list > * + * { border-top: 1px solid var(--stroke); }
 .list-row { display: flex; align-items: center; gap: 14px; padding: 12px 16px; width: 100%; text-align: left; background: none; border: 0; }
-button.list-row:hover, a.list-row:hover { background: rgba(255, 255, 255, 0.03); }
+button.list-row, a.list-row { transition: background 0.2s; }
+button.list-row:hover, a.list-row:hover { background: rgba(255, 255, 255, 0.045); }
+button.list-row:active, a.list-row:active { background: rgba(255, 255, 255, 0.07); }
+button.form-row { transition: background 0.2s; }
+button.form-row:hover { background: rgba(255, 255, 255, 0.04); }
+.input, .form-group { transition: border-color 0.2s, box-shadow 0.2s; }
+.input:focus { box-shadow: 0 0 0 4px rgba(43, 212, 164, 0.12); }
+.form-group:focus-within { border-color: rgba(255, 255, 255, 0.16); }
 
-/* Animações curtas */
-@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+/* Animações curtas. Curva "mola amortecida" no estilo da Apple: sai rápido e assenta devagar. */
+:root { --spring: cubic-bezier(0.22, 1, 0.36, 1); }
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 .rise { animation: rise 0.35s var(--ease) both; }
+/* Entrada das telas: cada bloco sobe em sequência. Só "backwards": depois da animação não sobra transform
+   (que prenderia elementos fixos, como barras e balões, dentro do bloco). */
+.page > * { animation: rise 0.55s var(--spring) backwards; }
+.page > :nth-child(2) { animation-delay: 30ms; }
+.page > :nth-child(3) { animation-delay: 60ms; }
+.page > :nth-child(4) { animation-delay: 90ms; }
+.page > :nth-child(5) { animation-delay: 120ms; }
+.page > :nth-child(6) { animation-delay: 150ms; }
+.page > :nth-child(n + 7) { animation-delay: 180ms; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }

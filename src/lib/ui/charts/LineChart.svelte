@@ -87,12 +87,12 @@
         <line x1={pad.l} x2={width - pad.r} y1={y(t)} y2={y(t)} stroke={t === 0 ? axisColor : gridColor} />
         <text x={pad.l - 8} y={y(t)} text-anchor="end" dominant-baseline="central" class="tick">{tick(t)}</text>
       {/each}
-      {#if fill}<path d={fill} fill="url(#{gradient})" />{/if}
-      {#each lines as line (line.id)}<path d={line.d} fill="none" stroke={line.color} stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />{/each}
+      {#if fill}<path class="area" d={fill} fill="url(#{gradient})" />{/if}
+      {#each lines as line (line.id)}<path class="line" pathLength="1" d={line.d} fill="none" stroke={line.color} stroke-width="2.25" stroke-linejoin="round" stroke-linecap="round" />{/each}
       {#if hovered !== null}<line x1={x(hovered)} x2={x(hovered)} y1={pad.t} y2={pad.t + plotH} stroke="rgba(255,255,255,0.28)" />{/if}
       {#each lines as line (line.id)}
         {@const at = hovered !== null && line.values[hovered] !== null ? hovered : lastIndex(line.values)}
-        {#if at >= 0}<circle cx={x(at)} cy={y(line.values[at]!)} r="4.5" fill={line.color} stroke={surface} stroke-width="2" />{/if}
+        {#if at >= 0}<circle class="dot" cx={x(at)} cy={y(line.values[at]!)} r="4.5" fill={line.color} stroke={surface} stroke-width="2" />{/if}
       {/each}
       {#each labels as label, i (i)}
         {#if i === labels.length - 1 || (i % every === 0 && labels.length - 1 - i >= every * 0.6)}<text x={x(i)} y={height - 8} text-anchor="middle" class="tick">{label}</text>{/if}
@@ -112,4 +112,10 @@
   .plot { position: relative; width: 100%; touch-action: pan-y; }
   svg { display: block; overflow: visible; }
   .tick { font-size: 11px; fill: var(--text-3); font-variant-numeric: tabular-nums; user-select: none; }
+  /* A linha se desenha da esquerda para a direita; a área e o ponto aparecem depois. */
+  .line { stroke-dasharray: 1; animation: draw 1s cubic-bezier(0.22, 1, 0.36, 1) both; transition: d 0.55s cubic-bezier(0.22, 1, 0.36, 1); }
+  .area { animation: show 0.8s 0.35s both; transition: d 0.55s cubic-bezier(0.22, 1, 0.36, 1); }
+  .dot { animation: show 0.4s 0.7s both; transition: cx 0.2s, cy 0.2s; }
+  @keyframes draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+  @keyframes show { from { opacity: 0; } }
 </style>

@@ -18,6 +18,7 @@
   import { inScope, inScopeAccount } from '$lib/features/model';
   import { analyzeMonth, forecastMonth } from '$lib/features/analytics';
   import Segmented from '$lib/ui/Segmented.svelte';
+  import Tally from '$lib/ui/Tally.svelte';
   import { prefs } from '$lib/ui/prefs.svelte';
 
   /** Lançamentos (o "analítico"): o mês escolhido em saldo, entradas, saídas por categoria e balanço.
@@ -74,9 +75,9 @@
     </section>
   {:else}
     <section class="card totals">
-      <div><span class="caption">Entradas</span><b class="num pos">{money(analysis.incomeTotal)}</b></div>
-      <div><span class="caption">Saídas</span><b class="num">{money(analysis.expenseTotal)}</b></div>
-      <div><span class="caption">Balanço</span><b class="num" class:pos={analysis.balance >= 0} class:neg={analysis.balance < 0}>{money(analysis.balance)}</b></div>
+      <div><span class="caption">Entradas</span><b class="pos"><Tally cents={analysis.incomeTotal} /></b></div>
+      <div><span class="caption">Saídas</span><b><Tally cents={analysis.expenseTotal} /></b></div>
+      <div><span class="caption">Balanço</span><b class:pos={analysis.balance >= 0} class:neg={analysis.balance < 0}><Tally cents={analysis.balance} /></b></div>
     </section>
     {#if accounts.some((a) => a.kind === 'creditCard')}
     <div class="credit-mode">
@@ -92,7 +93,7 @@
     </div>
     <EntryListCard title="Entradas" entries={analysis.income.flatMap((g) => g.entries)} total={analysis.incomeTotal} tone="pos" />
     <section class="out">
-      <div class="row between out-head"><h3>Saídas <span class="caption">· {money(analysis.expenseTotal)}</span></h3>
+      <div class="row between out-head"><h3>Saídas <span class="caption">· <Tally cents={analysis.expenseTotal} /></span></h3>
         <div class="mode" role="radiogroup" aria-label="Visualização">
           <button role="radio" aria-checked={outView === 'categories'} class:on={outView === 'categories'} onclick={() => setOutView('categories')} aria-label="Por categoria"><Icon name="reports" size={15} /></button>
           <button role="radio" aria-checked={outView === 'list'} class:on={outView === 'list'} onclick={() => setOutView('list')} aria-label="Lista"><Icon name="list" size={15} /></button>
@@ -114,7 +115,8 @@
   .out { display: flex; flex-direction: column; gap: 10px; }
   .out-head h3 { margin: 6px 4px 0; font: 600 18px var(--font-display); }
   .mode { display: flex; gap: 2px; padding: 3px; border-radius: 10px; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--stroke); }
-  .mode button { width: 32px; height: 28px; border: 0; border-radius: 8px; background: none; color: var(--text-3); display: grid; place-items: center; }
+  .mode button { width: 32px; height: 28px; border: 0; border-radius: 8px; background: none; color: var(--text-3); display: grid; place-items: center; transition: background 0.25s, color 0.2s; }
+  .mode button:hover:not(.on) { color: var(--text-2); }
   .mode button.on { background: rgba(255, 255, 255, 0.14); color: var(--text); }
   .credit-mode { display: flex; flex-direction: column; gap: 6px; }
   .credit-mode :global(.seg) { max-width: 460px; }

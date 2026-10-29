@@ -45,10 +45,11 @@
   {:else}
     <MonthStrip bind:value={month} {first} />
     <div class="cards">
-      <BalanceCard {analysis} title={month === monthOf(today()) ? 'Saldo financeiro' : `Saldo no fim de ${monthTitle(month).split(' ')[0].toLowerCase()}`} hidden={store.household?.settings.home_hidden ?? []} onconfig={() => (configOpen = true)} />
+      <BalanceCard {analysis} current={month === monthOf(today())} title={month === monthOf(today()) ? 'Saldo financeiro' : month > monthOf(today()) ? 'Saldo hoje' : `Saldo no fim de ${monthTitle(month).split(' ')[0].toLowerCase()}`} hidden={store.household?.settings.home_hidden ?? []} />
       <PanoramaCard {month} {analysis} {entries} {accounts} {stale} />
       <ForecastCard {accounts} />
     </div>
+    <button class="btn settings" onclick={() => (configOpen = true)} use:hint={['Configurações do Início', 'Quais contas, cartões e dinheiro aparecem no Saldo.']}><Icon name="settings" size={16} />Configurações</button>
   {/if}
 
 </div>
@@ -60,4 +61,6 @@
   .top { gap: 10px; }
   .top > div:first-child { min-width: 0; }
   .cards { display: flex; flex-direction: column; gap: 16px; }
+  .settings { align-self: center; margin-top: 10px; height: 38px; padding: 0 16px; color: var(--text-2); font-weight: 500; }
+  .settings:hover { color: var(--text); }
 </style>
