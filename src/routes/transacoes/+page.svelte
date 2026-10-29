@@ -7,7 +7,7 @@
   import Icon from '$lib/ui/Icon.svelte';
   import ChartButton from '$lib/ui/ChartButton.svelte';
   import { hint } from '$lib/ui/hint';
-  import CategoryDonut from '$lib/screens/money/CategoryDonut.svelte';
+  import MonthFlowCard from '$lib/screens/money/MonthFlowCard.svelte';
   import EntryListCard from '$lib/screens/money/EntryListCard.svelte';
   import CategoryRows from '$lib/screens/money/CategoryRows.svelte';
   import { filter } from '$lib/screens/transactions/filter.svelte';
@@ -78,10 +78,7 @@
       <a class="link" href="#/transacoes/configurar">Mudar</a>
     </p>
     <!-- Sempre os dois cartões, entradas antes de saídas. Vazio, o cartão fica apagado dizendo que ainda não há nada. -->
-    <div class="layout">
-      <CategoryDonut title="Entradas" groups={analysis.income} total={analysis.incomeTotal} empty="Ainda não há entradas neste mês." />
-      <CategoryDonut title="Saídas" groups={analysis.expenses} total={analysis.expenseTotal} empty="Ainda não há saídas neste mês." />
-    </div>
+    <MonthFlowCard {analysis} />
     <EntryListCard title="Entradas" entries={analysis.income.flatMap((g) => g.entries)} total={analysis.incomeTotal} tone="pos" empty="Ainda não há entradas neste mês. Importe o extrato da conta ou anote no botão +." />
     <section class="card flush out">
       <div class="card-head pad"><h3>Saídas <span class="caption">· {analysis.expenses.reduce((n, g) => n + g.entries.length, 0)}</span></h3>
@@ -105,8 +102,6 @@
   .top { gap: 10px; flex-wrap: wrap; }
   .month { display: flex; align-items: center; gap: 8px; }
   .icon-btn:disabled { opacity: 0.3; }
-  .layout { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); align-items: stretch; }
-  @media (min-width: 1000px) { .layout { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   .pad { padding: 16px 18px 10px; margin: 0; }
   .out .card-head b { font-size: 16px; }
   .mode { position: relative; display: flex; gap: 2px; padding: 3px; border-radius: 10px; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--stroke); isolation: isolate; }
