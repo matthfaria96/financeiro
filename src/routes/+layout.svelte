@@ -53,6 +53,7 @@
   }
   $effect(() => {
     document.documentElement.classList.toggle('bar-compact', compact);
+    document.documentElement.classList.toggle('bar-gone', compact && !pwa.standalone);
   });
   afterNavigate(({ from }) => {
     if (from) ui.navigations++;
@@ -142,7 +143,7 @@
       {/if}
       {@render children()}
     </main>
-    <nav class="tabbar" class:compact aria-label="Seções">
+    <nav class="tabbar" class:compact class:gone={compact && !pwa.standalone} aria-label="Seções">
       {#each tabs as tab (tab.id)}
         <a href={tab.href} class:on={active === tab.id} aria-current={active === tab.id ? 'page' : undefined} onclick={() => active !== tab.id && haptic()}>
           <Icon name={tab.icon} size={23} stroke={active === tab.id ? 2.3 : 1.9} /><span>{tab.label}</span>
@@ -169,9 +170,11 @@
     display: grid; grid-template-columns: repeat(3, 1fr); height: 66px; border-radius: 33px; padding: 0 6px;
     background: rgba(24, 32, 29, 0.78); backdrop-filter: blur(16px) saturate(1.6); -webkit-backdrop-filter: blur(16px) saturate(1.6);
     border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
-    transition: height 0.42s cubic-bezier(0.22, 1, 0.36, 1), left 0.42s cubic-bezier(0.22, 1, 0.36, 1), right 0.42s cubic-bezier(0.22, 1, 0.36, 1), bottom 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: height 0.42s cubic-bezier(0.22, 1, 0.36, 1), left 0.42s cubic-bezier(0.22, 1, 0.36, 1), right 0.42s cubic-bezier(0.22, 1, 0.36, 1), bottom 0.42s cubic-bezier(0.22, 1, 0.36, 1), transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.35s;
   }
   /* Compacta: mais baixa e mais estreita, só os ícones. */
+  /* No navegador (não instalado): ao descer, encolhe e some para baixo; ao subir, volta. */
+  .tabbar.gone { transform: translate3d(0, calc(100% + 24px + env(safe-area-inset-bottom)), 0) scale(0.92); opacity: 0; pointer-events: none; }
   .tabbar.compact { height: 50px; left: 56px; right: 56px; bottom: calc(6px + env(safe-area-inset-bottom)); }
   .tabbar a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; margin: 6px 0; color: var(--text-2); font-size: 10.5px; font-weight: 600; border-radius: 24px; transition: color 0.25s, background 0.3s, transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), gap 0.42s cubic-bezier(0.22, 1, 0.36, 1); }
   .tabbar.compact a { gap: 0; margin: 5px 0; }

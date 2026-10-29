@@ -125,7 +125,10 @@
   .fab:active { transform: scale(0.92); }
   @keyframes fab-in { from { opacity: 0; transform: scale(0.6) translateY(12px); } }
   /* Acompanha a barra de abas quando ela encolhe. */
-  @media (max-width: 959px) { :global(html.bar-compact) .fab { bottom: calc(70px + env(safe-area-inset-bottom)); } }
+  @media (max-width: 959px) {
+    :global(html.bar-compact) .fab { bottom: calc(70px + env(safe-area-inset-bottom)); }
+    :global(html.bar-gone) .fab { bottom: calc(18px + env(safe-area-inset-bottom)); }
+  }
   @media (min-width: 960px) { .fab { right: 32px; bottom: 32px; width: 60px; height: 60px; } }
   .view-note { margin: -2px 4px 2px; line-height: 1.45; }
   .view-note b { color: var(--text); font-weight: 600; }
