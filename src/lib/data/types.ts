@@ -12,7 +12,16 @@ export interface Household {
   invite_code: string;
   /** 'personal': o financeiro de alguém. 'shared': espaço compartilhado (carro, casa, listas). */
   kind?: 'personal' | 'shared';
-  settings: { forecast_months?: number; workspaces_enabled?: boolean; /** Contas escondidas do Saldo do Início. */ home_hidden?: string[]; /** Notas: cartões desligados e a ordem ('nb:<id>', 'desejos', 'transporte'). */ notes_hidden?: string[]; notes_order?: string[] };
+  settings: { forecast_months?: number; workspaces_enabled?: boolean; /** Contas escondidas do Saldo do Início. */ home_hidden?: string[]; /** Notas: cartões desligados e a ordem ('nb:<id>', 'desejos', 'transporte'). */ notes_hidden?: string[]; notes_order?: string[];
+    /** Ajuste manual por mês (YYYY-MM): diferença nas entradas/saídas, motivo e observação. */
+    adjustments?: Record<string, MonthAdjustment> };
+}
+
+export interface MonthAdjustment {
+  income: number;
+  expense: number;
+  reason: 'juros' | 'antecipacao' | 'outro';
+  note: string;
 }
 
 export interface Member {

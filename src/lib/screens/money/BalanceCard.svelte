@@ -59,6 +59,7 @@
   .rows { display: flex; flex-direction: column; }
   .item { gap: 12px; padding: 8px 0; color: inherit; font-size: 15px; }
   .item + .item { border-top: 1px solid var(--stroke); }
+  @media (max-width: 600px) { .guess { display: none; } }
   .guess { color: var(--warning); background: rgba(255, 166, 61, 0.12); }
   .block { display: block; }
   .cards { margin-top: 6px; }

@@ -108,7 +108,7 @@
   .top { gap: 10px; flex-wrap: wrap; }
   .month { display: flex; align-items: center; gap: 8px; }
   .icon-btn:disabled { opacity: 0.3; }
-  .layout { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); align-items: start; }
+  .layout { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); align-items: stretch; }
   @media (min-width: 1000px) { .layout { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   .out { display: flex; flex-direction: column; gap: 10px; }
   .out-head h3 { margin: 6px 4px 0; font: 600 18px var(--font-display); }

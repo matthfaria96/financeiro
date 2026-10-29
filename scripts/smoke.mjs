@@ -35,8 +35,11 @@ async function step(name, action, expect) {
 const go = (hash) => () => ev(`location.hash = ${JSON.stringify(hash)}`);
 const closeSheet = () => ev(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))`).then(() => sleep(700));
 await step('Início', go('#/'), 'Panorama mensal');
-await step('Panorama › Entradas × saídas', () => ev(`[...document.querySelectorAll('main [role=radio]')].find((b) => b.textContent.includes('Entradas')).click(); 'ok'`), 'média');
-await step('Mês anterior no topo', () => ev(`[...document.querySelectorAll('main [role=tab]')].at(-2).click(); 'ok'`), 'Saldo no fim de');
+await step('Panorama › bolinha 2', () => ev(`document.querySelectorAll('main .dots button')[1].click(); 'ok'`), 'média');
+await step('Ajustar o mês (janela)', () => { ev(`document.querySelectorAll('main .dots button')[0].click()`); return new Promise((r) => setTimeout(() => r(click('Ajustar')), 800)); }, 'Antecipação de fatura');
+await closeSheet();
+await step('Mês anterior no topo', () => ev(`document.querySelector('main [aria-label="Mês anterior"]').click(); 'ok'`), 'Saldo no fim de');
+await step('Voltar para o mês atual', () => click('Voltar para'), 'Saldo financeiro');
 await step('Fechar o mês (janela)', () => click('Fechar o mês'), 'somando a caixinha');
 await closeSheet();
 await step('Início › escolher contas', () => ev(`document.querySelector('main [aria-label="Escolher contas"]').click(); 'ok'`), 'Contas no Início');

@@ -22,7 +22,8 @@
 </section>
 
 <style>
-  .side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+  .side { display: flex; flex-direction: column; gap: 14px; min-width: 0; height: 100%; }
+  .legend { margin-top: auto; }
   .card-head { margin-bottom: 0; }
   .center { display: grid; place-items: center; }
   .legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px; }

@@ -1,7 +1,7 @@
 import { UNCATEGORIZED } from '$lib/core/catalog';
 import { addMonths, lastDay, monthOf, today, type Month } from '$lib/core/dates';
 import { store } from '$lib/data/store.svelte';
-import type { Account, Category, Entry } from '$lib/data/types';
+import type { Account, Category, Entry, MonthAdjustment } from '$lib/data/types';
 import { accountOf, balanceOf, billDueOf, categoryOf, kindOf, rootOf } from './model';
 import { prefs } from '$lib/ui/prefs.svelte';
 import { payableGroups } from './payables';
@@ -31,7 +31,11 @@ export interface MonthAnalysis {
   expenses: Group[];
   expenseTotal: number;
   balance: number;
+  /** Ajuste manual do mês (se houver), já somado nos totais. */
+  adjustment: MonthAdjustment | null;
 }
+
+export const adjustmentReason = { juros: 'Juros', antecipacao: 'Antecipação de fatura', outro: 'Outro' } as const;
 
 function group(entries: Entry[], keyOf: (entry: Entry) => Category | undefined, sign: 1 | -1): { groups: Group[]; total: number } {
   const map = new Map<string, Group>();
@@ -119,14 +123,27 @@ export function analyzeMonth(month: Month, entries: Entry[], accounts: Account[]
   const now = today();
   const end = lastDay(month) < now ? lastDay(month) : now;
   const balances = accounts.filter((a) => a.kind !== 'creditCard' && !a.archived).map((account) => ({ account, cents: balanceOf(account, end), estimated: account.kind !== 'cash' && account.anchor_balance_cents === null }));
+  const adjustment = store.household?.settings.adjustments?.[month] ?? null;
+  const adjust = (groups: Group[], cents: number, kind: 'in' | 'out') => {
+    if (!cents) return groups;
+    const label = `Ajuste · ${adjustmentReason[adjustment!.reason]}`;
+    return [...groups, { key: `ajuste-${kind}`, label, color: '#9e9e9e', icon: 'pencil', cents, share: 0, entries: [] }];
+  };
+  const incomeGroups = adjust(income.groups, adjustment?.income ?? 0, 'in');
+  const expenseGroups = adjust(expenses.groups, adjustment?.expense ?? 0, 'out');
+  const incomeTotal = income.total + (adjustment?.income ?? 0);
+  const expenseTotal = expenses.total + (adjustment?.expense ?? 0);
+  for (const g of incomeGroups) g.share = incomeTotal ? g.cents / incomeTotal : 0;
+  for (const g of expenseGroups) g.share = expenseTotal ? g.cents / expenseTotal : 0;
   return {
+    adjustment,
     balances,
     balanceTotal: balances.reduce((s, b) => s + b.cents, 0),
-    income: income.groups,
-    incomeTotal: income.total,
-    expenses: expenses.groups,
-    expenseTotal: expenses.total,
-    balance: income.total - expenses.total
+    income: incomeGroups,
+    incomeTotal,
+    expenses: expenseGroups,
+    expenseTotal,
+    balance: incomeTotal - expenseTotal
   };
 }
 

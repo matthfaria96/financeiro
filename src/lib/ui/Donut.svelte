@@ -38,7 +38,7 @@
 </script>
 
 <div class="donut" style:width="{size}px" style:height="{size}px">
-  <svg viewBox="0 0 100 100" width={size} height={size} role="img" aria-label={caption || 'Gráfico de rosca'} onpointerleave={() => (hovered = null)}>
+  <svg viewBox="-5 -5 110 110" width={size} height={size} role="img" aria-label={caption || 'Gráfico de rosca'} onpointerleave={() => (hovered = null)}>
     {#each arcs as arc (arc.id)}
       <path d={arc.path} fill={arc.color} fill-rule="evenodd" opacity={hovered && hovered !== arc.id ? 0.35 : 1}
         transform={hovered === arc.id ? `translate(${((arc.labelAt[0] - 50) * 0.05).toFixed(2)} ${((arc.labelAt[1] - 50) * 0.05).toFixed(2)})` : ''}
