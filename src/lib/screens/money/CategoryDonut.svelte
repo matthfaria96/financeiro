@@ -13,7 +13,7 @@
 </script>
 
 <section class="card side" class:empty={!slices.length}>
-  <div class="card-head"><h3>{title}</h3></div>
+  <div class="card-head"><h3>{title}</h3>{#if slices.length}<b class="num head-total">{money(total, { cents: false })}</b>{/if}</div>
   {#if slices.length}
     <div class="body">
       <div class="center"><Donut size={190} {slices} center={money(total, { cents: false })} caption={title} /></div>
@@ -53,5 +53,20 @@
     .chip-l { font-size: 14px; }
     .lbl { flex: 1; }
     .pct { display: inline; color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+  }
+  .head-total { display: none; font-size: 16px; font-weight: 600; }
+  /* Celular (cartão estreito): rosca pequena à esquerda e a lista com % à direita — metade da altura. */
+  @container (max-width: 520px) {
+    .side { gap: 10px; }
+    .head-total { display: inline; }
+    .body { flex-direction: row; align-items: center; gap: 18px; }
+    .center :global(.donut), .center :global(.donut svg), .ghost svg { width: 118px !important; height: 118px !important; }
+    .center :global(.donut .center) { display: none; }
+    .legend { margin: 0; flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 7px; justify-content: center; }
+    .chip-l { display: flex; gap: 8px; font-size: 13.5px; }
+    .lbl { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+    .pct { display: inline; color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+    .zero b { font-size: 14px; }
+    .none { margin: 0; text-align: left; }
   }
 </style>
