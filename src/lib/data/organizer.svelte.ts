@@ -3,6 +3,7 @@ import { supabase } from './backend';
 import { readKey, writeKey } from './cache';
 import { describe, store } from './store.svelte';
 import { buildOrganizerDemo } from './organizerDemo';
+import { stressDemo } from './demoMode';
 import { orgTables, parentOf, type OrgSnapshot, type OrgTable, type OrgTables, type Space, type SpaceMember } from './organizerTypes';
 
 const uuid = () => crypto.randomUUID();
@@ -47,7 +48,7 @@ class Organizer {
     if (!key || this.loadedFor === key) return;
     this.loadedFor = key;
     if (store.demo) {
-      const demo = buildOrganizerDemo(this.personalId);
+      const demo = stressDemo ? (await import('./organizerStress')).buildOrganizerStress(this.personalId) : buildOrganizerDemo(this.personalId);
       // Na demonstração, "Você" é o próprio usuário (para não aparecer duas vezes na família).
       demo.members = demo.members.map((m) => (m.display_name === 'Você' ? { ...m, user_id: store.userId || m.user_id } : m));
       return this.apply(demo);

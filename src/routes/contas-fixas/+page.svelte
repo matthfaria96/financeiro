@@ -14,7 +14,7 @@
   import { billInMonth, billStatus, monthNames, onCard } from '$lib/features/bills';
   import { payableGroups } from '$lib/features/payables';
   import { isBillPaid } from '$lib/features/month';
-  import { accountOf, inScope, inScopeAccount, inScopeBill } from '$lib/features/model';
+  import { accountOf, inScopeAccount, visibleEntries, inScopeBill } from '$lib/features/model';
 
   /** Contas fixas (tela; abre pelo Configurar de Lançamentos e pelo calendário da Previsão):
    *  o que vence no mês (calendário + lista) ou no ano (o que é mensal e o que vem 1x por ano). */
@@ -25,7 +25,7 @@
   let newYearly = $state(false);
 
   const bills = $derived(store.bills.filter((b) => b.active && inScopeBill(b)).toSorted((a, b) => a.day_of_month - b.day_of_month));
-  const scoped = $derived(store.entries.filter(inScope));
+  const scoped = $derived(visibleEntries());
   const cash = $derived(scoped.filter((e) => ['checking', 'cash'].includes(accountOf(e)?.kind ?? '')));
   const cards = $derived(store.accounts.filter((a) => a.kind === 'creditCard' && inScopeAccount(a)));
   const isCard = (b: Bill) => onCard(b, store.accountById.get(b.account_id ?? '')?.kind === 'creditCard');
@@ -82,7 +82,7 @@
       {/if}
       <div class="card flush list">
         {#each monthBills as { bill, status } (bill.id)}<button class="list-row plain" class:paid={status.type === 'paid'} onclick={() => edit(bill)}><BillRow {bill} {status} /></button>
-        {:else}<p class="muted small pad">Nenhuma conta fixa neste mês. Toque em "Conta" para cadastrar aluguel, luz, escola…</p>{/each}
+        {:else}<p class="muted small pad">Nenhuma conta fixa neste mês. Toque em + para cadastrar aluguel, luz, escola…</p>{/each}
       </div>
     {:else}
       <section class="card sums">

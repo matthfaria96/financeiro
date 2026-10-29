@@ -12,3 +12,6 @@ export function enterDemo(newTab = false) {
 export function exitDemo() {
   location.assign(`${location.pathname}#/`);
 }
+
+/** `?demo&muito`: demonstração pesada (3 anos, ~18 mil lançamentos) para medir o desempenho. Lido ao carregar, antes de o endereço ser limpo. */
+export const stressDemo = typeof location !== 'undefined' && new URLSearchParams(location.search).has('demo') && new URLSearchParams(location.search).has('muito');

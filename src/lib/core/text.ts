@@ -1,5 +1,7 @@
 /** Minúsculas, sem acentos e com espaços simples: base para comparar descrições. */
 export function fold(text: string): string {
+  // Atalho: só ASCII visível com espaços simples (o caso comum nos extratos) é só passar para minúsculas.
+  if (!/[^\x21-\x7e ]| {2}|^ | $/.test(text)) return text.toLowerCase();
   return text
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')

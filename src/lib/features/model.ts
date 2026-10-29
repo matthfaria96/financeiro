@@ -3,6 +3,7 @@ import { CARD_PAYMENT, INVESTMENT, UNCATEGORIZED, type CategoryKind, type CostTy
 import type { Day } from '$lib/core/dates';
 import { store } from '$lib/data/store.svelte';
 import type { Account, Bill, Category, Entry } from '$lib/data/types';
+import { byText, memo } from './memo';
 
 /** Regras derivadas dos dados (o que o app nativo tinha como propriedades dos modelos). */
 
@@ -73,27 +74,39 @@ export function isInternalMove(account: Account, entry: Entry): boolean {
   return entry.category_id !== null && entry.category_id === store.categoryByKey.get(INVESTMENT)?.id && savingsInside(account);
 }
 
-/** Saldo de uma conta ao fim de `day` (ou com tudo, se omitido). Com saldo de referência (X ao fim do dia D),
- *  saldo(t) = X + Σ lançamentos em (D, t] − Σ lançamentos em (t, D]. Sem referência, soma tudo até t. */
-export function balanceOf(account: Account, day?: Day): number {
-  const entries = (store.entriesByAccount.get(account.id) ?? []).filter((e) => !isInternalMove(account, e));
-  if (account.anchor_date !== null && account.anchor_balance_cents !== null) {
-    const anchor = account.anchor_date;
-    let total = account.anchor_balance_cents;
-    for (const entry of entries) {
-      if (day === undefined) {
-        if (entry.date > anchor) total += entry.amount_cents;
-      } else if (day >= anchor) {
-        if (entry.date > anchor && entry.date <= day) total += entry.amount_cents;
-      } else if (entry.date > day && entry.date <= anchor) {
-        total -= entry.amount_cents;
-      }
-    }
-    return total;
+/** Lançamentos da conta que mexem no saldo, por data, com a soma acumulada (`sums[i]` = tudo até `dates[i]`).
+ *  Calculado uma vez por versão dos lançamentos; o saldo em qualquer dia sai por busca binária. */
+function ledger(account: Account): { dates: Day[]; sums: number[] } {
+  const byAccount = store.entriesByAccount;
+  return memo(byAccount, `ledger:${account.id}`, [account.kind, store.accounts, store.categoryByKey], () => {
+    const entries = (byAccount.get(account.id) ?? []).filter((e) => !isInternalMove(account, e)).toSorted((a, b) => byText(a.date, b.date));
+    const dates = entries.map((e) => e.date);
+    let total = 0;
+    const sums = entries.map((e) => (total += e.amount_cents));
+    return { dates, sums };
+  });
+}
+
+/** Soma dos lançamentos até `day` (inclusive); sem `day`, de todos. */
+function sumUntil(account: Account, day?: Day): number {
+  const { dates, sums } = ledger(account);
+  if (day === undefined) return sums.at(-1) ?? 0;
+  let lo = 0, hi = dates.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (dates[mid] <= day) lo = mid + 1;
+    else hi = mid;
   }
-  let total = 0;
-  for (const entry of entries) if (day === undefined || entry.date <= day) total += entry.amount_cents;
-  return total;
+  return lo ? sums[lo - 1] : 0;
+}
+
+/** Saldo de uma conta ao fim de `day` (ou com tudo, se omitido). Com saldo de referência (X ao fim do dia D),
+ *  saldo(t) = X + Σ lançamentos em (D, t] − Σ lançamentos em (t, D] = X + S(t) − S(D). Sem referência, soma tudo até t. */
+export function balanceOf(account: Account, day?: Day): number {
+  if (account.anchor_date !== null && account.anchor_balance_cents !== null) {
+    return account.anchor_balance_cents + sumUntil(account, day) - sumUntil(account, account.anchor_date);
+  }
+  return sumUntil(account, day);
 }
 
 export function lastEntryDate(account: Account): Day | null {
@@ -119,5 +132,6 @@ export function inScopeBill(bill: Bill): boolean {
   return workspace === store.scopeId;
 }
 
-export const visibleEntries = () => store.entries.filter(inScope);
+/** Lançamentos da área aberta. Sem área (o normal), a própria lista do `store`: as telas dividem os cálculos guardados. */
+export const visibleEntries = () => (store.scopeId ? store.entries.filter(inScope) : store.entries);
 export const visibleAccounts = () => store.accounts.filter(inScopeAccount);

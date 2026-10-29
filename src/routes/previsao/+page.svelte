@@ -9,12 +9,12 @@
   import ForecastBreakdown from '$lib/screens/forecast/ForecastBreakdown.svelte';
   import ForecastInfo from '$lib/screens/forecast/ForecastInfo.svelte';
   import Icon from '$lib/ui/Icon.svelte';
-  import { inScope, inScopeAccount } from '$lib/features/model';
+  import { inScopeAccount, visibleEntries } from '$lib/features/model';
   import { expectedIncome } from '$lib/features/analytics';
   import { closedMonths, forecastSpending, monthSpend, spendKindColor, spendKindName, spendKinds } from '$lib/features/spending';
 
   /** Previsão (subtela do Início): o que deve sair em cada um dos próximos 6 meses, em fixas, variáveis e sazonais. */
-  const entries = $derived(store.entries.filter(inScope));
+  const entries = $derived(visibleEntries());
   const accounts = $derived(store.accounts.filter((a) => !a.archived && inScopeAccount(a)));
   const now = monthOf(today());
   const months = [1, 2, 3, 4, 5, 6].map((i) => addMonths(now, i));

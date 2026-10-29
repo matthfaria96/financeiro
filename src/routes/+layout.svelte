@@ -19,7 +19,7 @@
   import NewEntry from '$lib/screens/transactions/NewEntry.svelte';
   import AccountEditor from '$lib/screens/accounts/AccountEditor.svelte';
   import { seedDemo } from '$lib/features/demoData';
-  import { exitDemo } from '$lib/data/demoMode';
+  import { exitDemo, stressDemo } from '$lib/data/demoMode';
   import { haptic, pwa } from '$lib/features/pwa.svelte';
   import { billInMonth, billStatus } from '$lib/features/bills';
   import { monthOf, today } from '$lib/core/dates';
@@ -48,11 +48,11 @@
 
   onMount(async () => {
     pwa.start((files) => ui.startImport(null, files));
-    if (pendingOpen) history.replaceState(history.state, '', `${location.pathname}${params.has('demo') ? `?demo${capture ? '&captura' : ''}` : ''}${location.hash}`);
+    if (pendingOpen) history.replaceState(history.state, '', `${location.pathname}${params.has('demo') ? `?demo${stressDemo ? '&muito' : ''}${capture ? '&captura' : ''}` : ''}${location.hash}`);
     await store.start();
     if (store.demo) {
       // ?demo&vazio: demonstração sem dados, para ver o primeiro acesso.
-      if (!params.has('vazio')) await seedDemo();
+      if (!params.has('vazio')) await (stressDemo ? (await import('$lib/features/demoStress')).seedStress() : seedDemo());
       // Só na demonstração: ?abrir=conta | lancamento abre as folhas para conferir.
       if (pendingOpen === 'conta') ui.newAccountOpen = true;
       if (pendingOpen === 'lancamento') ui.editEntry(store.entries.find((e) => e.merchant_id && e.bill_due_date)?.id ?? '');
@@ -168,7 +168,7 @@
   .statusbar { position: fixed; z-index: 60; top: 0; left: 0; right: 0; height: env(safe-area-inset-top); pointer-events: none;
     background: rgba(6, 10, 9, 0.72); backdrop-filter: blur(16px) saturate(1.6); -webkit-backdrop-filter: blur(16px) saturate(1.6); }
   main { padding-top: env(safe-area-inset-top); }
-  .offline { position: fixed; z-index: 70; top: calc(8px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 6px;
+  .offline { position: fixed; z-index: 70; top: calc(8px + env(safe-area-inset-top)); left: 0; right: 0; margin: 0 auto; width: fit-content; max-width: calc(100% - 24px); display: flex; align-items: center; gap: 6px;
     padding: 6px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: #ffd28a; background: rgba(60, 40, 10, 0.85); border: 1px solid rgba(255, 166, 61, 0.35);
     backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); animation: rise 0.4s var(--spring) both; white-space: nowrap; }
   .update { position: fixed; z-index: 130; left: 12px; right: 12px; bottom: calc(88px + env(safe-area-inset-bottom)); max-width: 440px; margin: 0 auto; display: flex; align-items: center; gap: 10px;

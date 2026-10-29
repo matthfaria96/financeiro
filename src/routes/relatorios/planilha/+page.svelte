@@ -10,7 +10,7 @@
   import SubHeader from '$lib/screens/more/SubHeader.svelte';
   import BarChart from '$lib/ui/charts/BarChart.svelte';
   import { seriesColor } from '$lib/ui/charts/scale';
-  import { inScope, inScopeAccount } from '$lib/features/model';
+  import { inScopeAccount, visibleEntries } from '$lib/features/model';
   import { monthRange, monthStatus, sheetData, type CreditMonth, type SheetGrouping } from '$lib/features/sheet';
 
   let grouping = $state<SheetGrouping>('category');
@@ -21,7 +21,7 @@
 
   const months = $derived(monthRange(count, creditMonth === 'bill' ? 3 : 0));
   const closed = $derived(months.filter((m) => monthStatus(m) === 'closed'));
-  const data = $derived(sheetData(store.entries.filter(inScope), store.accounts.filter(inScopeAccount), months, grouping, creditMonth));
+  const data = $derived(sheetData(visibleEntries(), store.accounts.filter(inScopeAccount), months, grouping, creditMonth));
   const label = (key: string) => data.labels.get(key) ?? { name: key, color: '#78909C' };
   const average = (values: Map<Month, number | null>) => {
     const list = closed.map((m) => values.get(m)).filter((v): v is number => v != null);

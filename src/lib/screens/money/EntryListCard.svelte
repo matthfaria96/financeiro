@@ -4,12 +4,13 @@
   import { ui } from '$lib/ui/ui.svelte';
   import EntryRow from '$lib/screens/EntryRow.svelte';
   import { spendDate } from '$lib/features/analytics';
+  import { byText } from '$lib/features/memo';
   import { prefs } from '$lib/ui/prefs.svelte';
   import type { Entry } from '$lib/data/types';
 
   /** Extrato de um lado (entradas ou saídas) do mês, mais novos primeiro, 15 por vez. `bare`: só a lista (dentro de outro cartão). */
   let { title = '', entries, total = 0, tone = '', bare = false, empty = 'Nada neste mês.' }: { title?: string; entries: Entry[]; total?: number; tone?: 'pos' | ''; bare?: boolean; empty?: string } = $props();
-  const sorted = $derived(entries.toSorted((a, b) => spendDate(b).localeCompare(spendDate(a)) || b.created_at.localeCompare(a.created_at)));
+  const sorted = $derived(entries.toSorted((a, b) => byText(spendDate(b), spendDate(a)) || byText(b.created_at, a.created_at)));
   // No cartão, a data é a da compra (a fatura do mês já é a que vence nele).
   let limit = $state(15);
 </script>

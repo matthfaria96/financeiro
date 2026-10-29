@@ -6,6 +6,8 @@ import { store } from '$lib/data/store.svelte';
 import type { Account, Category, Entry, MonthAdjustment } from '$lib/data/types';
 import { accountOf, balanceOf, billDueOf, categoryOf, kindOf, rootOf } from './model';
 import { prefs } from '$lib/ui/prefs.svelte';
+import { byText, memo } from './memo';
+import { byMonth, groupBy } from './entryIndex';
 
 /**
  * A conta do mês usada no Início e em Lançamentos (sempre a mesma, para os números baterem):
@@ -52,7 +54,7 @@ function group(entries: Entry[], keyOf: (entry: Entry) => Category | undefined, 
   const total = groups.reduce((s, g) => s + g.cents, 0);
   for (const g of groups) {
     g.share = total ? g.cents / total : 0;
-    g.entries.sort((a, b) => spendDate(b).localeCompare(spendDate(a)));
+    g.entries.sort((a, b) => byText(spendDate(b), spendDate(a)));
   }
   // "Não categorizados" sempre por último.
   groups.sort((a, b) => (a.key === 'none' ? 1 : b.key === 'none' ? -1 : b.cents - a.cents));
@@ -87,7 +89,7 @@ function groupIncome(entries: Entry[]): { groups: Group[]; total: number } {
   const total = groups.reduce((s, g) => s + g.cents, 0);
   for (const g of groups) {
     g.share = total ? g.cents / total : 0;
-    g.entries.sort((a, b) => spendDate(b).localeCompare(spendDate(a)));
+    g.entries.sort((a, b) => byText(spendDate(b), spendDate(a)));
   }
   return { groups, total };
 }
@@ -156,11 +158,32 @@ export function spendDate(entry: Entry): Day {
   return parcel ? purchaseOf(parcel).date : entry.date;
 }
 
+/** O que `kindOf`, `payMonth` e `spendMonth` leem do estado (para os cálculos guardados saberem quando refazer). */
+export const entryDeps = () => [store.categoryById, store.accountById, store.entries, prefs.creditByPurchase];
+/** As contas por id (as telas filtram/ordenam a lista, mas os objetos são os do `store`). */
+export const accountsKey = (accounts: Account[]) => accounts.map((a) => a.id).join(',');
+
+/** Saídas (sem as cópias de investimento) agrupadas pelo mês da visão escolhida (`spendMonth`), na ordem da lista. */
+export function expensesBySpendMonth(entries: Entry[]): Map<Month | null, Entry[]> {
+  return memo(entries, 'spendMonth', entryDeps(), () => groupBy(entries.filter((e) => !e.is_mirror && kindOf(e) === 'expense'), spendMonth));
+}
+
+/** Saídas agrupadas pelo mês em que saem do bolso (`payMonth`), na ordem da lista. */
+export function expensesByPayMonth(entries: Entry[]): Map<Month, Entry[]> {
+  return memo(entries, 'payMonth', entryDeps(), () => groupBy(entries.filter((e) => !e.is_mirror && kindOf(e) === 'expense'), payMonth));
+}
+
+/** A conta do mês, guardada por mês enquanto lançamentos, contas, categorias e ajustes não mudam. */
 export function analyzeMonth(month: Month, entries: Entry[], accounts: Account[]): MonthAnalysis {
-  const inMonth = entries.filter((e) => !e.is_mirror && monthOf(e.date) === month);
+  const deps = [...entryDeps(), accountsKey(accounts), store.accounts, store.merchantById, store.entriesByAccount, store.categoryByKey, store.household?.settings.adjustments, today()];
+  return memo(entries, `month:${month}`, deps, () => computeMonth(month, entries, accounts));
+}
+
+function computeMonth(month: Month, entries: Entry[], accounts: Account[]): MonthAnalysis {
+  const inMonth = (byMonth(entries).get(month) ?? []).filter((e) => !e.is_mirror);
   const incoming = inMonth.filter((e) => kindOf(e) === 'income' && ['checking', 'cash'].includes(accountOf(e)?.kind ?? ''));
   const income = groupIncome(incoming);
-  const expenses = group(entries.filter((e) => !e.is_mirror && kindOf(e) === 'expense' && spendMonth(e) === month), (e) => rootOf(categoryOf(e)), -1, spendCents);
+  const expenses = group(expensesBySpendMonth(entries).get(month) ?? [], (e) => rootOf(categoryOf(e)), -1, spendCents);
   const now = today();
   const end = lastDay(month) < now ? lastDay(month) : now;
   const balances = accounts.filter((a) => a.kind !== 'creditCard' && !a.archived).map((account) => ({ account, cents: balanceOf(account, end), estimated: account.kind !== 'cash' && account.anchor_balance_cents === null }));

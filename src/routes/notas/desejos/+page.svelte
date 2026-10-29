@@ -43,7 +43,7 @@
   <section class="card summary"><span class="caption">Falta (estimado)</span><b class="value-lg">{money(total, { cents: false })}</b><span class="caption">{pending.length} {pending.length === 1 ? 'desejo' : 'desejos'}</span></section>
   <div class="card flush list">
     {#each pending as item (item.id)}<ItemRow {item} project={group ? '' : byId.get(item.project_id)?.name ?? ''} onedit={() => { editing = { item, project: byId.get(item.project_id)! }; editorOpen = true; }} />
-    {:else}<p class="muted small pad">Nada na lista. Toque em "Desejo" para anotar o que quer comprar ou fazer.</p>{/each}
+    {:else}<p class="muted small pad">Nada na lista. Toque em + para anotar o que quer comprar ou fazer.</p>{/each}
   </div>
   {#if done.length}
     <button class="btn ghost" style="align-self: flex-start" onclick={() => (showDone = !showDone)}><Icon name={showDone ? 'chevron-up' : 'chevron-down'} size={15} />Já comprados ({done.length})</button>

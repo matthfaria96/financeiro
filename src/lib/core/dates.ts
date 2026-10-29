@@ -17,10 +17,20 @@ export function parts(day: Day): { year: number; month: number; day: number } {
   return { year, month, day: date };
 }
 
+const brasilia = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' });
+// Criar o formatador a cada chamada custava caro (as telas chamam milhares de vezes): guarda o dia por 1 s.
+let todayAt = -Infinity;
+let todayValue: Day = '';
+
 /** Hoje no horário de Brasília. */
-export function today(now: Date = new Date()): Day {
-  const text = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
-  return text;
+export function today(now?: Date): Day {
+  if (now) return brasilia.format(now);
+  const at = Date.now();
+  if (at - todayAt > 1000 || at < todayAt) {
+    todayValue = brasilia.format(new Date(at));
+    todayAt = at;
+  }
+  return todayValue;
 }
 
 /** Aceita "2026-10-02", "02/10/2026", "02/10/26", "20261002", "20261002120000[-3:BRT]". */

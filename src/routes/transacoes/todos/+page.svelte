@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { spendCents } from '$lib/features/analytics';
   import { page } from '$app/state';
   import { store } from '$lib/data/store.svelte';
   import { ui } from '$lib/ui/ui.svelte';
@@ -16,12 +17,13 @@
   import { today } from '$lib/core/dates';
   import { inScopeAccount, kindOf } from '$lib/features/model';
   import { reconcileMirrors } from '$lib/features/mirrors';
+  import { byText } from '$lib/features/memo';
 
   onMount(() => {
     if (page.url.searchParams.get('semcategoria')) filter.set({ period: 'all', uncategorized: true });
   });
 
-  const list = $derived(store.entries.filter((e) => filter.matches(e)).toSorted((a, b) => b.date.localeCompare(a.date) || b.created_at.localeCompare(a.created_at)));
+  const list = $derived(store.entries.filter(filter.matcher()).toSorted((a, b) => byText(b.date, a.date) || byText(b.created_at, a.created_at)));
   // Mostra 15 por vez (lista leve); "Carregar mais" traz os próximos 15.
   let limit = $state(15);
   const shownList = $derived(list.slice(0, limit));
@@ -33,7 +35,7 @@
   const totals = $derived.by(() => {
     const counted = list.filter((e) => kindOf(e) !== 'transfer');
     const income = counted.filter((e) => e.amount_cents > 0).reduce((s, e) => s + e.amount_cents, 0);
-    const out = counted.filter((e) => e.amount_cents < 0).reduce((s, e) => s + e.amount_cents, 0);
+    const out = counted.filter((e) => e.amount_cents < 0).reduce((s, e) => s + spendCents(e), 0);
     return { income, out, net: income + out };
   });
 
@@ -128,7 +130,7 @@
     <div class="card tight row between totals" class:mobile-only={prefs.full} use:hint={['Resumo', 'Somas do que está filtrado. Transferências entre suas contas e pagamento de fatura ficam de fora.']}>
       <div><span class="caption">Entradas</span><b class="num pos">{money(totals.income)}</b></div>
       <div><span class="caption">Saídas</span><b class="num">{money(totals.out)}</b></div>
-      <div style="text-align: right"><span class="caption">Resultado</span><b class="num" class:pos={totals.net >= 0} class:neg={totals.net < 0}>{money(totals.net)}</b></div>
+      <div style="text-align: right"><span class="caption">Balanço</span><b class="num" class:pos={totals.net >= 0} class:neg={totals.net < 0}>{money(totals.net)}</b></div>
     </div>
   {/if}
 
@@ -151,15 +153,15 @@
 
 {#if selecting && selected.size}
   <div class="selbar">
-    <b>{selected.size} selecionados</b>
+    <b class="count">{selected.size}<span class="hide-m"> selecionados</span></b>
     <button class="btn ghost" onclick={() => (selected = new Set(list.filter((e) => !e.is_mirror).map((e) => e.id)))}>Todos</button>
     <span class="grow"></span>
     {#if confirmDelete}
       <button class="btn danger" onclick={removeSelected}>Apagar {selected.size}?</button>
     {:else}
-      <button class="btn" onclick={() => (confirmDelete = true)}><Icon name="trash" size={16} />Apagar</button>
+      <button class="btn" aria-label="Apagar" onclick={() => (confirmDelete = true)}><Icon name="trash" size={16} /><span class="hide-m">Apagar</span></button>
     {/if}
-    <button class="btn primary" onclick={() => (moving = true)}><Icon name="move" size={16} />Mover…</button>
+    <button class="btn primary" aria-label="Mover" onclick={() => (moving = true)}><Icon name="move" size={16} /><span class="hide-m">Mover…</span></button>
   </div>
 {/if}
 
@@ -190,5 +192,7 @@
   .menu button { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; border: 0; background: none; text-align: left; }
   .menu button:hover { background: rgba(255, 255, 255, 0.07); }
   .selbar { position: fixed; z-index: 60; left: 12px; right: 12px; bottom: calc(84px + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 20px; background: rgba(28, 36, 33, 0.9); backdrop-filter: blur(20px); border: 1px solid var(--stroke-strong); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5); }
+  .selbar .count { white-space: nowrap; }
+  @media (max-width: 600px) { .selbar { gap: 6px; padding: 8px 10px; } .selbar .btn { padding: 0 12px; } }
   @media (min-width: 960px) { .selbar { left: calc(var(--sidebar) + 24px); right: 24px; bottom: 24px; } }
 </style>

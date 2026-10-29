@@ -23,15 +23,17 @@ class Store {
   userEmail = $state('');
   userId = $state('');
   household = $state<Household | null>(null);
-  members = $state<Member[]>([]);
-  people = $state<Tables['people'][]>([]);
-  workspaces = $state<Tables['workspaces'][]>([]);
-  categories = $state<Tables['categories'][]>([]);
-  accounts = $state<Tables['accounts'][]>([]);
-  merchants = $state<Tables['merchants'][]>([]);
-  import_batches = $state<Tables['import_batches'][]>([]);
-  entries = $state<Tables['entries'][]>([]);
-  bills = $state<Tables['bills'][]>([]);
+  // Tabelas em `$state.raw`: só a troca da lista inteira avisa a tela (toda escrita cria uma lista nova).
+  // Com proxies profundos, ler 18 mil lançamentos registrava uma dependência por campo e travava as telas.
+  members = $state.raw<Member[]>([]);
+  people = $state.raw<Tables['people'][]>([]);
+  workspaces = $state.raw<Tables['workspaces'][]>([]);
+  categories = $state.raw<Tables['categories'][]>([]);
+  accounts = $state.raw<Tables['accounts'][]>([]);
+  merchants = $state.raw<Tables['merchants'][]>([]);
+  import_batches = $state.raw<Tables['import_batches'][]>([]);
+  entries = $state.raw<Tables['entries'][]>([]);
+  bills = $state.raw<Tables['bills'][]>([]);
   toasts = $state<Toast[]>([]);
   /** Área aberta ('' = Tudo), por aparelho. */
   selectedWorkspace = $state('');
@@ -189,10 +191,9 @@ class Store {
     if (change.type === 'delete') {
       this.setList(change.table, list.filter((row) => row.id !== change.id));
     } else {
-      const row = change.row as { id: string };
+      const row = change.row as never as (typeof list)[number];
       const index = list.findIndex((item) => item.id === row.id);
-      if (index >= 0) list[index] = row as never;
-      else list.push(row as never);
+      this.setList(change.table, index >= 0 ? list.with(index, row) : [...list, row]);
     }
     this.persistCache();
   }
@@ -224,25 +225,33 @@ class Store {
   }
 
   async update<K extends TableName>(table: K, id: string, patch: Partial<Tables[K]>) {
-    const list = this.list(table);
-    const index = list.findIndex((row) => row.id === id);
-    if (index < 0) return;
-    const before = { ...list[index] };
-    list[index] = { ...list[index], ...patch };
-    try {
-      await this.backend.update(table, id, patch);
-      this.persistCache();
-    } catch (error) {
-      const current = this.list(table);
-      const at = current.findIndex((row) => row.id === id);
-      if (at >= 0) current[at] = before;
-      this.toast(`Não foi possível salvar: ${describe(error)}`, 'error');
-    }
+    await this.updateMany(table, [{ id, patch }]);
   }
 
-  /** Atualiza várias linhas da mesma tabela (cada uma com seu patch). */
+  /** Atualiza várias linhas da mesma tabela (cada uma com seu patch): a tela muda de uma vez só, numa lista nova. */
   async updateMany<K extends TableName>(table: K, patches: { id: string; patch: Partial<Tables[K]> }[]) {
-    await Promise.all(patches.map(({ id, patch }) => this.update(table, id, patch)));
+    const byId = new Map<string, Partial<Tables[K]>>();
+    for (const { id, patch } of patches) byId.set(id, { ...byId.get(id), ...patch });
+    const before = new Map<string, Tables[K]>();
+    const list = this.list(table);
+    const next = list.map((row) => {
+      const patch = byId.get(row.id);
+      if (!patch) return row;
+      before.set(row.id, row);
+      return { ...row, ...patch };
+    });
+    if (!before.size) return;
+    this.setList(table, next);
+    await Promise.all(patches.filter((p) => before.has(p.id)).map(async ({ id, patch }) => {
+      try {
+        await this.backend.update(table, id, patch);
+        this.persistCache();
+      } catch (error) {
+        const old = before.get(id)!;
+        this.setList(table, this.list(table).map((row) => (row.id === id ? old : row)));
+        this.toast(`Não foi possível salvar: ${describe(error)}`, 'error');
+      }
+    }));
   }
 
   async remove(table: TableName, ids: string[]) {

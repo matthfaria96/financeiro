@@ -34,11 +34,15 @@ export interface FutureInstallment {
  *  Agrupa pelo valor em reais: o banco joga o centavo que sobra na 1ª (33,34 + 33,33 + 33,33). */
 export function futureInstallments(items: { title: string; cents: number; installment: Installment; due: Day }[]): FutureInstallment[] {
   const latest = new Map<string, { cents: number; installment: Installment; due: Day; title: string }>();
+  // O mesmo título se repete em cada parcela: limpa o nome uma vez por título.
+  const names = new Map<string, [string, string]>();
+  const nameOf = (title: string) => names.get(title) ?? names.set(title, [displayName(title), fold(displayName(title))]).get(title)!;
   for (const item of items) {
-    const key = `${fold(displayName(item.title))}|${Math.trunc(item.cents / 100)}|${item.installment.total}`;
+    const [name, folded] = nameOf(item.title);
+    const key = `${folded}|${Math.trunc(item.cents / 100)}|${item.installment.total}`;
     const current = latest.get(key);
     if (current && current.installment.current >= item.installment.current) continue;
-    latest.set(key, { ...item, title: displayName(item.title) });
+    latest.set(key, { ...item, title: name });
   }
   const result: FutureInstallment[] = [];
   for (const value of latest.values()) {

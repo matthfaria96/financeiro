@@ -28,7 +28,8 @@
     }
   });
   const cents = $derived(Math.abs(parseCents(amount) ?? 0) * (type === 'out' ? -1 : 1));
-  const valid = $derived(title.trim() && cents !== 0 && accountId);
+  // Sem data válida o lançamento ficava invisível (contava nos totais, mas não dava para abrir nem apagar).
+  const valid = $derived(title.trim() && cents !== 0 && accountId && /^\d{4}-\d{2}-\d{2}$/.test(date));
 
   async function save() {
     const account = store.accountById.get(accountId);

@@ -11,7 +11,7 @@
   import EntryListCard from '$lib/screens/money/EntryListCard.svelte';
   import CategoryRows from '$lib/screens/money/CategoryRows.svelte';
   import { filter } from '$lib/screens/transactions/filter.svelte';
-  import { inScope, inScopeAccount } from '$lib/features/model';
+  import { inScopeAccount, visibleEntries } from '$lib/features/model';
   import { analyzeMonth } from '$lib/features/analytics';
   import { forecastSpending } from '$lib/features/spending';
   import ForecastBreakdown from '$lib/screens/forecast/ForecastBreakdown.svelte';
@@ -25,7 +25,7 @@
    *  Meses futuros mostram o que já está previsto (faturas e contas fixas). */
   const current = monthOf(today());
   let month = $state<Month>(current);
-  const entries = $derived(store.entries.filter(inScope));
+  const entries = $derived(visibleEntries());
   const accounts = $derived(store.accounts.filter((a) => !a.archived && inScopeAccount(a)).toSorted((a, b) => a.sort_order - b.sort_order));
   const first = $derived(entries.map((e) => monthOf(e.date)).sort()[0] ?? current);
   const options = $derived(Array.from({ length: 64 }, (_, i) => addMonths(current, 3 - i)).filter((m) => m >= first || m >= current));

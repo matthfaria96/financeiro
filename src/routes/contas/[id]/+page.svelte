@@ -21,9 +21,10 @@
   import { seriesColor } from '$lib/ui/charts/scale';
   import { bankColor } from '$lib/ui/look';
   import { lastDay, shortMonth } from '$lib/core/dates';
+  import { byText } from '$lib/features/memo';
 
   const account = $derived(store.accountById.get(page.params.id ?? ''));
-  const entries = $derived(account ? (store.entriesByAccount.get(account.id) ?? []).toSorted((a, b) => b.date.localeCompare(a.date)) : []);
+  const entries = $derived(account ? (store.entriesByAccount.get(account.id) ?? []).toSorted((a, b) => byText(b.date, a.date)) : []);
   const months = $derived(Array.from({ length: 12 }, (_, i) => addMonths(monthOf(today()), i - 11)));
   const covered = $derived(new Set(entries.map((e) => monthOf(e.date))));
   const first = $derived([...covered].sort()[0]);
@@ -35,9 +36,22 @@
   const labels = $derived(months.map((m) => shortMonth(m).slice(0, 3)));
   const now = today();
   const balances = $derived(account ? months.map((m) => (first && m >= first ? balanceOf(account, lastDay(m) < now ? lastDay(m) : now) : null)) : []);
-  const perMonth = (sign: 1 | -1) => months.map((m) => entries.filter((e) => !e.is_mirror && monthOf(e.date) === m && kindOf(e) !== 'transfer' && Math.sign(e.amount_cents) === sign).reduce((s, e) => s + sign * e.amount_cents, 0));
+  // Uma passada só pelos lançamentos (conta com milhares de linhas): entrou/saiu por mês e fatura por vencimento.
+  const sums = $derived.by(() => {
+    const came = new Map<string, number>(), went = new Map<string, number>(), due = new Map<string, number>();
+    const add = (map: Map<string, number>, key: string, cents: number) => map.set(key, (map.get(key) ?? 0) + cents);
+    for (const e of entries) {
+      if (e.is_mirror) continue;
+      const kind = kindOf(e);
+      if (kind !== 'transfer' && e.amount_cents > 0) add(came, monthOf(e.date), e.amount_cents);
+      if (kind !== 'transfer' && e.amount_cents < 0) add(went, monthOf(e.date), -e.amount_cents);
+      if (kind === 'expense') add(due, monthOf(billDueOf(e) ?? e.date), -e.amount_cents);
+    }
+    return { came, went, due };
+  });
+  const perMonth = (sign: 1 | -1) => months.map((m) => (sign === 1 ? sums.came : sums.went).get(m) ?? 0);
   // Cartão: valor de cada fatura pelo mês de vencimento.
-  const bills = $derived(months.map((m) => entries.filter((e) => !e.is_mirror && kindOf(e) === 'expense' && monthOf(billDueOf(e) ?? e.date) === m).reduce((s, e) => s - e.amount_cents, 0)));
+  const bills = $derived(months.map((m) => sums.due.get(m) ?? 0));
 </script>
 
 {#if account}

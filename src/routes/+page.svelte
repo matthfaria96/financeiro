@@ -15,11 +15,11 @@
   import ConfigureLink from '$lib/ui/ConfigureLink.svelte';
   import InstallCard from '$lib/ui/InstallCard.svelte';
   import { profileName } from '$lib/features/profile';
-  import { inScope, inScopeAccount } from '$lib/features/model';
+  import { inScopeAccount, visibleEntries } from '$lib/features/model';
   import { analyzeMonth } from '$lib/features/analytics';
 
   /** Início: meses no topo (o atual em destaque), Saldo, Panorama mensal e Previsão dos próximos meses. */
-  const entries = $derived(store.entries.filter(inScope));
+  const entries = $derived(visibleEntries());
   const accounts = $derived(store.accounts.filter((a) => !a.archived && inScopeAccount(a)).toSorted((a, b) => a.sort_order - b.sort_order));
   let month = $state(monthOf(today()));
   const first = $derived(entries.map((e) => monthOf(e.date)).sort()[0] ?? null);

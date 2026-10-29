@@ -5,7 +5,7 @@
   import Icon from '$lib/ui/Icon.svelte';
   import Segmented from '$lib/ui/Segmented.svelte';
   import { hint } from '$lib/ui/hint';
-  import { inScope, inScopeAccount } from '$lib/features/model';
+  import { inScopeAccount, visibleEntries } from '$lib/features/model';
   import MonthSummary from '$lib/screens/reports/MonthSummary.svelte';
   import CategoryReport from '$lib/screens/reports/CategoryReport.svelte';
   import Breakdown from '$lib/screens/reports/Breakdown.svelte';
@@ -19,7 +19,7 @@
   // Visão simples: só "para onde foi" (categorias, pessoas, contas); o resto fica na completa.
   const view = $derived<Tab>(prefs.full ? tab : 'categories');
   let month = $state(monthOf(today()));
-  const entries = $derived(store.entries.filter(inScope));
+  const entries = $derived(visibleEntries());
   const accounts = $derived(store.accounts.filter(inScopeAccount));
   const current = monthOf(today());
   const history = $derived(flowHistory(12, entries, accounts));

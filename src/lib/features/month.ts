@@ -5,6 +5,7 @@ import { store } from '$lib/data/store.svelte';
 import type { Account, Bill, Entry } from '$lib/data/types';
 import { accountOf, balanceOf, billDueOf, categoryOf, costOf, cycleOf, kindOf } from './model';
 import { billStatus } from './bills';
+import { byMonth } from './entryIndex';
 
 /** O mês do jeito do usuário: entrou; saiu da conta/dinheiro (inclui fatura paga); comprado no crédito
  *  (só informativo: é pago nas próximas faturas); e quanto havia em conta, dinheiro e investido no fim. */
@@ -23,8 +24,8 @@ export const totalPaid = (f: MonthFlow) => f.paidFromAccount + f.paidCash + f.ca
 
 export function monthFlow(month: Month, entries: Entry[], accounts: Account[]): MonthFlow {
   const flow: MonthFlow = { income: 0, paidFromAccount: 0, paidCash: 0, cardBillPaid: 0, creditPurchases: 0, endInAccount: 0, endCash: 0, endInvested: 0 };
-  for (const entry of entries) {
-    if (entry.is_mirror || monthOf(entry.date) !== month) continue;
+  for (const entry of byMonth(entries).get(month) ?? []) {
+    if (entry.is_mirror) continue;
     const kind = accountOf(entry)?.kind;
     const category = kindOf(entry);
     if (kind === 'checking' || kind === 'cash') {

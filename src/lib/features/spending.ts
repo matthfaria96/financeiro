@@ -4,8 +4,10 @@ import { fold } from '$lib/core/text';
 import { averageOfMonthsWithData, seasonalForecast } from '$lib/core/forecast';
 import type { Account, Bill, Entry } from '$lib/data/types';
 import { billInMonth } from './bills';
-import { costOf, kindOf } from './model';
-import { payMonth } from './analytics';
+import { costOf } from './model';
+import { accountsKey, entryDeps, expensesByPayMonth } from './analytics';
+import { foldedTitle } from './entryIndex';
+import { memo } from './memo';
 import { payableGroups } from './payables';
 
 /**
@@ -31,7 +33,7 @@ export const spendKindColor: Record<SpendKind, string> = { fixed: '#3987e5', var
 const history = () => store.forecastMonths || 6;
 
 // A previsão é sempre do que sai do bolso no mês (fatura que vence nele), seja qual for a visão escolhida em Lançamentos.
-const expensesOf = (month: Month, entries: Entry[]) => entries.filter((e) => !e.is_mirror && kindOf(e) === 'expense' && payMonth(e) === month);
+const expensesOf = (month: Month, entries: Entry[]) => expensesByPayMonth(entries).get(month) ?? [];
 
 /** Qual conta fixa cada gasto do mês paga (pelo "texto no extrato" da conta, ou pelo nome dela). */
 export function billMatches(month: Month, list: Entry[], bills: Bill[] = store.bills): Map<string, Bill> {
@@ -39,7 +41,7 @@ export function billMatches(month: Month, list: Entry[], bills: Bill[] = store.b
   for (const bill of bills.filter((b) => b.active && billInMonth(b, month))) {
     const pattern = fold(bill.match_pattern || bill.name);
     if (!pattern) continue;
-    const hit = list.find((e) => !matches.has(e.id) && fold(`${e.title} ${e.original_title}`).includes(pattern));
+    const hit = list.find((e) => !matches.has(e.id) && foldedTitle(e).includes(pattern));
     if (hit) matches.set(hit.id, bill);
   }
   return matches;
@@ -56,7 +58,14 @@ export interface MonthSpend {
   kindOf: Map<string, SpendKind>;
 }
 
+/** O que custa o que (`costOf`) e as contas fixas: quando um deles muda, os cálculos guardados refazem. */
+const spendDeps = (bills: Bill[]) => [...entryDeps(), store.merchantById, bills];
+
 export function monthSpend(month: Month, entries: Entry[], bills: Bill[] = store.bills): MonthSpend {
+  return memo(entries, `spend:${month}`, spendDeps(bills), () => computeSpend(month, entries, bills));
+}
+
+function computeSpend(month: Month, entries: Entry[], bills: Bill[]): MonthSpend {
   const list = expensesOf(month, entries);
   const matches = billMatches(month, list, bills);
   const result: MonthSpend = { fixed: 0, variable: 0, seasonal: 0, looseFixed: 0, byBill: new Map(), kindOf: new Map() };
@@ -93,6 +102,11 @@ export interface SpendForecast {
 
 /** Previsão de gastos para vários meses de uma vez (o histórico é calculado uma vez só). */
 export function forecastSpending(months: Month[], entries: Entry[], accounts: Account[]): SpendForecast[] {
+  const deps = [...spendDeps(store.bills), accountsKey(accounts), store.accounts, store.entriesByAccount, store.forecastMonths, today()];
+  return memo(entries, `forecast:${months.join()}`, deps, () => computeForecast(months, entries, accounts));
+}
+
+function computeForecast(months: Month[], entries: Entry[], accounts: Account[]): SpendForecast[] {
   const past = closedMonths().map((m) => monthSpend(m, entries));
   const bills = store.bills.filter((b) => b.active && (!b.account_id || accounts.some((a) => a.id === b.account_id) || !store.accountById.get(b.account_id)));
   const seasonalAverage = averageOfMonthsWithData(past.map((h) => h.seasonal), past.length);

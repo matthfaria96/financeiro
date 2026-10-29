@@ -1,3 +1,4 @@
+import { byText } from './memo';
 import { today, type Day } from '$lib/core/dates';
 import { currentOdometer, fillStats, fuelSummary, maintenanceDue, type DueInfo } from '$lib/core/vehicle';
 import { organizer } from '$lib/data/organizer.svelte';
@@ -5,7 +6,7 @@ import { normalizeKind, type LogKind, type MaintenanceItem, type Vehicle, type V
 
 /** Contas do carro em cima dos registros: km atual, consumo, revisões e gasto por tipo. */
 export const logsOf = (vehicle: Vehicle): VehicleLog[] =>
-  organizer.vehicle_logs.filter((log) => log.vehicle_id === vehicle.id).toSorted((a, b) => b.date.localeCompare(a.date) || (b.odometer ?? 0) - (a.odometer ?? 0));
+  organizer.vehicle_logs.filter((log) => log.vehicle_id === vehicle.id).toSorted((a, b) => byText(b.date, a.date) || (b.odometer ?? 0) - (a.odometer ?? 0));
 
 export const fuelsOf = (vehicle: Vehicle) => logsOf(vehicle).filter((log) => log.kind === 'fuel');
 

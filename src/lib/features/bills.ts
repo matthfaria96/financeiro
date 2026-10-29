@@ -2,6 +2,7 @@ import { clampedDay, diffDays, monthOf, addMonths, today, type Day, type Month }
 import { fold } from '$lib/core/text';
 import type { Bill, Entry } from '$lib/data/types';
 import { costOf, kindOf } from './model';
+import { byMonth, foldedTitle } from './entryIndex';
 
 export type BillStatus = { type: 'paid'; date: Day } | { type: 'today' } | { type: 'upcoming'; days: number } | { type: 'overdue'; days: number };
 
@@ -29,7 +30,7 @@ export const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'J
 export function billPayment(bill: Bill, month: Month, entries: Entry[]): Entry | undefined {
   const pattern = fold(bill.match_pattern || bill.name);
   if (!pattern) return undefined;
-  return entries.find((e) => e.amount_cents < 0 && monthOf(e.date) === month && fold(`${e.title} ${e.original_title}`).includes(pattern));
+  return byMonth(entries).get(month)?.find((e) => e.amount_cents < 0 && foldedTitle(e).includes(pattern));
 }
 
 export function billStatus(bill: Bill, month: Month, entries: Entry[]): BillStatus {
