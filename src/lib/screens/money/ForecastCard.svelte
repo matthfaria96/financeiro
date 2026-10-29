@@ -7,12 +7,17 @@
   import { hint } from '$lib/ui/hint';
   import { ui } from '$lib/ui/ui.svelte';
   import { forecastSpending, spendKindColor, spendKindName, spendKinds, type SpendForecast } from '$lib/features/spending';
+  import { expectedIncome } from '$lib/features/analytics';
+  import Tally from '$lib/ui/Tally.svelte';
 
   /** Previsão dos próximos meses: fixas + variáveis + sazonais em cada barra. Toque abre a tela de Previsão. */
   let { accounts, entries }: { accounts: Account[]; entries: Entry[] } = $props();
   const now = monthOf(today());
   const forecasts = $derived(forecastSpending([1, 2, 3, 4, 5, 6].map((i) => addMonths(now, i)), entries, accounts));
   const top = $derived(Math.max(1, ...forecasts.map((f) => f.total)));
+  const income = $derived(expectedIncome(entries, accounts));
+  const next = $derived(forecasts[0]);
+  const left = $derived(income.cents - (next?.total ?? 0));
   const part = (f: SpendForecast, kind: (typeof spendKinds)[number]) => (kind === 'fixed' ? f.fixed.total : kind === 'variable' ? f.variable.total : f.seasonal.cents);
 
   function open(month: string | null) {
@@ -25,6 +30,13 @@
   <button class="head" onclick={() => open(null)} use:hint={['Previsão', 'Como cada mês foi calculado: fixas, variáveis e sazonais.']}>
     <h3>Previsão dos próximos meses</h3><span class="more">Detalhes <Icon name="chevron-right" size={14} /></span>
   </button>
+  {#if next}
+    <div class="lead">
+      <span class="caption">Em {monthTitle(next.month).split(' ')[0].toLowerCase()} deve sair</span>
+      <b class="big"><Tally cents={next.total} showCents={false} /></b>
+      {#if income.months}<span class="caption">{left >= 0 ? `e sobrar ${money(left, { cents: false })}` : `faltam ${money(-left, { cents: false })}`} do que costuma entrar ({money(income.cents, { cents: false })})</span>{/if}
+    </div>
+  {/if}
   <div class="legend">{#each spendKinds as kind (kind)}<span><i style:background={spendKindColor[kind]}></i>{spendKindName[kind]}</span>{/each}</div>
   <div class="months">
     {#each forecasts as f, k (f.month)}
@@ -46,6 +58,8 @@
   .head h3 { margin: 0; font: 600 16px var(--font-display); letter-spacing: -0.01em; }
   .more { display: inline-flex; align-items: center; gap: 2px; color: var(--accent); font-size: 13.5px; font-weight: 600; transition: gap 0.25s var(--ease); }
   .head:hover .more { gap: 6px; }
+  .lead { display: flex; flex-direction: column; gap: 3px; margin-bottom: 14px; }
+  .big { font: 600 32px/1.1 var(--font-display); letter-spacing: -0.02em; margin: 2px 0; }
   .legend { display: flex; gap: 14px; margin-bottom: 8px; font-size: 12.5px; color: var(--text-2); }
   .legend span { display: inline-flex; align-items: center; gap: 6px; }
   i { width: 9px; height: 9px; border-radius: 3px; display: inline-block; }

@@ -45,7 +45,7 @@
       {/if}
     </div>
   {:else}
-    <p class="muted small">Nada neste mês.</p>
+    <p class="muted small">Ainda não há saídas neste mês.</p>
   {/each}
 </div>
 

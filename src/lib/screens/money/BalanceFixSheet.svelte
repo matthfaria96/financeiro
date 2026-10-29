@@ -67,7 +67,7 @@
   }
 </script>
 
-<Sheet bind:open title="Fechar o mês">
+<Sheet bind:open title="Corrigir saldos">
   {#snippet actions()}<button class="btn primary" onclick={save}>Salvar</button>{/snippet}
   <p class="muted small intro">Digite quanto tinha em cada lugar: na conta <b>somando a caixinha</b>, no investimento o valor de hoje, na carteira o dinheiro vivo. Mover dinheiro entre eles nunca é gasto nem entrada. A diferença vira <b>rendimento</b> (ou perda) no banco e no investimento, e <b>gastos em dinheiro</b> na carteira.</p>
   <Segmented label="Quando" bind:value={when} options={[{ value: 'month', label: `Fim de ${monthTitle(lastMonth).split(' ')[0].toLowerCase()}` }, { value: 'today', label: 'Hoje' }]} />

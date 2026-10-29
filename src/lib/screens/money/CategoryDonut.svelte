@@ -3,7 +3,8 @@
   import Donut from '$lib/ui/Donut.svelte';
   import type { Group } from '$lib/features/analytics';
 
-  /** Rosca de um lado (saídas ou entradas) com o nome de cada cor; o total fica no centro e os valores ao passar o mouse. */
+  /** Rosca de um lado (saídas ou entradas) com o nome de cada cor; o total fica no centro e os valores ao passar o mouse.
+   *  Sem nada no mês, o cartão continua lá, apagado: anel vazio e a frase dizendo que ainda não há nada. */
   let { title, groups, total, empty }: { title: string; groups: Group[]; total: number; empty: string } = $props();
   const slices = $derived([
     ...groups.slice(0, 6).map((g) => ({ id: g.key, label: g.label, value: g.cents, color: g.color })),
@@ -11,7 +12,7 @@
   ]);
 </script>
 
-<section class="card side">
+<section class="card side" class:empty={!slices.length}>
   <div class="card-head"><h3>{title}</h3></div>
   {#if slices.length}
     <div class="body">
@@ -19,7 +20,13 @@
       <div class="legend">{#each slices as s (s.id)}<span class="chip-l"><i style:background={s.color}></i><span class="lbl">{s.label}</span><span class="pct">{percent(s.value / (total || 1))}</span></span>{/each}</div>
     </div>
   {:else}
-    <p class="muted small">{empty}</p>
+    <div class="body">
+      <div class="center ghost" aria-hidden="true">
+        <svg viewBox="0 0 100 100" width="190" height="190"><circle cx="50" cy="50" r="41" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="16" /><circle cx="50" cy="50" r="41" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="16" stroke-dasharray="2 6" /></svg>
+        <span class="zero"><span class="caption">{title}</span><b>{money(0, { cents: false })}</b></span>
+      </div>
+      <p class="muted small none">{empty}</p>
+    </div>
   {/if}
 </section>
 
@@ -30,6 +37,12 @@
   .pct { display: none; }
   .card-head { margin-bottom: 0; }
   .center { display: grid; place-items: center; }
+  .empty { opacity: 0.72; }
+  .ghost { position: relative; }
+  .ghost svg { display: block; }
+  .zero { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+  .zero b { font: 600 18px var(--font-display); color: var(--text-3); }
+  .none { margin: auto 0 0; text-align: center; }
   .legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px; }
   .chip-l { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-2); white-space: nowrap; }
   i { width: 10px; height: 10px; border-radius: 3px; flex: none; }

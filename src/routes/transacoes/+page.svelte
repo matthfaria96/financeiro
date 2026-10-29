@@ -77,12 +77,12 @@
       {:else}<b>O que você paga em {monthTitle(month).split(' ')[0].toLowerCase()}</b>: contas, Pix e as faturas que vencem no mês — de compra parcelada, só a parcela deste mês (ex.: R$ 10.000 em 5x conta R$ 2.000).{/if}
       <a class="link" href="#/transacoes/configurar">Mudar</a>
     </p>
-    <!-- Sempre entradas antes de saídas. A rosca de entradas só aparece com 3 fontes ou mais (com menos, a lista já diz tudo). -->
-    <div class="layout" class:single={analysis.income.length < 3}>
-      {#if analysis.income.length >= 3}<CategoryDonut title="Entradas" groups={analysis.income} total={analysis.incomeTotal} empty="" />{/if}
-      <CategoryDonut title="Saídas" groups={analysis.expenses} total={analysis.expenseTotal} empty="Nenhuma saída neste mês." />
+    <!-- Sempre os dois cartões, entradas antes de saídas. Vazio, o cartão fica apagado dizendo que ainda não há nada. -->
+    <div class="layout">
+      <CategoryDonut title="Entradas" groups={analysis.income} total={analysis.incomeTotal} empty="Ainda não há entradas neste mês." />
+      <CategoryDonut title="Saídas" groups={analysis.expenses} total={analysis.expenseTotal} empty="Ainda não há saídas neste mês." />
     </div>
-    <EntryListCard title="Entradas" entries={analysis.income.flatMap((g) => g.entries)} total={analysis.incomeTotal} tone="pos" />
+    <EntryListCard title="Entradas" entries={analysis.income.flatMap((g) => g.entries)} total={analysis.incomeTotal} tone="pos" empty="Ainda não há entradas neste mês. Importe o extrato da conta ou anote no botão +." />
     <section class="card flush out">
       <div class="card-head pad"><h3>Saídas <span class="caption">· {analysis.expenses.reduce((n, g) => n + g.entries.length, 0)}</span></h3>
         <div class="row" style="gap: 12px"><b class="num"><Tally cents={-analysis.expenseTotal} /></b>
@@ -94,7 +94,7 @@
         </div>
       </div>
       {#if outView === 'categories'}<CategoryRows flat groups={analysis.expenses} previous={previous.expenses} />
-      {:else}<EntryListCard bare entries={analysis.expenses.flatMap((g) => g.entries)} />{/if}
+      {:else}<EntryListCard bare entries={analysis.expenses.flatMap((g) => g.entries)} empty="Ainda não há saídas neste mês." />{/if}
     </section>
   {/if}
   <ConfigureLink href="#/transacoes/configurar" />
@@ -106,7 +106,7 @@
   .month { display: flex; align-items: center; gap: 8px; }
   .icon-btn:disabled { opacity: 0.3; }
   .layout { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); align-items: stretch; }
-  @media (min-width: 1000px) { .layout:not(.single) { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (min-width: 1000px) { .layout { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   .pad { padding: 16px 18px 10px; margin: 0; }
   .out .card-head b { font-size: 16px; }
   .mode { position: relative; display: flex; gap: 2px; padding: 3px; border-radius: 10px; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--stroke); isolation: isolate; }

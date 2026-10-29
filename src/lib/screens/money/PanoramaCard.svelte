@@ -5,6 +5,7 @@
   import AdjustSheet from './AdjustSheet.svelte';
   import Icon from '$lib/ui/Icon.svelte';
   import Tally from '$lib/ui/Tally.svelte';
+  import CornerButton from '$lib/ui/CornerButton.svelte';
   import Carousel from '$lib/ui/Carousel.svelte';
   import BarChart from '$lib/ui/charts/BarChart.svelte';
   import LineChart from '$lib/ui/charts/LineChart.svelte';
@@ -57,7 +58,7 @@
   {#snippet slide(i)}
     <section class="card panel">
       {#if i === 0}
-        <div class="card-head"><h3>{titles[0]}</h3>{#if !future}<button class="btn adj" onclick={() => (adjustOpen = true)}><Icon name="pencil" size={13} />Ajustar</button>{:else}<span class="pill soon">previsão</span>{/if}</div>
+        <div class="card-head"><h3>{titles[0]}</h3>{#if !future}<CornerButton label="Ajustar o mês" detail="Se não bate com o banco: quanto ganhou, quanto gastou e quanto sobrou, com o motivo (juros, antecipação…)." onclick={() => (adjustOpen = true)} />{:else}<span class="pill soon">previsão</span>{/if}</div>
         <div class="lead">
           <span class="caption">{future ? 'Deve sobrar' : 'Balanço do mês'}</span>
           <b class="big" class:pos={balance >= 0} class:neg={balance < 0}><Tally cents={balance} /></b>
@@ -117,7 +118,6 @@
   /* Os três cartões têm a mesma altura (o carrossel estica) e o mesmo desenho: cabeçalho, destaque, conteúdo. */
   .panel { display: flex; flex-direction: column; min-height: 360px; }
   .card-head { margin-bottom: 10px; }
-  .adj { height: 30px; padding: 0 11px; font-size: 13px; gap: 6px; }
   .soon { color: #8fc0ff; background: rgba(57, 135, 229, 0.14); }
   .lead { display: flex; flex-direction: column; gap: 2px; margin-bottom: 14px; }
   .big { font: 600 32px/1.1 var(--font-display); letter-spacing: -0.02em; margin: 2px 0; }
