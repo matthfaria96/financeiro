@@ -31,6 +31,26 @@
   const active = $derived(sectionOf(page.route.id ?? '/'));
 
   let dragging = $state(false);
+  // Barra de abas como a do Instagram: ao descer a página encolhe e esconde os nomes; ao subir (ou no topo) volta.
+  let compact = $state(false);
+  let lastY = 0;
+  let ticking = false;
+  function onScroll() {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      ticking = false;
+      const y = scrollY;
+      if (y < 40) compact = false;
+      else if (y > lastY + 8) compact = true;
+      else if (y < lastY - 8) compact = false;
+      else return;
+      lastY = y;
+    });
+  }
+  $effect(() => {
+    document.documentElement.classList.toggle('bar-compact', compact);
+  });
   afterNavigate(({ from }) => {
     if (from) ui.navigations++;
   });
@@ -85,7 +105,7 @@
   }
 </script>
 
-<svelte:window ondragover={(e) => { e.preventDefault(); dragging = store.status === 'ready'; }} ondragleave={(e) => { if (!e.relatedTarget) dragging = false; }} ondrop={drop} />
+<svelte:window onscroll={onScroll} ondragover={(e) => { e.preventDefault(); dragging = store.status === 'ready'; }} ondragleave={(e) => { if (!e.relatedTarget) dragging = false; }} ondrop={drop} />
 
 {#if store.status === 'loading'}
   <div class="splash"><div class="logo"><Icon name="trending-up" size={34} stroke={2.4} /></div></div>
@@ -119,7 +139,7 @@
       {/if}
       {@render children()}
     </main>
-    <nav class="tabbar" aria-label="Seções">
+    <nav class="tabbar" class:compact aria-label="Seções">
       {#each tabs as tab (tab.id)}
         <a href={tab.href} class:on={active === tab.id} aria-current={active === tab.id ? 'page' : undefined} onclick={() => active !== tab.id && haptic()}>
           <Icon name={tab.icon} size={23} stroke={active === tab.id ? 2.3 : 1.9} /><span>{tab.label}</span>
@@ -143,15 +163,22 @@
   .shell > :global(.sidebar) { display: none; }
   .tabbar {
     position: fixed; z-index: 50; left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom));
-    display: grid; grid-template-columns: repeat(3, 1fr); height: 66px; border-radius: 30px; padding: 0 6px;
+    display: grid; grid-template-columns: repeat(3, 1fr); height: 66px; border-radius: 33px; padding: 0 6px;
     background: rgba(24, 32, 29, 0.78); backdrop-filter: blur(16px) saturate(1.6); -webkit-backdrop-filter: blur(16px) saturate(1.6);
     border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+    transition: height 0.42s cubic-bezier(0.22, 1, 0.36, 1), left 0.42s cubic-bezier(0.22, 1, 0.36, 1), right 0.42s cubic-bezier(0.22, 1, 0.36, 1), bottom 0.42s cubic-bezier(0.22, 1, 0.36, 1);
   }
-  .tabbar a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; margin: 6px 0; color: var(--text-2); font-size: 10.5px; font-weight: 600; border-radius: 24px; transition: color 0.25s, background 0.3s, transform 0.2s cubic-bezier(0.22, 1, 0.36, 1); }
+  /* Compacta: mais baixa e mais estreita, só os ícones. */
+  .tabbar.compact { height: 50px; left: 56px; right: 56px; bottom: calc(6px + env(safe-area-inset-bottom)); }
+  .tabbar a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; margin: 6px 0; color: var(--text-2); font-size: 10.5px; font-weight: 600; border-radius: 24px; transition: color 0.25s, background 0.3s, transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), gap 0.42s cubic-bezier(0.22, 1, 0.36, 1); }
+  .tabbar.compact a { gap: 0; margin: 5px 0; }
   .tabbar a.on { color: var(--accent); background: rgba(255, 255, 255, 0.07); }
   .tabbar a:active { transform: scale(0.92); }
-  .tabbar a :global(svg) { transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1); }
+  .tabbar a :global(svg) { transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1); }
   .tabbar a.on :global(svg) { transform: translateY(-1px) scale(1.08); }
+  .tabbar.compact a :global(svg) { transform: scale(0.92); }
+  .tabbar a span { display: block; max-height: 14px; opacity: 1; overflow: hidden; transition: max-height 0.42s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s; }
+  .tabbar.compact a span { max-height: 0; opacity: 0; }
   .tabbar a span { white-space: nowrap; font-size: 10px; letter-spacing: -0.01em; }
   @media (min-width: 960px) {
     .shell { display: grid; grid-template-columns: 220px minmax(0, 1fr); }
@@ -164,10 +191,11 @@
   .demo-bar :global(svg) { color: var(--warning); flex: none; }
   .demo-bar .btn.sm { height: 30px; padding: 0 12px; font-size: 13px; }
   @media (min-width: 960px) { .demo-bar { margin: 12px auto 0; max-width: 908px; width: calc(100% - 72px); } }
-  /* App instalado no iPhone: a barra de status fica por cima do conteúdo; esta faixa de vidro a mantém legível. */
-  .statusbar { position: fixed; z-index: 60; top: 0; left: 0; right: 0; height: env(safe-area-inset-top); pointer-events: none;
-    background: rgba(6, 10, 9, 0.72); backdrop-filter: blur(16px) saturate(1.6); -webkit-backdrop-filter: blur(16px) saturate(1.6); }
-  main { padding-top: env(safe-area-inset-top); }
+  /* App instalado no iPhone: a hora e a bateria ficam por cima do conteúdo. Um esmaecido suave (não uma faixa escura)
+     deixa legível quando o conteúdo passa por baixo, e um respiro empurra a tela para baixo do relógio. */
+  .statusbar { position: fixed; z-index: 60; top: 0; left: 0; right: 0; height: calc(env(safe-area-inset-top) + 14px); pointer-events: none;
+    background: linear-gradient(180deg, rgba(6, 12, 10, 0.88) 0%, rgba(6, 12, 10, 0.55) 60%, rgba(6, 12, 10, 0)); }
+  main { padding-top: calc(env(safe-area-inset-top) + 6px); }
   .offline { position: fixed; z-index: 70; top: calc(8px + env(safe-area-inset-top)); left: 0; right: 0; margin: 0 auto; width: fit-content; max-width: calc(100% - 24px); display: flex; align-items: center; gap: 6px;
     padding: 6px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: #ffd28a; background: rgba(60, 40, 10, 0.85); border: 1px solid rgba(255, 166, 61, 0.35);
     backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); animation: rise 0.4s var(--spring) both; white-space: nowrap; }

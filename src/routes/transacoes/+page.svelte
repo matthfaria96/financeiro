@@ -120,10 +120,12 @@
     color: var(--accent); border: 1px solid rgba(255, 255, 255, 0.16); background: rgba(30, 46, 40, 0.55);
     backdrop-filter: blur(22px) saturate(1.8); -webkit-backdrop-filter: blur(22px) saturate(1.8);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 14px 36px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(43, 212, 164, 0.12);
-    animation: fab-in 0.5s var(--spring) 0.2s backwards; transition: transform 0.25s var(--spring), background 0.2s, color 0.2s; }
+    animation: fab-in 0.5s var(--spring) 0.2s backwards; transition: bottom 0.42s cubic-bezier(0.22, 1, 0.36, 1), transform 0.25s var(--spring), background 0.2s, color 0.2s; }
   .fab:hover { transform: translateY(-2px) scale(1.04); background: rgba(43, 212, 164, 0.22); color: #b8ffe6; }
   .fab:active { transform: scale(0.92); }
   @keyframes fab-in { from { opacity: 0; transform: scale(0.6) translateY(12px); } }
+  /* Acompanha a barra de abas quando ela encolhe. */
+  @media (max-width: 959px) { :global(html.bar-compact) .fab { bottom: calc(70px + env(safe-area-inset-bottom)); } }
   @media (min-width: 960px) { .fab { right: 32px; bottom: 32px; width: 60px; height: 60px; } }
   .view-note { margin: -2px 4px 2px; line-height: 1.45; }
   .view-note b { color: var(--text); font-weight: 600; }
