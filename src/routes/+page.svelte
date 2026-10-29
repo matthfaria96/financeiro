@@ -11,7 +11,6 @@
   import ForecastCard from '$lib/screens/money/ForecastCard.svelte';
   import { lastEntryDate } from '$lib/features/model';
   import { dayMonth } from '$lib/core/dates';
-  import AccountsSheet from '$lib/screens/money/AccountsSheet.svelte';
   import ProfileAvatar from '$lib/ui/ProfileAvatar.svelte';
   import ConfigureLink from '$lib/ui/ConfigureLink.svelte';
   import { profileName } from '$lib/features/profile';
@@ -26,7 +25,6 @@
   const analysis = $derived(analyzeMonth(month, entries, accounts));
   const empty = $derived(!store.accounts.length || !store.entries.length);
 
-  let configOpen = $state(false);
   // Contas cujo extrato ainda não chegou neste mês (as entradas do mês parecem zeradas por isso).
   const stale = $derived(accounts.filter((a) => a.kind === 'checking').map((a) => ({ account: a, last: lastEntryDate(a) })).filter((x) => x.last && x.last < `${month}-01` && month === monthOf(today()))
     .map((x) => `${x.account.name} até ${dayMonth(x.last!)}`));
@@ -55,11 +53,10 @@
       <PanoramaCard {month} {analysis} {entries} {accounts} {stale} />
       <ForecastCard {accounts} />
     </div>
-    <ConfigureLink onclick={() => (configOpen = true)} />
+    <ConfigureLink href="#/configurar" />
   {/if}
 
 </div>
-<AccountsSheet bind:open={configOpen} />
 
 <style>
   .top { gap: 10px; margin-top: 4px; }

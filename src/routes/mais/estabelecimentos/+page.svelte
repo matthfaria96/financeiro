@@ -61,7 +61,7 @@
 </script>
 
 <div class="page">
-  <SubHeader title="Estabelecimentos"><button class="icon-btn" aria-label="Novo estabelecimento" onclick={() => { editing = null; open = true; }}><Icon name="plus" /></button></SubHeader>
+  <SubHeader title="Estabelecimentos" back="#/transacoes/configurar"><button class="icon-btn" aria-label="Novo estabelecimento" onclick={() => { editing = null; open = true; }}><Icon name="plus" /></button></SubHeader>
   <button class="card row batch" onclick={openBatch} use:hint={['Buscar logos', 'Busca de uma vez o logo dos estabelecimentos que têm site e ainda não têm imagem.']}>
     <Icon name="sparkles" size={20} color="var(--accent)" /><span class="grow"><b>Buscar logos dos que não têm imagem</b><div class="caption">{store.merchants.filter((m) => m.image_url || m.image_data).length} com imagem · fotos ocupam {kilobytes(photoBytes)}; logos são só links</div></span><Icon name="chevron-right" size={15} class="faint" />
   </button>

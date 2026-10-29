@@ -6,11 +6,13 @@
   import { hint } from '$lib/ui/hint';
   import MoreRow from '$lib/screens/more/MoreRow.svelte';
   import FamilySheet from '$lib/screens/settings/FamilySheet.svelte';
-  import { inScopeAccount } from '$lib/features/model';
+  import { exitDemo } from '$lib/data/demoMode';
+  import { ui } from '$lib/ui/ui.svelte';
   import ProfileAvatar from '$lib/ui/ProfileAvatar.svelte';
   import { profileName } from '$lib/features/profile';
 
-  /** Perfil (abre pelo avatar do Início): quem é você, a família e todas as configurações. */
+  /** Perfil (abre pelo avatar do Início): quem é você, família e compartilhamento, conta e sair.
+   *  O que é de uma tela (categorias, contas fixas, contas no Saldo…) fica no Configurar dela. */
   let familyOpen = $state(false);
   const fullAccess = $derived(store.members);
   const sharedMembers = $derived(organizer.shared.flatMap((space) => organizer.members.filter((m) => m.household_id === space.id).map((m) => ({ ...m, space: space.name }))));
@@ -19,7 +21,7 @@
 
 <div class="page narrow">
   <header class="me">
-    <a class="icon-btn back" href="#/" aria-label="Voltar ao Início"><Icon name="chevron-left" /></a>
+    <a class="icon-btn back" href="#/" aria-label="Voltar" onclick={(e) => { if (ui.navigations) { e.preventDefault(); history.back(); } }}><Icon name="chevron-left" /></a>
     <ProfileAvatar size={72} />
     <div class="who"><h1>{profileName()}</h1><span class="muted small">{store.demo ? 'Demonstração · dados fictícios' : store.userEmail}</span>
       <a class="link small" href="#/mais/pessoas" use:hint={['Foto', 'A foto do perfil é a da pessoa “Eu”, em De quem é cada gasto.']}>Trocar foto</a></div>
@@ -35,25 +37,17 @@
     {/each}
     <button class="list-row add-row" onclick={() => (familyOpen = true)}><span class="avatar plus"><Icon name="plus" size={15} /></span><span class="grow">Adicionar familiar</span><Icon name="chevron-right" size={15} class="faint" /></button>
   </div>
-  <p class="form-footer"><b>Tudo</b>: vê e edita o financeiro. <b>Notas</b>: vê só o que você marcar como compartilhado (listas, desejos, carro). <a class="link" href="#/mais/compartilhar">Espaços compartilhados</a></p>
+  <p class="form-footer"><b>Tudo</b>: vê e edita o financeiro. <b>Notas</b>: vê só o que você marcar como compartilhado (listas, desejos, carro).</p>
 
-  <SectionTitle title="Suas contas" />
-  <div class="card flush list">
-    <MoreRow href="#/mais/contas" title="Contas e cartões" detail="Bancos, cartões, investimentos e dinheiro." icon="card" color="#1E90FF" count={store.accounts.filter(inScopeAccount).length} />
-    <MoreRow href="#/mais/importacoes" title="Importações" detail="Extratos importados: mover ou desfazer." icon="history" color="#4DD0E1" count={store.import_batches.length || null} />
-  </div>
-
-  <SectionTitle title="Como o app organiza" />
-  <div class="card flush list">
-    <MoreRow href="#/mais/categorias" title="Categorias" detail="Mercado, casa, carro… e as subcategorias." icon="home" color="#FF9F1C" />
-    <MoreRow href="#/mais/estabelecimentos" title="Estabelecimentos" detail="Lojas reconhecidas e seus logos." icon="store" color="#E056FD" />
-    <MoreRow href="#/mais/pessoas" title="De quem é cada gasto" detail="Eu, esposa, casa, filho… (etiquetas nos lançamentos)." icon="users" color="#FF8FAB" />
+  <div class="card flush list" style="margin-top: 12px">
+    <MoreRow href="#/mais/compartilhar" title="Espaços compartilhados" detail="O que a família vê junto: listas, desejos, carro." icon="share" color="#FF8FAB" />
   </div>
 
   <SectionTitle title="Conta" />
   <div class="card flush list">
-    <MoreRow href="#/mais/ajustes" title="Conta e preferências" detail="Senha, previsão, painéis avançados e demonstração." icon="settings" color="#8E8E93" />
+    <MoreRow href="#/mais/ajustes" title="Conta e preferências" detail="Senha, código da casa, painéis avançados, manutenção e demonstração." icon="settings" color="#8E8E93" />
   </div>
+  <button class="btn block signout" onclick={() => (store.demo ? exitDemo() : store.signOut())}><Icon name="logout" size={16} />{store.demo ? 'Sair da demonstração' : 'Sair da conta'}</button>
 </div>
 <FamilySheet bind:open={familyOpen} />
 
@@ -66,6 +60,7 @@
   .avatar { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; flex: none; font-weight: 700; background: rgba(255, 143, 171, 0.18); color: #ff8fab; }
   .avatar.plus { background: var(--accent-soft); color: var(--accent); }
   .add-row { color: var(--accent); }
+  .signout { margin-top: 22px; color: var(--negative); }
   .pill.full { color: var(--accent); background: var(--accent-soft); }
   .pill.notes { color: #ff8fab; background: rgba(255, 143, 171, 0.14); }
 </style>

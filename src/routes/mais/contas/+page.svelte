@@ -28,7 +28,7 @@
 </script>
 
 <div class="page">
-  <SubHeader title="Contas e cartões"><button class="btn primary" onclick={() => (creating = true)} use:hint={['Cadastrar', 'Conta, cartão (inclusive virtual), investimento ou dinheiro.']}><Icon name="plus" size={16} /><span class="hide-m">Cadastrar</span></button></SubHeader>
+  <SubHeader title="Contas e cartões" back="#/configurar"><button class="btn primary" onclick={() => (creating = true)} use:hint={['Cadastrar', 'Conta, cartão (inclusive virtual), investimento ou dinheiro.']}><Icon name="plus" size={16} /><span class="hide-m">Cadastrar</span></button></SubHeader>
   {#each groups as group (group.key)}
     {@const person = group.main.default_person_id ? store.personById.get(group.main.default_person_id) : undefined}
     <section class="card bank">

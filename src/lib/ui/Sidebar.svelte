@@ -4,14 +4,14 @@
   import { ui } from './ui.svelte';
   import Icon from './Icon.svelte';
   import { hint } from './hint';
-  import { sectionOf, sections } from './nav';
+  import { isProfileRoute, sectionOf, sections } from './nav';
   import ProfileAvatar from './ProfileAvatar.svelte';
   import { profileName } from '$lib/features/profile';
 
   /** Menu lateral fino do computador: Início, Lançamentos e Notas; Importar e o perfil (com as configurações) embaixo. */
   const active = $derived(sectionOf(page.route.id ?? '/'));
   const ordered = $derived([sections[1], sections[0], sections[2]]);
-  const onProfile = $derived((page.route.id ?? '').startsWith('/mais') && !/^\/mais\/(carro|projetos|compras)/.test(page.route.id ?? ''));
+  const onProfile = $derived(isProfileRoute(page.route.id ?? ''));
 </script>
 
 <nav class="sidebar glass" aria-label="Seções">

@@ -37,7 +37,7 @@
       <input class="input" placeholder="Nome da casa" bind:value={house} />
     {:else}
       <input class="input" placeholder="Código de convite (ex.: 4F9A2C1B)" bind:value={code} required autocapitalize="characters" />
-      <p class="caption">Quem criou a casa encontra o código em Mais › Ajustes.</p>
+      <p class="caption">Quem criou a casa encontra o código em Perfil › Conta e preferências.</p>
     {/if}
     <button class="btn primary lg block" disabled={busy}>{mode === 'create' ? 'Criar e começar' : 'Entrar na casa'}</button>
     {#if message}<p class="small neg">{message}</p>{/if}

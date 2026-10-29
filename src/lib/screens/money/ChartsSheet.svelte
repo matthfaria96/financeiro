@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { goto } from '$app/navigation';
   import { addMonths, monthOf, shortMonth, today, type Month } from '$lib/core/dates';
   import { money, percent } from '$lib/core/money';
   import { store } from '$lib/data/store.svelte';
@@ -44,7 +45,7 @@
 
   function manage() {
     open = false;
-    ui.billsOpen = true;
+    void goto('#/contas-fixas');
   }
 </script>
 

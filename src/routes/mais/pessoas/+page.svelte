@@ -52,7 +52,7 @@
 </script>
 
 <div class="page">
-  <SubHeader title="Pessoas"><button class="btn primary" onclick={() => edit(null)}><Icon name="plus" size={16} /><span class="hide-m">Nova pessoa</span></button></SubHeader>
+  <SubHeader title="Pessoas" back="#/transacoes/configurar"><button class="btn primary" onclick={() => edit(null)}><Icon name="plus" size={16} /><span class="hide-m">Nova pessoa</span></button></SubHeader>
   <div class="layout">
     <div class="people">
       {#each people as person (person.id)}

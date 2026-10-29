@@ -16,7 +16,7 @@
 </script>
 
 <div class="page">
-  <SubHeader title="Importações" />
+  <SubHeader title="Importações" back="#/transacoes/configurar" />
   <div class="grid">
   {#each batches as batch (batch.id)}
     {@const account = store.accountById.get(batch.account_id ?? '')}

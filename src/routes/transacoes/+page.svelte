@@ -22,7 +22,6 @@
   import { prefs } from '$lib/ui/prefs.svelte';
   import { ui } from '$lib/ui/ui.svelte';
   import ConfigureLink from '$lib/ui/ConfigureLink.svelte';
-  import EntriesSettings from '$lib/screens/money/EntriesSettings.svelte';
 
   /** Lançamentos (o "analítico"): o mês escolhido em saldo, entradas, saídas por categoria e balanço.
    *  Meses futuros mostram o que já está previsto (faturas e contas fixas). */
@@ -43,7 +42,6 @@
   }
   const forecast = $derived(future ? forecastMonth(month, accounts) : null);
   let chartsOpen = $state(false);
-  let settingsOpen = $state(false);
 
   function search() {
     filter.set({ month });
@@ -110,10 +108,9 @@
       {:else}<EntryListCard bare entries={analysis.expenses.flatMap((g) => g.entries)} />{/if}
     </section>
   {/if}
-  <ConfigureLink onclick={() => (settingsOpen = true)} />
+  <ConfigureLink href="#/transacoes/configurar" />
 </div>
 <button class="fab" aria-label="Novo lançamento" onclick={() => (ui.newEntryOpen = true)} use:hint={['Novo lançamento', 'Anote à mão um gasto ou uma entrada (dinheiro, Pix de alguém…).']}><Icon name="plus" size={24} stroke={2.4} /></button>
-<EntriesSettings bind:open={settingsOpen} />
 <ChartsSheet bind:open={chartsOpen} focus="cost" month={future ? current : month} {entries} {accounts} />
 
 <style>

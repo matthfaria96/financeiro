@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Sheet from '$lib/ui/Sheet.svelte';
+  import SubHeader from '$lib/screens/more/SubHeader.svelte';
   import Toggle from '$lib/ui/Toggle.svelte';
   import Icon from '$lib/ui/Icon.svelte';
   import { slide } from 'svelte/transition';
@@ -8,14 +8,10 @@
   import { allNoteCards, deleteNotebook, hiddenNotes, isSystemCard, moveNote, setNoteVisible } from '$lib/features/notes';
 
   /** Configurar Notas: o que aparece, em que ordem e apagar as listas criadas por você (as do app ficam). */
-  let { open = $bindable() }: { open: boolean } = $props();
   const cards = $derived(allNoteCards());
   const hidden = $derived(hiddenNotes());
   let confirming = $state<string | null>(null);
   let busy = $state(false);
-  $effect(() => {
-    if (!open) confirming = null;
-  });
   async function remove(id: string, name: string) {
     busy = true;
     try {
@@ -28,7 +24,8 @@
   }
 </script>
 
-<Sheet bind:open title="Configurar Notas">
+<div class="page narrow">
+  <SubHeader title="Configurar Notas" back="#/notas" />
   <p class="muted small intro">Desligue o que não usa e mude a ordem com as setas. Desligar não apaga nada. As listas que você criou podem ser apagadas na lixeira.</p>
   <div class="form-group">
     {#each cards as card, index (card.key)}
@@ -51,8 +48,7 @@
       </div>
     {/each}
   </div>
-  <a class="general" href="#/mais" onclick={() => (open = false)}>Todas as configurações</a>
-</Sheet>
+</div>
 
 <style>
   .intro { margin: 12px 4px; }
@@ -68,5 +64,4 @@
   .danger-fill { background: var(--negative); color: #fff; border-color: transparent; }
   .danger-fill:hover { background: #ff8273; }
   @media (max-width: 520px) { .confirm { flex-wrap: wrap; } .confirm .grow { flex-basis: 100%; } }
-  .general { display: block; text-align: center; margin-top: 22px; font-size: 12px; color: var(--text-3); }
 </style>

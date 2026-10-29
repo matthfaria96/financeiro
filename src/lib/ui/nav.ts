@@ -10,7 +10,10 @@ export const sections: { id: Section; href: string; label: string; icon: string;
 
 export function sectionOf(route: string): Section {
   if (route === '/') return 'home';
-  if (/^\/(transacoes|a-pagar|relatorios|contas-fixas|contas\/)/.test(route)) return 'entries';
+  if (/^\/(transacoes|a-pagar|relatorios|contas-fixas|contas\/|mais\/(categorias|estabelecimentos|pessoas|importacoes))/.test(route)) return 'entries';
   if (/^\/(notas|mais\/carro|mais\/projetos|mais\/compras)/.test(route)) return 'notes';
   return 'home';
 }
+
+/** Telas do perfil (abrem pelo avatar): no menu, acende o perfil, não uma das três seções. */
+export const isProfileRoute = (route: string) => /^\/mais(\/(ajustes|compartilhar))?$/.test(route);

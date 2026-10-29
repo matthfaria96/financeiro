@@ -8,7 +8,6 @@
   import { hint } from '$lib/ui/hint';
   import SharedBadge from '$lib/screens/organizer/SharedBadge.svelte';
   import NotebookEditor from '$lib/screens/notes/NotebookEditor.svelte';
-  import NotesSettings from '$lib/screens/notes/NotesSettings.svelte';
   import { rememberSystemNotebooks, visibleNoteCards } from '$lib/features/notes';
   import ConfigureLink from '$lib/ui/ConfigureLink.svelte';
   import { currentList, ensureNotebooks, itemsOf, notebooks } from '$lib/features/shopping';
@@ -16,7 +15,6 @@
 
   /** Notas: cada coisa da casa vira um cartão (listas, desejos, transporte). Toque para abrir. */
   let creating = $state(false);
-  let configuring = $state(false);
   $effect(() => {
     if (organizer.loadedFor && !organizer.notebooks.length) void ensureNotebooks();
     else if (organizer.loadedFor) rememberSystemNotebooks();
@@ -61,9 +59,8 @@
     {/if}
     {/each}
   </div>
-  <ConfigureLink onclick={() => (configuring = true)} />
+  <ConfigureLink href="#/notas/configurar" />
 </div>
-<NotesSettings bind:open={configuring} />
 <NotebookEditor bind:open={creating} onsaved={(n) => goto(`#/notas/lista/${n.id}`)} />
 
 <style>

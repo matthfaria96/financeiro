@@ -59,7 +59,7 @@
   </div>
 
   {#each draft.otherAccountMatches as match}
-    <div class="card row small"><Icon name="alert" size={18} color="var(--warning)" /><span class="grow"><b>{match.count} destas linhas já estão em {match.name}.</b> Se o arquivo é dessa conta, troque o destino. Se foi importado lá por engano, mova em Mais › Importações.</span></div>
+    <div class="card row small"><Icon name="alert" size={18} color="var(--warning)" /><span class="grow"><b>{match.count} destas linhas já estão em {match.name}.</b> Se o arquivo é dessa conta, troque o destino. Se foi importado lá por engano, mova em Lançamentos › Configurar › Importações.</span></div>
   {/each}
 
   <div class="form-title" style="margin-top: 6px">Arquivo</div>

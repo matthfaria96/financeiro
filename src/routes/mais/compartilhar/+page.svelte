@@ -58,7 +58,7 @@
     <div class="form-group">
       <div class="form-row"><span class="field-label">Quem participa</span><span class="field">{organizer.memberNames(space.id).join(', ')}</span></div>
       <div class="form-row"><span class="field-label">Dentro</span><span class="field muted">{c.cars} carro{c.cars === 1 ? '' : 's'} · {c.projects} projeto{c.projects === 1 ? '' : 's'} · {c.lists} lista{c.lists === 1 ? '' : 's'}</span></div>
-      <div class="form-row" use:hint={['Código do espaço', 'Mande para sua esposa: na conta dela, em Mais › Compartilhar › Entrar com código. Só dá acesso a este espaço, nunca ao seu financeiro.']}>
+      <div class="form-row" use:hint={['Código do espaço', 'Mande para sua esposa: na conta dela, em Perfil › Espaços compartilhados › Entrar com código. Só dá acesso a este espaço, nunca ao seu financeiro.']}>
         <span class="field-label">Código</span><span class="field num code">{space.invite_code}</span>
         <button class="btn" onclick={() => copy(space.id, space.invite_code)}><Icon name={copied === space.id ? 'check' : 'copy'} size={15} />{copied === space.id ? 'Copiado' : 'Copiar'}</button>
       </div>

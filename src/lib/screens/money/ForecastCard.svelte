@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { goto } from '$app/navigation';
   import { money } from '$lib/core/money';
   import { addMonths, dayMonth, monthOf, monthTitle, today } from '$lib/core/dates';
   import { store } from '$lib/data/store.svelte';
@@ -22,7 +23,7 @@
 </script>
 
 <section class="card">
-  <div class="card-head"><h3>Previsão dos próximos meses</h3><ChartButton icon="calendar" label="Calendário" detail="Contas fixas do mês ou do ano, e o calendário." onclick={() => (oncalendar ? oncalendar() : (ui.billsOpen = true))} /></div>
+  <div class="card-head"><h3>Previsão dos próximos meses</h3><ChartButton icon="calendar" label="Calendário" detail="Contas fixas do mês ou do ano, e o calendário." onclick={() => (oncalendar ? oncalendar() : goto('#/contas-fixas'))} /></div>
   <div class="months">
     {#each months as n, k (n.month)}
       <button class="bar-row" class:open={open === n.month} style:--d="{k * 50}ms" onclick={() => (open = open === n.month ? '' : n.month)} aria-expanded={open === n.month}>

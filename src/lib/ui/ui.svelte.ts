@@ -6,8 +6,8 @@ class UI {
   editingEntryId = $state<string | null>(null);
   newEntryOpen = $state(false);
   newAccountOpen = $state(false);
-  /** Janela das contas fixas (mês / ano). */
-  billsOpen = $state(false);
+  /** Quantas navegações já houve dentro do app: com alguma, o "Voltar" volta pelo histórico (para a tela de onde veio). */
+  navigations = $state(0);
 
   startImport(accountId: string | null = null, files: File[] = []) {
     this.importAccountId = accountId;

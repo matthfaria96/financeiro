@@ -2,6 +2,7 @@
   import '../app.css';
   import { onMount, type Snippet } from 'svelte';
   import { page } from '$app/state';
+  import { afterNavigate } from '$app/navigation';
   import { store } from '$lib/data/store.svelte';
   import { organizer } from '$lib/data/organizer.svelte';
   import { ui } from '$lib/ui/ui.svelte';
@@ -17,7 +18,6 @@
   import EntryEditor from '$lib/screens/transactions/EntryEditor.svelte';
   import NewEntry from '$lib/screens/transactions/NewEntry.svelte';
   import AccountEditor from '$lib/screens/accounts/AccountEditor.svelte';
-  import BillsSheet from '$lib/screens/bills/BillsSheet.svelte';
   import { seedDemo } from '$lib/features/demoData';
   import { exitDemo } from '$lib/data/demoMode';
 
@@ -28,6 +28,9 @@
   const active = $derived(sectionOf(page.route.id ?? '/'));
 
   let dragging = $state(false);
+  afterNavigate(({ from }) => {
+    if (from) ui.navigations++;
+  });
 
   // Carro, casa e listas: carregam quando a casa pessoal está pronta; saem junto com o login.
   $effect(() => {
@@ -98,7 +101,6 @@
   <EntryEditor />
   <NewEntry />
   <AccountEditor bind:open={ui.newAccountOpen} />
-  <BillsSheet />
   {#if dragging}<div class="dropzone"><Icon name="import" size={40} /><p>Solte os extratos para importar</p></div>{/if}
 {/if}
 <Toasts />

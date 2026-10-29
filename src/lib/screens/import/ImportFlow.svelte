@@ -109,7 +109,7 @@
         <b>{reading ? 'Lendo e gravando…' : 'Solte os extratos aqui'}</b>
         <span class="caption">ou toque para escolher · OFX, CSV ou PDF · vários de uma vez</span>
       </button>
-      <p class="caption center">O app descobre o banco e a conta pelo arquivo, separa por categoria e grava. Só pergunta se tiver dúvida. Dá para desfazer em Configuração › Importações.</p>
+      <p class="caption center">O app descobre o banco e a conta pelo arquivo, separa por categoria e grava. Só pergunta se tiver dúvida. Dá para desfazer em Lançamentos › Configurar › Importações.</p>
       <button class="btn ghost manual" onclick={() => (manual = !manual)}><Icon name={manual ? 'chevron-up' : 'chevron-down'} size={15} />Escolher a conta manualmente</button>
       {#if manual}
         <div class="stack-sm">
@@ -159,7 +159,7 @@
         </div>
       {/each}
       {#each failures as failure}<div class="card small neg">{failure.name}: {failure.message}</div>{/each}
-      <p class="caption">Os relatórios já estão atualizados. Para desfazer, use Configuração › Importações.</p>
+      <p class="caption">Os relatórios já estão atualizados. Para desfazer, use Lançamentos › Configurar › Importações.</p>
       <div class="row between">
         {#if uncategorized}<a class="btn" href="#/transacoes/todos?semcategoria=1" onclick={() => (ui.importOpen = false)}>Revisar {uncategorized} sem categoria</a>{:else}<span></span>{/if}
         <button class="btn primary" onclick={() => (ui.importOpen = false)}>Concluir</button>

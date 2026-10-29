@@ -99,7 +99,7 @@
     {#if error}
       <div class="card warnbox stack-sm">
         <span class="small">{error}</span>
-        {#if fallbackCode}<span class="small muted">Enquanto isso: crie o login dela e peça para ela entrar com este código em Configuração › Família:</span>
+        {#if fallbackCode}<span class="small muted">Enquanto isso: crie o login dela e peça para ela entrar com este código em Perfil › Família:</span>
           <button class="btn" onclick={() => copy(fallbackCode)}><Icon name={copied ? 'check' : 'copy'} size={15} />{fallbackCode}</button>{/if}
       </div>
     {/if}

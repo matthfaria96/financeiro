@@ -41,7 +41,7 @@
 </script>
 
 <div class="page">
-  <SubHeader title="Categorias"><button class="icon-btn" aria-label="Nova categoria" onclick={() => edit(null)} use:hint={['Nova categoria', 'Categoria principal com ícone, cor e fixo ou variável.']}><Icon name="plus" /></button></SubHeader>
+  <SubHeader title="Categorias" back="#/transacoes/configurar"><button class="icon-btn" aria-label="Nova categoria" onclick={() => edit(null)} use:hint={['Nova categoria', 'Categoria principal com ícone, cor e fixo ou variável.']}><Icon name="plus" /></button></SubHeader>
   {#each ['expense', 'income', 'transfer'] as CategoryKind[] as kind}
     <SectionTitle title={kindName[kind]} />
     <div class="tiles">
