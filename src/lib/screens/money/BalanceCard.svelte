@@ -16,6 +16,8 @@
   const estimated = $derived(shown.filter((b) => b.estimated).length);
   // Uma linha por banco: saldo da conta (e caixinha) com o cartão do mesmo banco embaixo.
   const groups = $derived(bankGroups(store.accounts.filter((a) => !a.archived && !hidden.includes(a.id))).filter((g) => g.accounts.some((a) => a.kind !== 'creditCard') || g.cardOpen > 0));
+  // Saldo do grupo no fim do mês escolhido (vem da análise do mês, não do saldo de hoje).
+  const groupBalance = (g: BankGroup) => g.accounts.reduce((s, a) => s + (shown.find((b) => b.account.id === a.id)?.cents ?? 0), 0);
   const isEstimated = (g: BankGroup) => g.accounts.some((a) => shown.find((b) => b.account.id === a.id)?.estimated);
   const cardsOpen = $derived(groups.reduce((s, g) => s + g.cardOpen, 0));
   let fixOpen = $state(false);
@@ -40,7 +42,7 @@
       <a class="row item" href="#/contas/{group.main.id}"><BankCard account={group.main} width={38} />
         <span class="grow" style="min-width: 0"><span class="ellipsis block">{group.name}</span>{#if group.cardOpen > 0}<span class="caption">{hasMoney ? 'Cartão' : 'Só cartão'}: {money(group.cardOpen, { cents: false })} em aberto</span>{/if}</span>
         {#if guess}<span class="pill guess">estimado</span>{/if}
-        {#if hasMoney}<span class="num" class:neg={group.balance < 0} class:faint={guess}>{money(group.balance)}</span>{:else}<span class="num faint">—</span>{/if}</a>
+        {#if hasMoney}<span class="num" class:neg={groupBalance(group) < 0} class:faint={guess}>{money(groupBalance(group))}</span>{:else}<span class="num faint">—</span>{/if}</a>
     {:else}
       <a class="muted small" href="#/mais/contas">{analysis.balances.length ? 'Todas as contas estão escondidas.' : 'Cadastre suas contas para ver o saldo.'}</a>
     {/each}

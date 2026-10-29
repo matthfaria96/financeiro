@@ -11,6 +11,7 @@
   import { hint } from '$lib/ui/hint';
   import CategoryDonut from '$lib/screens/money/CategoryDonut.svelte';
   import EntryListCard from '$lib/screens/money/EntryListCard.svelte';
+  import CategoryRows from '$lib/screens/money/CategoryRows.svelte';
   import ChartsSheet from '$lib/screens/money/ChartsSheet.svelte';
   import { merchantForBill } from '$lib/screens/bills/billLook';
   import { filter } from '$lib/screens/transactions/filter.svelte';
@@ -29,6 +30,13 @@
   const options = $derived(Array.from({ length: 64 }, (_, i) => addMonths(current, 3 - i)).filter((m) => m >= first || m >= current));
   const future = $derived(month > current);
   const analysis = $derived(analyzeMonth(month, entries, accounts));
+  const previous = $derived(analyzeMonth(addMonths(month, -1), entries, accounts));
+  // Saídas: por categoria (padrão) ou lista; fica lembrado no aparelho.
+  let outView = $state<'categories' | 'list'>((() => { try { return localStorage.getItem('financeiro.saidas') === 'list' ? 'list' : 'categories'; } catch { return 'categories'; } })());
+  function setOutView(v: 'categories' | 'list') {
+    outView = v;
+    try { localStorage.setItem('financeiro.saidas', v); } catch { /* aba privada */ }
+  }
   const forecast = $derived(future ? forecastMonth(month, accounts) : null);
   let chartsOpen = $state(false);
 
@@ -82,7 +90,16 @@
       <CategoryDonut title="Entradas" groups={analysis.income} total={analysis.incomeTotal} tone="pos" empty="Nenhuma entrada neste mês. Importe o extrato da conta." />
     </div>
     <EntryListCard title="Entradas" entries={analysis.income.flatMap((g) => g.entries)} total={analysis.incomeTotal} tone="pos" />
-    <EntryListCard title="Saídas" entries={analysis.expenses.flatMap((g) => g.entries)} total={-analysis.expenseTotal} />
+    <section class="out">
+      <div class="row between out-head"><h3>Saídas <span class="caption">· {money(analysis.expenseTotal)}</span></h3>
+        <div class="mode" role="radiogroup" aria-label="Visualização">
+          <button role="radio" aria-checked={outView === 'categories'} class:on={outView === 'categories'} onclick={() => setOutView('categories')} aria-label="Por categoria"><Icon name="reports" size={15} /></button>
+          <button role="radio" aria-checked={outView === 'list'} class:on={outView === 'list'} onclick={() => setOutView('list')} aria-label="Lista"><Icon name="list" size={15} /></button>
+        </div>
+      </div>
+      {#if outView === 'categories'}<CategoryRows groups={analysis.expenses} previous={previous.expenses} />
+      {:else}<EntryListCard title="Saídas" entries={analysis.expenses.flatMap((g) => g.entries)} total={-analysis.expenseTotal} />{/if}
+    </section>
   {/if}
 </div>
 <ChartsSheet bind:open={chartsOpen} focus="cost" month={future ? current : month} {entries} {accounts} />
@@ -93,6 +110,11 @@
   .icon-btn:disabled { opacity: 0.3; }
   .layout { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); align-items: start; }
   @media (min-width: 1000px) { .layout { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .out { display: flex; flex-direction: column; gap: 10px; }
+  .out-head h3 { margin: 6px 4px 0; font: 600 18px var(--font-display); }
+  .mode { display: flex; gap: 2px; padding: 3px; border-radius: 10px; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--stroke); }
+  .mode button { width: 32px; height: 28px; border: 0; border-radius: 8px; background: none; color: var(--text-3); display: grid; place-items: center; }
+  .mode button.on { background: rgba(255, 255, 255, 0.14); color: var(--text); }
   .credit-mode { display: flex; flex-direction: column; gap: 6px; }
   .credit-mode :global(.seg) { max-width: 460px; }
   .totals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }

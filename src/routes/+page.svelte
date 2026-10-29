@@ -6,31 +6,26 @@
   import { hint } from '$lib/ui/hint';
   import Welcome from '$lib/screens/home/Welcome.svelte';
   import BalanceCard from '$lib/screens/money/BalanceCard.svelte';
-  import MonthCard from '$lib/screens/money/MonthCard.svelte';
-  import ScaleCard from '$lib/screens/money/ScaleCard.svelte';
+  import MonthStrip from '$lib/screens/money/MonthStrip.svelte';
+  import PanoramaCard from '$lib/screens/money/PanoramaCard.svelte';
+  import ForecastCard from '$lib/screens/money/ForecastCard.svelte';
   import { lastEntryDate } from '$lib/features/model';
   import { dayMonth } from '$lib/core/dates';
   import AccountsSheet from '$lib/screens/money/AccountsSheet.svelte';
-  import ChartsSheet from '$lib/screens/money/ChartsSheet.svelte';
   import { inScope, inScopeAccount } from '$lib/features/model';
   import { analyzeMonth } from '$lib/features/analytics';
 
-  /** Início: sempre o mês atual, em três cartões empilhados: Saldo, o mês e a previsão dos próximos meses. */
+  /** Início: meses no topo (o atual em destaque), Saldo, Panorama mensal e Previsão dos próximos meses. */
   const entries = $derived(store.entries.filter(inScope));
   const accounts = $derived(store.accounts.filter((a) => !a.archived && inScopeAccount(a)).toSorted((a, b) => a.sort_order - b.sort_order));
-  const month = monthOf(today());
+  let month = $state(monthOf(today()));
+  const first = $derived(entries.map((e) => monthOf(e.date)).sort()[0] ?? null);
   const analysis = $derived(analyzeMonth(month, entries, accounts));
   const empty = $derived(!store.accounts.length || !store.entries.length);
-  let chartsOpen = $state(false);
-  let chartFocus = $state<'cost' | 'flow'>('cost');
-  function charts(focus: 'cost' | 'flow') {
-    chartFocus = focus;
-    chartsOpen = true;
-  }
 
   let configOpen = $state(false);
   // Contas cujo extrato ainda não chegou neste mês (as entradas do mês parecem zeradas por isso).
-  const stale = $derived(accounts.filter((a) => a.kind === 'checking').map((a) => ({ account: a, last: lastEntryDate(a) })).filter((x) => x.last && x.last < `${month}-01`)
+  const stale = $derived(accounts.filter((a) => a.kind === 'checking').map((a) => ({ account: a, last: lastEntryDate(a) })).filter((x) => x.last && x.last < `${month}-01` && month === monthOf(today()))
     .map((x) => `${x.account.name} até ${dayMonth(x.last!)}`));
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
@@ -48,16 +43,16 @@
   {#if empty}
     <Welcome />
   {:else}
+    <MonthStrip bind:value={month} {first} />
     <div class="cards">
-      <BalanceCard {analysis} hidden={store.household?.settings.home_hidden ?? []} onconfig={() => (configOpen = true)} />
-      <MonthCard {analysis} title={monthTitle(month)} link="#/transacoes" onchart={() => charts('cost')} {stale} />
-      <ScaleCard {entries} {accounts} />
+      <BalanceCard {analysis} title={month === monthOf(today()) ? 'Saldo financeiro' : `Saldo no fim de ${monthTitle(month).split(' ')[0].toLowerCase()}`} hidden={store.household?.settings.home_hidden ?? []} onconfig={() => (configOpen = true)} />
+      <PanoramaCard {month} {analysis} {entries} {accounts} {stale} />
+      <ForecastCard {accounts} />
     </div>
   {/if}
 
 </div>
 <AccountsSheet bind:open={configOpen} />
-<ChartsSheet bind:open={chartsOpen} focus={chartFocus} {entries} {accounts} />
 
 <style>
   .top h1 { margin: 6px 4px 2px; font: 700 30px var(--font-display); letter-spacing: -0.02em; }
