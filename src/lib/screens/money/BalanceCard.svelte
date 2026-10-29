@@ -11,8 +11,7 @@
   import { store } from '$lib/data/store.svelte';
   import { bankGroups, type BankGroup } from '$lib/features/bankGroups';
   import { balanceFixReason, lastBalanceFix } from '$lib/features/balanceFix';
-  import { addMonths, dayMonth, monthOf, today } from '$lib/core/dates';
-  import { monthEndTotal } from '$lib/features/analytics';
+  import { dayMonth } from '$lib/core/dates';
 
   /**
    * Seu dinheiro: em destaque o que está LIVRE (contas + caixinhas + dinheiro, menos as faturas do cartão que ainda vão sair),
@@ -33,18 +32,10 @@
   // Divisão do dinheiro por banco (só o que é positivo), na cor de cada banco.
   const slices = $derived(groups.map((g) => ({ key: g.key, name: g.name, cents: Math.max(0, groupBalance(g)), color: bankColor(g.main) })).filter((s) => s.cents > 0));
   let fixOpen = $state(false);
-  // Desenho de fundo: o saldo dos últimos 6 meses como uma onda suave no canto.
-  const history = $derived(Array.from({ length: 6 }, (_, i) => monthEndTotal(addMonths(monthOf(today()), i - 5), store.accounts)));
-  const wave = $derived.by(() => {
-    const lo = Math.min(...history), hi = Math.max(...history), span = hi - lo || 1;
-    const pts = history.map((v, i) => [i * 20, 34 - ((v - lo) / span) * 26]);
-    return pts.reduce((d, [x, y], i) => (i ? `${d} C${x - 10},${pts[i - 1][1]} ${x - 10},${y} ${x},${y}` : `M${x},${y}`), '');
-  });
   const fix = $derived(lastBalanceFix());
 </script>
 
-<section class="card money">
-  <svg class="wave" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="wave-g" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#2bd4a4" stop-opacity="0.35" /><stop offset="1" stop-color="#2bd4a4" stop-opacity="0" /></linearGradient></defs><path d={wave + ' L100,40 L0,40 Z'} fill="url(#wave-g)" /><path d={wave} fill="none" stroke="#2bd4a4" stroke-opacity="0.6" stroke-width="0.8" vector-effect="non-scaling-stroke" /></svg>
+<section class="card">
   <div class="card-head"><h3>{title}</h3>
     <CornerButton label="Corrigir saldos" detail="Digite quanto tem em cada conta, caixinha e dinheiro: o app acerta e lança o rendimento ou a diferença." onclick={() => (fixOpen = true)} />
   </div>
@@ -53,9 +44,10 @@
     <span class="caption">{cardsOpen > 0 ? 'Livre, já descontando as faturas' : current ? 'Nas contas, caixinhas e dinheiro' : 'Nas contas no fim do mês'}{estimated && informed === null ? ' · estimado' : ''}</span>
     <b class="big" class:neg={free < 0}><Tally cents={free} /></b>
     {#if cardsOpen > 0}
-      <div class="stats">
-        <div class="stat"><span class="ic"><Icon name="wallet" size={16} /></span><span><span class="caption">Nas contas</span><b class="num">{money(total, { cents: false })}</b></span></div>
-        <div class="stat" use:hint={['Faturas em aberto', 'Compras no cartão que ainda vão sair nas próximas faturas (com as parcelas já lançadas).']}><span class="ic warm"><Icon name="receipt" size={16} /></span><span><span class="caption">Faturas em aberto</span><b class="num">{money(cardsOpen, { cents: false })}</b></span></div>
+      <div class="math">
+        <span>Nas contas <b class="num">{money(total, { cents: false })}</b></span>
+        <span class="minus">−</span>
+        <span use:hint={['Faturas em aberto', 'Compras no cartão que ainda vão sair nas próximas faturas (com as parcelas já lançadas).']}>Faturas em aberto <b class="num">{money(cardsOpen, { cents: false })}</b></span>
       </div>
     {:else if informed !== null}
       <span class="caption">informado no ajuste do mês</span>
@@ -94,16 +86,9 @@
   .big { font: 600 36px/1.08 var(--font-display); letter-spacing: -0.025em; margin: 2px 0;
     background: linear-gradient(120deg, #ffffff 20%, #c8fff0 70%, #9fe0ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
   .big.neg { background: none; color: var(--negative); }
-  .money { position: relative; overflow: hidden; }
-  .money > :global(*:not(.wave)) { position: relative; }
-  .wave { position: absolute; right: 0; top: 0; width: 60%; height: 120px; pointer-events: none; opacity: 0.9;
-    -webkit-mask-image: linear-gradient(90deg, transparent, #000 40%); mask-image: linear-gradient(90deg, transparent, #000 40%); }
-  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
-  .stat { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--stroke); min-width: 0; }
-  .stat > span:last-child { display: flex; flex-direction: column; min-width: 0; }
-  .stat b { font-size: 15px; font-weight: 600; white-space: nowrap; }
-  .ic { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; flex: none; color: var(--accent); background: var(--accent-soft); }
-  .ic.warm { color: #ffb36b; background: rgba(255, 166, 61, 0.14); }
+  .math { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: 13px; color: var(--text-2); }
+  .math b { color: var(--text); font-weight: 600; }
+  .minus { color: var(--text-3); }
   .fixed { align-self: flex-start; display: inline-flex; align-items: center; gap: 5px; margin-top: 4px; padding: 0; border: 0; background: none; font-size: 12px; color: var(--text-3); text-align: left; }
   .fixed:hover { color: var(--text-2); }
   .split { display: flex; gap: 3px; height: 8px; margin: 14px 0 4px; border-radius: 4px; overflow: hidden; }

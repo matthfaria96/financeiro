@@ -135,7 +135,7 @@
   .key { display: flex; align-items: center; gap: 8px; color: var(--text-2); font-size: 14.5px; white-space: nowrap; }
   .pct { font-size: 12px; color: var(--text-3); font-variant-numeric: tabular-nums; }
   .line b { font-size: 16px; font-weight: 600; white-space: nowrap; }
-  .balance { display: flex; flex-direction: column; gap: 1px; margin-top: 4px; padding: 10px 12px; border-radius: 14px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--stroke); }
+  .balance { display: flex; flex-direction: column; gap: 1px; margin-top: 4px; padding-top: 10px; border-top: 1px solid var(--stroke); }
   .balance b { font: 600 24px/1.15 var(--font-display); letter-spacing: -0.015em; }
   i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; flex: none; }
   .tops { display: flex; flex-direction: column; gap: 2px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--stroke); }
