@@ -33,6 +33,8 @@
   let dragging = $state(false);
   // Barra de abas como a do Instagram: ao descer a página encolhe e esconde os nomes; ao subir (ou no topo) volta.
   let compact = $state(false);
+  // Só depois de rolar a faixa do topo aparece (no topo da página, nada cobre o fundo).
+  let scrolled = $state(false);
   let lastY = 0;
   let ticking = false;
   function onScroll() {
@@ -41,6 +43,7 @@
     requestAnimationFrame(() => {
       ticking = false;
       const y = scrollY;
+      scrolled = y > 8;
       if (y < 40) compact = false;
       else if (y > lastY + 8) compact = true;
       else if (y < lastY - 8) compact = false;
@@ -123,7 +126,7 @@
     <button class="btn primary" onclick={() => location.reload()}>Tentar de novo</button>
   </div>
 {:else}
-  <div class="statusbar" aria-hidden="true"></div>
+  <div class="statusbar" class:on={scrolled} aria-hidden="true"></div>
   {#if !pwa.online}<div class="offline" role="status"><Icon name="cloud" size={14} />Sem internet · mostrando o que está salvo</div>{/if}
   {#if updated.current}
     <div class="update glass" role="status"><Icon name="sparkles" size={16} /><span class="grow">Versão nova do app pronta.</span><button class="btn sm primary" onclick={() => location.reload()}>Atualizar</button></div>
@@ -191,11 +194,14 @@
   .demo-bar :global(svg) { color: var(--warning); flex: none; }
   .demo-bar .btn.sm { height: 30px; padding: 0 12px; font-size: 13px; }
   @media (min-width: 960px) { .demo-bar { margin: 12px auto 0; max-width: 908px; width: calc(100% - 72px); } }
-  /* App instalado no iPhone: a hora e a bateria ficam por cima do conteúdo. Um esmaecido suave (não uma faixa escura)
-     deixa legível quando o conteúdo passa por baixo, e um respiro empurra a tela para baixo do relógio. */
-  .statusbar { position: fixed; z-index: 60; top: 0; left: 0; right: 0; height: calc(env(safe-area-inset-top) + 14px); pointer-events: none;
-    background: linear-gradient(180deg, rgba(6, 12, 10, 0.88) 0%, rgba(6, 12, 10, 0.55) 60%, rgba(6, 12, 10, 0)); }
-  main { padding-top: calc(env(safe-area-inset-top) + 6px); }
+  /* App instalado no iPhone: a hora e a bateria ficam por cima da tela. No topo da página não há faixa nenhuma (só o fundo
+     do app) e a tela começa com folga abaixo do relógio; ao rolar, um vidro claro e leve aparece só atrás do relógio. */
+  .statusbar { position: fixed; z-index: 60; top: 0; left: 0; right: 0; height: env(safe-area-inset-top); pointer-events: none;
+    background: rgba(18, 30, 26, 0.55); backdrop-filter: blur(14px) saturate(1.5); -webkit-backdrop-filter: blur(14px) saturate(1.5);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06); opacity: 0; transition: opacity 0.3s; }
+  .statusbar.on { opacity: 1; }
+  main { padding-top: calc(env(safe-area-inset-top) + 14px); }
+  @media (min-width: 960px) { main { padding-top: 0; } }
   .offline { position: fixed; z-index: 70; top: calc(8px + env(safe-area-inset-top)); left: 0; right: 0; margin: 0 auto; width: fit-content; max-width: calc(100% - 24px); display: flex; align-items: center; gap: 6px;
     padding: 6px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: #ffd28a; background: rgba(60, 40, 10, 0.85); border: 1px solid rgba(255, 166, 61, 0.35);
     backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); animation: rise 0.4s var(--spring) both; white-space: nowrap; }
