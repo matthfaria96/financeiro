@@ -41,6 +41,8 @@
   const fix = $derived(lastBalanceFix());
   // Computador: o gráfico ocupa a metade direita do cartão, então pode ser mais alto.
   let wide = $state(false);
+  // Celular: o carrossel estica o cartão até a altura do vizinho; o gráfico ocupa a sobra em vez de deixar um vazio embaixo.
+  let fillH = $state(0);
   $effect(() => {
     const mq = matchMedia('(min-width: 1100px)');
     wide = mq.matches;
@@ -68,7 +70,7 @@
   {/if}
 
 
-  {#if current}<div class="trend"><LineChart labels={months.map((m) => shortMonth(m).slice(0, 3))} height={wide ? 230 : 120} title="Seu dinheiro no fim de cada mês" series={[{ id: 'bal', name: 'Saldo', color: '#2bd4a4', values: history }]} /></div>{/if}
+  {#if current}<div class="trend" class:fill={!wide} bind:clientHeight={fillH}><div class="trend-in"><LineChart labels={months.map((m) => shortMonth(m).slice(0, 3))} height={wide ? 230 : Math.max(120, fillH)} title="Seu dinheiro no fim de cada mês" series={[{ id: 'bal', name: 'Saldo', color: '#2bd4a4', values: history }]} /></div></div>{/if}
   <!-- Mais de 3 lugares: mostra 3 e um pedaço do 4º esmaecendo; "Ver mais" abre e fecha com animação. -->
   <div class="rows" class:solo={groups.length < 2} class:clamp={groups.length > 3 && !showAll} style:max-height={groups.length > 3 ? (showAll ? `${rowsHeight}px` : '168px') : undefined}>
     <div class="rows-in" bind:clientHeight={rowsHeight}>
@@ -103,7 +105,10 @@
   .item + .item { border-top: 1px solid var(--stroke); border-radius: 0 0 12px 12px; }
   .block { display: block; }
   .value { white-space: nowrap; }
+  .card { display: flex; flex-direction: column; }
   .trend { margin: 10px 0 2px; }
+  .trend.fill { flex: 1; min-height: 120px; position: relative; }
+  .trend.fill .trend-in { position: absolute; inset: 0; }
   .solo .item { font-size: 14px; color: var(--text-2); }
   @container home (min-width: 860px) {
     .card { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); column-gap: 40px; padding: 24px 26px; }

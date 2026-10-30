@@ -20,6 +20,15 @@
    */
   let { month, analysis, entries, accounts, stale = [] }: { month: Month; analysis: MonthAnalysis; entries: Entry[]; accounts: Account[]; stale?: string[] } = $props();
   let shown = $state(0);
+  // Computador: rosca maior à esquerda e até 5 categorias à direita, no mesmo desenho dos outros cartões largos.
+  let wide = $state(false);
+  $effect(() => {
+    const mq = matchMedia('(min-width: 1100px)');
+    wide = mq.matches;
+    const on = () => (wide = mq.matches);
+    mq.addEventListener('change', on);
+    return () => mq.removeEventListener('change', on);
+  });
   let adjustOpen = $state(false);
   const name = $derived(monthTitle(month).split(' ')[0].toLowerCase());
   const future = $derived(month > monthOf(today()));
@@ -29,7 +38,7 @@
   // Onde mais foi o dinheiro: as 3 maiores categorias (mês futuro: fixas, variáveis e sazonais previstas).
   const highlights = $derived(forecast
     ? [{ key: 'fixed', label: spendKindName.fixed, color: spendKindColor.fixed, cents: forecast.fixed.total, icon: '' }, { key: 'variable', label: spendKindName.variable, color: spendKindColor.variable, cents: forecast.variable.total, icon: '' }, { key: 'seasonal', label: spendKindName.seasonal, color: spendKindColor.seasonal, cents: forecast.seasonal.cents, icon: '' }]
-    : analysis.expenses.filter((g) => g.key !== 'none').slice(0, 3).map((g) => ({ key: g.key, label: g.label, color: g.color, cents: g.cents, icon: g.icon })));
+    : analysis.expenses.filter((g) => g.key !== 'none').slice(0, wide ? 5 : 3).map((g) => ({ key: g.key, label: g.label, color: g.color, cents: g.cents, icon: g.icon })));
   const balance = $derived(view.income - view.expense);
   const moved = $derived(view.income + view.expense);
   const context = $derived.by(() => {
@@ -49,7 +58,7 @@
         <div class="card-head"><h3>{titles[0]}</h3>{#if !future}<CornerButton label="Ajustar o mês" detail="Se não bate com o banco: quanto ganhou, quanto gastou e quanto sobrou, com o motivo (juros, antecipação…)." onclick={() => (adjustOpen = true)} />{:else}<span class="pill soon">previsão</span>{/if}</div>
         <!-- 100% = tudo o que passou pelo mês (entradas + saídas); cada fatia mostra quanto foi de cada lado. -->
         <div class="month">
-          <Donut size={132} thickness={0.26} center={money(moved, { cents: false })} caption={future ? 'previsto' : 'movimentado'} format={(v) => `${money(v, { cents: false })} · ${percent(v / (moved || 1))}`}
+          <Donut size={wide ? 184 : 132} thickness={wide ? 0.22 : 0.26} center={money(moved, { cents: false })} caption={future ? 'previsto' : 'movimentado'} format={(v) => `${money(v, { cents: false })} · ${percent(v / (moved || 1))}`}
             slices={[{ id: 'in', label: future ? 'Deve entrar' : 'Entradas', value: view.income, color: seriesColor.income }, { id: 'out', label: future ? 'Deve sair' : 'Saídas', value: view.expense, color: seriesColor.expense }]} />
           <div class="legend">
             <div class="line"><span class="key"><i style:background={seriesColor.income}></i>{future ? 'Deve entrar' : 'Entradas'}<span class="pct">{percent(view.income / (moved || 1))}</span></span><b class="num pos"><Tally cents={view.income} showCents={false} /></b></div>
@@ -69,7 +78,7 @@
                 {#if h.icon}<CategoryIcon symbol={h.icon} color={h.color} size={30} />{:else}<i style:background={h.color}></i>{/if}
                 <span class="lbl ellipsis">{h.label}</span>
                 <span class="caption pct">{view.expense ? percent(h.cents / view.expense) : ''}</span>
-                <span class="bar"><span style:width="{view.expense ? (h.cents / view.expense) * 100 : 0}%" style:background={h.color}></span></span>
+                <span class="bar"><span style:width="{view.expense ? (h.cents / view.expense) * 100 : 0}%" style:background={h.color} style:--c={h.color}></span></span>
                 <b class="num">{money(h.cents, { cents: false })}</b>
               </div>
             {/each}
@@ -108,8 +117,8 @@
   .tops > .caption { margin-bottom: 4px; }
   .top { display: grid; grid-template-columns: 30px minmax(0, 1fr) 34px minmax(40px, 0.9fr) auto; align-items: center; gap: 10px; padding: 5px 0; font-size: 14px; }
   .top i { justify-self: center; }
-  .bar { display: block; height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.07); overflow: hidden; }
-  .bar span { display: block; height: 100%; border-radius: 3px; transform-origin: left; animation: fill 0.9s cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .bar { display: block; height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.07); }
+  .bar span { display: block; height: 100%; border-radius: 3px; box-shadow: 0 0 10px color-mix(in srgb, var(--c) 45%, transparent); transform-origin: left; animation: fill 0.9s cubic-bezier(0.22, 1, 0.36, 1) both; }
   @keyframes fill { from { transform: scaleX(0); } }
   .top b { font-weight: 600; min-width: 64px; text-align: right; }
   .pct { min-width: 34px; text-align: right; }
@@ -119,6 +128,18 @@
   .foot { margin-top: auto; padding-top: 14px; }
   .more { display: inline-flex; align-items: center; gap: 3px; color: var(--accent); font-weight: 600; font-size: 13.5px; transition: gap 0.25s var(--ease); }
   .more:hover { gap: 7px; }
+  @container home (min-width: 860px) {
+    .panel { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); grid-template-rows: auto 1fr auto auto auto; column-gap: 36px; padding: 24px 26px; }
+    .card-head { grid-column: 1 / -1; }
+    .month { grid-column: 1; grid-row: 2; gap: 28px; align-self: center; }
+    .tops { grid-column: 2; grid-row: 2 / span 4; align-self: center; margin: 0; padding: 0 0 0 36px; border-top: 0; border-left: 1px solid var(--stroke); gap: 6px; }
+    .stale, .note, .foot { grid-column: 1; }
+    .top { grid-template-columns: 30px minmax(0, 1.4fr) 34px minmax(48px, 1fr) auto; padding: 7px 0; font-size: 14.5px; }
+    .bar { height: 8px; border-radius: 4px; }
+    .bar span { border-radius: 4px; }
+    .balance b { font-size: 30px; white-space: nowrap; }
+    .line b { font-size: 18px; }
+  }
   /* Cartão estreito (celular): nome em cima, valor embaixo, para nada passar da borda. */
   @container (max-width: 440px) {
     .month { gap: 16px; }
