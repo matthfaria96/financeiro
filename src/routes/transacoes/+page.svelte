@@ -18,8 +18,8 @@
   import Tally from '$lib/ui/Tally.svelte';
   import { prefs } from '$lib/ui/prefs.svelte';
   import { ui } from '$lib/ui/ui.svelte';
-  import { haptic } from '$lib/features/pwa.svelte';
   import ConfigureLink from '$lib/ui/ConfigureLink.svelte';
+  import Fab from '$lib/ui/Fab.svelte';
 
   /** Lançamentos (o "analítico"): o mês escolhido em saldo, entradas, saídas por categoria e balanço.
    *  Meses futuros mostram o que já está previsto (faturas e contas fixas). */
@@ -109,7 +109,7 @@
   {/if}
   <ConfigureLink href="#/transacoes/configurar" />
 </div>
-<button class="fab" aria-label="Novo lançamento" onclick={() => { haptic(); ui.newEntryOpen = true; }} use:hint={['Novo lançamento', 'Anote à mão um gasto ou uma entrada (dinheiro, Pix de alguém…).']}><Icon name="plus" size={24} stroke={2.4} /></button>
+<Fab label="Novo lançamento" detail="Anote à mão um gasto ou uma entrada (dinheiro, Pix de alguém…)." onclick={() => (ui.newEntryOpen = true)} />
 
 <style>
   .top { gap: 10px; flex-wrap: wrap; }
@@ -123,21 +123,6 @@
   .mode button { width: 32px; height: 28px; border: 0; border-radius: 8px; background: none; color: var(--text-3); display: grid; place-items: center; transition: color 0.2s; }
   .mode button:hover:not(.on) { color: var(--text-2); }
   .mode button.on { color: var(--text); }
-  /* Botão flutuante (novo lançamento): vidro, fixo no canto; no celular fica acima da barra de abas. */
-  .fab { position: fixed; z-index: 45; right: 22px; bottom: calc(96px + env(safe-area-inset-bottom)); width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center;
-    color: var(--accent); border: 1px solid rgba(255, 255, 255, 0.16); background: rgba(30, 46, 40, 0.55);
-    backdrop-filter: blur(22px) saturate(1.8); -webkit-backdrop-filter: blur(22px) saturate(1.8);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 14px 36px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(43, 212, 164, 0.12);
-    animation: fab-in 0.5s var(--spring) 0.2s backwards; transition: bottom 0.42s cubic-bezier(0.22, 1, 0.36, 1), transform 0.25s var(--spring), background 0.2s, color 0.2s; }
-  .fab:hover { transform: translateY(-2px) scale(1.04); background: rgba(43, 212, 164, 0.22); color: #b8ffe6; }
-  .fab:active { transform: scale(0.92); }
-  @keyframes fab-in { from { opacity: 0; transform: scale(0.6) translateY(12px); } }
-  /* Acompanha a barra de abas quando ela encolhe. */
-  @media (max-width: 959px) {
-    :global(html.bar-compact) .fab { bottom: calc(70px + env(safe-area-inset-bottom)); }
-    :global(html.bar-gone) .fab { bottom: calc(18px + env(safe-area-inset-bottom)); }
-  }
-  @media (min-width: 960px) { .fab { right: 32px; bottom: 32px; width: 60px; height: 60px; } }
   .desk { display: contents; }
   @media (min-width: 1180px) {
     .desk { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }

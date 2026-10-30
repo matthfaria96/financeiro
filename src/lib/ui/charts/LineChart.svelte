@@ -88,7 +88,7 @@
         <text x={pad.l - 8} y={y(t)} text-anchor="end" dominant-baseline="central" class="tick">{tick(t)}</text>
       {/each}
       {#if fill}<path class="area" d={fill} fill="url(#{gradient})" />{/if}
-      {#each lines as line (line.id)}<path class="line" pathLength="1" d={line.d} fill="none" stroke={line.color} stroke-width="2.25" stroke-linejoin="round" stroke-linecap="round" />{/each}
+      {#each lines as line (line.id)}<path class="line" style:--c={line.color} pathLength="1" d={line.d} fill="none" stroke={line.color} stroke-width="2.25" stroke-linejoin="round" stroke-linecap="round" />{/each}
       {#if hovered !== null}<line x1={x(hovered)} x2={x(hovered)} y1={pad.t} y2={pad.t + plotH} stroke="rgba(255,255,255,0.28)" />{/if}
       {#each lines as line (line.id)}
         {@const at = hovered !== null && line.values[hovered] !== null ? hovered : lastIndex(line.values)}
@@ -113,9 +113,9 @@
   svg { display: block; overflow: visible; }
   .tick { font-size: 11px; fill: var(--text-3); font-variant-numeric: tabular-nums; user-select: none; }
   /* A linha se desenha da esquerda para a direita; a área e o ponto aparecem depois. */
-  .line { stroke-dasharray: 1; animation: draw 1s cubic-bezier(0.22, 1, 0.36, 1) both; transition: d 0.55s cubic-bezier(0.22, 1, 0.36, 1); }
+  .line { filter: drop-shadow(0 0 6px color-mix(in srgb, var(--c) 55%, transparent)); stroke-dasharray: 1; animation: draw 1s cubic-bezier(0.22, 1, 0.36, 1) both; transition: d 0.55s cubic-bezier(0.22, 1, 0.36, 1); }
   .area { animation: show 0.8s 0.35s both; transition: d 0.55s cubic-bezier(0.22, 1, 0.36, 1); }
-  .dot { animation: show 0.4s 0.7s both; transition: cx 0.2s, cy 0.2s; }
+  .dot { filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.35)); animation: show 0.4s 0.7s both; transition: cx 0.2s, cy 0.2s; }
   @keyframes draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
   @keyframes show { from { opacity: 0; } }
 </style>

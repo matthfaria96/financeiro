@@ -101,7 +101,7 @@
   @media (max-width: 600px) { .month :global(svg) { display: none; } }
   .side { display: flex; flex-direction: column; gap: 14px; }
   .center { display: grid; place-items: center; }
-  i { width: 9px; height: 9px; border-radius: 3px; display: inline-block; }
+  i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
   .pick { display: grid; place-items: center; padding-top: 8px; }
   .swatch { width: 26px; height: 26px; border-radius: 50%; border: 0; }
   .swatch.on { box-shadow: 0 0 0 2px #121916, 0 0 0 4px #fff; }

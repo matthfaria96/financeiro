@@ -78,7 +78,7 @@
       {/each}
       {#if hovered !== null}<rect x={pad.l + band * hovered + 2} y={pad.t} width={band - 4} height={plotH} rx="8" fill="rgba(255,255,255,0.045)" />{/if}
       {#each bars as bar (bar.key)}
-        <path class="bar" style:--i={bar.i} d={bar.d} fill={bar.color} opacity={faded(bar.i) ? 0.38 : hovered === null || hovered === bar.i ? 1 : 0.55} />
+        <path class="bar" style:--c={bar.color} style:--i={bar.i} d={bar.d} fill={bar.color} opacity={faded(bar.i) ? 0.38 : hovered === null || hovered === bar.i ? 1 : 0.55} />
       {/each}
       {#if reference}
         <line x1={pad.l} x2={width - pad.r} y1={y(reference.value)} y2={y(reference.value)} stroke="rgba(255,255,255,0.5)" stroke-width="1.25" stroke-dasharray="4 4" />
@@ -111,7 +111,7 @@
   .tick.now { fill: var(--text); font-weight: 600; }
   .hit:focus { outline: none; }
   /* Barras sobem da base ao aparecer e mudam de altura com suavidade quando os dados mudam. */
-  .bar { transform-box: fill-box; transform-origin: 50% 100%; animation: grow 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; animation-delay: calc(var(--i) * 40ms);
+  .bar { filter: drop-shadow(0 0 5px color-mix(in srgb, var(--c) 40%, transparent)); transform-box: fill-box; transform-origin: 50% 100%; animation: grow 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; animation-delay: calc(var(--i) * 40ms);
     transition: opacity 0.25s, d 0.55s cubic-bezier(0.22, 1, 0.36, 1); }
   @keyframes grow { from { transform: scaleY(0); } }
   svg :global(text) { user-select: none; }

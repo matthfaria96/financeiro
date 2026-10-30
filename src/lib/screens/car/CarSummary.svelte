@@ -41,6 +41,6 @@
   .split { display: flex; gap: 20px; align-items: center; padding-top: 12px; border-top: 1px solid var(--stroke); }
   .legend { flex: 1; display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 210px)); gap: 8px 28px; color: var(--text-2); }
   .legend span { display: flex; align-items: center; gap: 8px; }
-  .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; flex: none; }
+  .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; flex: none; }
   .legend b { color: var(--text); font-weight: 600; }
 </style>

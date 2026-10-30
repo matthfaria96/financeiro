@@ -60,7 +60,7 @@
 </div>
 
 <style>
-  i { width: 9px; height: 9px; border-radius: 3px; display: inline-block; flex: none; }
+  i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; }
   .track { height: 8px; border-radius: 4px; background: rgba(255, 255, 255, 0.06); overflow: hidden; }
   .track span { display: block; height: 100%; border-radius: 4px; transition: width 0.5s var(--ease); }
   .credit { gap: 10px; padding-top: 12px; border-top: 1px solid var(--stroke); }

@@ -79,7 +79,7 @@
   .parts { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13.5px; color: var(--text-2); }
   .parts span { display: inline-flex; align-items: center; gap: 6px; }
   .parts b { color: var(--text); font-weight: 600; }
-  i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; flex: none; }
+  i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; }
   .flow { display: flex; justify-content: space-between; gap: 12px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--stroke-strong); }
   .flow > div { display: flex; flex-direction: column; gap: 2px; }
   .flow b { font: 600 20px var(--font-display); }

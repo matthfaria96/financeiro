@@ -5,6 +5,7 @@
   import { ui } from '$lib/ui/ui.svelte';
   import Avatar from '$lib/ui/Avatar.svelte';
   import Tally from '$lib/ui/Tally.svelte';
+  import { seriesColor } from '$lib/ui/charts/scale';
   import { categoryOf } from '$lib/features/model';
   import { spendCents, spendDate, type MonthAnalysis } from '$lib/features/analytics';
 
@@ -13,7 +14,7 @@
    * (o maior dos dois fecha o anel). No centro o saldo; embaixo as barras e as maiores compras do mês.
    */
   let { analysis }: { analysis: MonthAnalysis } = $props();
-  const IN = '#22c58b', OUT = '#ff6b5b';
+  const IN = seriesColor.income, OUT = seriesColor.expense;
   const top = $derived(Math.max(1, analysis.incomeTotal, analysis.expenseTotal));
   const inShare = $derived(analysis.incomeTotal / top);
   const outShare = $derived(analysis.expenseTotal / top);

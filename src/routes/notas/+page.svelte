@@ -11,6 +11,7 @@
   import { rememberSystemNotebooks, visibleNoteCards } from '$lib/features/notes';
   import ConfigureLink from '$lib/ui/ConfigureLink.svelte';
   import NoteIcon from '$lib/ui/NoteIcon.svelte';
+  import Fab from '$lib/ui/Fab.svelte';
   import { currentList, ensureNotebooks, itemsOf, notebooks } from '$lib/features/shopping';
   import { dueText, logsOf, planOf } from '$lib/features/car';
 
@@ -33,7 +34,6 @@
 <div class="page">
   <header class="row between top">
     <h1>Notas</h1>
-    <button class="btn primary" onclick={() => (creating = true)} use:hint={['Cadastrar novo', 'Uma lista nova: limpeza, bebê, festa…']}><Icon name="plus" size={16} /><span class="hide-m">Cadastrar novo</span></button>
   </header>
 
   <div class="grid">
@@ -62,6 +62,7 @@
   </div>
   <ConfigureLink href="#/notas/configurar" />
 </div>
+<Fab label="Nova lista" detail="Uma lista nova: limpeza, bebê, festa…" onclick={() => (creating = true)} />
 <NotebookEditor bind:open={creating} onsaved={(n) => goto(`#/notas/lista/${n.id}`)} />
 
 <style>

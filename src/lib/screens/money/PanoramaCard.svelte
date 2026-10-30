@@ -69,10 +69,10 @@
         <!-- 100% = tudo o que passou pelo mês (entradas + saídas); cada fatia mostra quanto foi de cada lado. -->
         <div class="month">
           <Donut size={132} thickness={0.26} center={money(moved, { cents: false })} caption={future ? 'previsto' : 'movimentado'} format={(v) => `${money(v, { cents: false })} · ${percent(v / (moved || 1))}`}
-            slices={[{ id: 'in', label: future ? 'Deve entrar' : 'Entradas', value: view.income, color: seriesColor.income }, { id: 'out', label: future ? 'Deve sair' : 'Saídas', value: view.expense, color: seriesColor.credit }]} />
+            slices={[{ id: 'in', label: future ? 'Deve entrar' : 'Entradas', value: view.income, color: seriesColor.income }, { id: 'out', label: future ? 'Deve sair' : 'Saídas', value: view.expense, color: seriesColor.expense }]} />
           <div class="legend">
             <div class="line"><span class="key"><i style:background={seriesColor.income}></i>{future ? 'Deve entrar' : 'Entradas'}<span class="pct">{percent(view.income / (moved || 1))}</span></span><b class="num pos"><Tally cents={view.income} showCents={false} /></b></div>
-            <div class="line"><span class="key"><i style:background={seriesColor.credit}></i>{future ? 'Deve sair' : 'Saídas'}<span class="pct">{percent(view.expense / (moved || 1))}</span></span><b class="num"><Tally cents={view.expense} showCents={false} /></b></div>
+            <div class="line"><span class="key"><i style:background={seriesColor.expense}></i>{future ? 'Deve sair' : 'Saídas'}<span class="pct">{percent(view.expense / (moved || 1))}</span></span><b class="num"><Tally cents={view.expense} showCents={false} /></b></div>
             <div class="balance">
               <span class="caption">{future ? 'Deve sobrar' : 'Balanço'}</span>
               <b class="num" class:pos={balance >= 0} class:neg={balance < 0}><Tally cents={balance} /></b>
@@ -108,7 +108,7 @@
           <span class="caption">{vsAverage === null ? 'Ainda sem meses anteriores para comparar.' : Math.abs(vsAverage) < 0.03 ? 'na média dos meses anteriores' : `${percent(Math.abs(vsAverage))} ${vsAverage > 0 ? 'acima' : 'abaixo'} da média (${money(average!, { cents: false })})`}</span>
         </div>
         <div class="chart"><BarChart {labels} current={5} height={200} title="Entradas e saídas por mês"
-          series={[{ id: 'in', name: 'Entradas', color: seriesColor.income, values: per.map((p) => p.incomeTotal) }, { id: 'out', name: 'Saídas', color: seriesColor.credit, values: per.map((p) => p.expenseTotal) }]}
+          series={[{ id: 'in', name: 'Entradas', color: seriesColor.income, values: per.map((p) => p.incomeTotal) }, { id: 'out', name: 'Saídas', color: seriesColor.expense, values: per.map((p) => p.expenseTotal) }]}
           reference={average ? { value: average, label: '' } : null} /></div>
         {#if average}<p class="caption faint note"><span class="dash"></span>média das saídas</p>{/if}
       {/if}
@@ -136,7 +136,7 @@
   .line b { font-size: 16px; font-weight: 600; white-space: nowrap; }
   .balance { display: flex; flex-direction: column; gap: 1px; margin-top: 4px; padding-top: 10px; border-top: 1px solid var(--stroke); }
   .balance b { font: 600 24px/1.15 var(--font-display); letter-spacing: -0.015em; }
-  i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; flex: none; }
+  i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; }
   .tops { display: flex; flex-direction: column; gap: 2px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--stroke); }
   .tops > .caption { margin-bottom: 4px; }
   .top { display: grid; grid-template-columns: 30px minmax(0, 1fr) 34px minmax(40px, 0.9fr) auto; align-items: center; gap: 10px; padding: 5px 0; font-size: 14px; }

@@ -45,7 +45,7 @@
   .none { margin: auto 0 0; text-align: center; }
   .legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px; }
   .chip-l { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-2); white-space: nowrap; }
-  i { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+  i { width: 9px; height: 9px; border-radius: 50%; flex: none; }
   /* Cartão largo (a rosca sozinha no computador): legenda em lista ao lado, com a % de cada uma. */
   @container (min-width: 620px) {
     .body { flex-direction: row; align-items: center; justify-content: center; gap: 48px; }

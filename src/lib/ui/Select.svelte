@@ -128,7 +128,7 @@
   .select.chip.active { color: var(--accent); background: var(--accent-soft); border-color: rgba(43, 212, 164, 0.35); }
   .select.title { padding: 8px 16px; border-radius: 999px; border: 1px solid var(--stroke-strong); background: rgba(255, 255, 255, 0.07); font: 600 19px var(--font-display); }
   .select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 10px; }
-  i { width: 9px; height: 9px; border-radius: 3px; flex: none; }
+  i { width: 9px; height: 9px; border-radius: 50%; flex: none; }
   :global(.select-back) { position: fixed; inset: 0; z-index: 300; }
   :global(.select-pop) { position: fixed; z-index: 301; display: flex; flex-direction: column; overflow: hidden; border-radius: 14px; padding: 6px;
     background: #1a221f; border: 1px solid var(--stroke-strong); box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55); will-change: transform, opacity;

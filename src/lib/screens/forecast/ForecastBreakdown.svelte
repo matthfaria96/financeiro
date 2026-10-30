@@ -56,7 +56,7 @@
 <style>
   .groups { display: flex; flex-direction: column; gap: 12px; }
   header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--stroke); }
-  i { width: 12px; height: 12px; border-radius: 4px; flex: none; background: var(--c); box-shadow: 0 0 12px color-mix(in srgb, var(--c) 55%, transparent); }
+  i { width: 9px; height: 9px; border-radius: 50%; flex: none; background: var(--c); box-shadow: 0 0 12px color-mix(in srgb, var(--c) 55%, transparent); }
   header b { font-size: 15.5px; }
   .total { font: 600 18px var(--font-display); }
   .block { display: block; margin-top: 1px; }

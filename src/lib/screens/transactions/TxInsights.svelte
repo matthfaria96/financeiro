@@ -73,7 +73,7 @@
   {#if timeline}
     <section class="card">
       <div class="card-head"><h3>Gastos {timeline.daily ? 'por dia' : 'por mês'}</h3><span class="sub">{expenses.length} lançamentos</span></div>
-      <BarChart labels={timeline.labels} height={170} title="Gastos {timeline.daily ? 'por dia' : 'por mês'}" series={[{ id: 'out', name: 'Gastos', color: seriesColor.account, values: timeline.values }]} />
+      <BarChart labels={timeline.labels} height={170} title="Gastos {timeline.daily ? 'por dia' : 'por mês'}" series={[{ id: 'out', name: 'Gastos', color: seriesColor.expense, values: timeline.values }]} />
     </section>
   {/if}
   {#if categories.length}

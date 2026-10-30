@@ -36,7 +36,7 @@
   .lead + ul { margin-bottom: 8px; }
   ul { list-style: none; margin: 0 0 6px; padding: 0; display: flex; flex-direction: column; gap: 5px; }
   li { display: flex; gap: 9px; align-items: flex-start; }
-  i { width: 9px; height: 9px; border-radius: 3px; flex: none; margin-top: 6px; }
+  i { width: 9px; height: 9px; border-radius: 50%; flex: none; margin-top: 6px; }
   i.tag { background: var(--text-3); border-radius: 50%; width: 6px; height: 6px; margin: 8px 1px 0 2px; }
   b { color: var(--text); font-weight: 600; }
   p.small { margin: 0 0 10px; font-size: 12.5px; }

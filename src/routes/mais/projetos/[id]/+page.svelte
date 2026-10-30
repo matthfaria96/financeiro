@@ -107,7 +107,7 @@
   .overview { display: flex; gap: 20px; align-items: center; }
   .sums { flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
   .banner { height: 200px; border-radius: var(--radius); background-size: cover; background-position: center; border: 1px solid var(--stroke); display: flex; align-items: flex-end; justify-content: flex-end; padding: 14px; }
-  i { width: 9px; height: 9px; border-radius: 3px; flex: none; display: inline-block; }
+  i { width: 9px; height: 9px; border-radius: 50%; flex: none; display: inline-block; }
   .sums > div { display: flex; flex-direction: column; gap: 3px; }
   .pad { padding: 16px; margin: 0; }
   .dashed { border-style: dashed; color: var(--accent); background: var(--accent-soft); }

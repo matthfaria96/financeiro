@@ -81,7 +81,7 @@
             <LineChart {labels} height={200} title="Saldo no fim de cada mês" series={[{ id: 'bal', name: 'Saldo', color: bankColor(account), values: balances }]} /></section>
         {/if}
         <section class="card"><div class="card-head"><h3>Entrou e saiu</h3><span class="sub">sem transferências entre contas</span></div>
-          <BarChart {labels} current={11} height={200} title="Entrou e saiu por mês" series={[{ id: 'in', name: 'Entrou', color: seriesColor.income, values: perMonth(1) }, { id: 'out', name: 'Saiu', color: seriesColor.account, values: perMonth(-1) }]} /></section>
+          <BarChart {labels} current={11} height={200} title="Entrou e saiu por mês" series={[{ id: 'in', name: 'Entrou', color: seriesColor.income, values: perMonth(1) }, { id: 'out', name: 'Saiu', color: seriesColor.expense, values: perMonth(-1) }]} /></section>
       </div>
     {/if}
     <section class="card stack" use:hint={['Meses com extrato', 'Quais dos últimos 12 meses já têm lançamentos nesta conta.']}>

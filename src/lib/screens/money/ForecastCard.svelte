@@ -54,7 +54,7 @@
     <span class="caption">entra {money(inNext, { cents: false })} · sai {money(outNext, { cents: false })}</span>
   </div>
   <div class="chart"><BarChart labels={months.map((m) => shortMonth(m).slice(0, 3))} height={wide ? 220 : 170} title="Ganhos e gastos previstos por mês" onselect={(i) => open(months[i])}
-    series={[{ id: 'in', name: 'Ganhos', color: seriesColor.income, values: months.map(() => income.cents) }, { id: 'out', name: 'Gastos', color: '#f06a7e', values: forecasts.map((f) => f.total) }]} /></div>
+    series={[{ id: 'in', name: 'Ganhos', color: seriesColor.income, values: months.map(() => income.cents) }, { id: 'out', name: 'Gastos', color: seriesColor.expense, values: forecasts.map((f) => f.total) }]} /></div>
   <div class="foot"><button class="more" onclick={() => open(null)}>Ver detalhes <Icon name="chevron-right" size={13} /></button></div>
 </section>
 <Sheet bind:open={info} title="Como a previsão é calculada"><div class="sheet-info"><ForecastInfo open base={forecasts[0]?.base ?? 0} /></div></Sheet>

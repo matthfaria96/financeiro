@@ -1,7 +1,8 @@
 /** Escalas e cores dos gráficos (SVG puro, sem biblioteca). */
 
 /** Cores das séries fixas, validadas para daltonismo no fundo escuro (azul, laranja, água). */
-export const seriesColor = { income: '#199e70', account: '#3987e5', credit: '#d95926' } as const;
+/** Cores do app inteiro: entrada sempre verde, saída sempre coral (as mesmas de Lançamentos). account/credit só para separar débito × crédito. */
+export const seriesColor = { income: '#22c58b', expense: '#ff6b5b', account: '#3987e5', credit: '#d95926' } as const;
 export const surface = '#141b18';
 export const gridColor = 'rgba(255,255,255,0.07)';
 export const axisColor = 'rgba(255,255,255,0.14)';

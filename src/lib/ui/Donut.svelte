@@ -93,6 +93,7 @@
 <style>
   .donut { position: relative; flex: none; container-type: inline-size; }
   path { transition: opacity 0.2s, transform 0.2s var(--ease); outline: none; }
+  svg { filter: drop-shadow(0 0 10px rgba(43, 212, 164, 0.12)); }
   .center { position: absolute; inset: 20%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; pointer-events: none; line-height: 1.15; gap: 2px; }
   .center b { font: 600 clamp(12px, 9cqw, 24px) var(--font-display); }
   .name { font-size: clamp(10px, 5.2cqw, 12.5px); color: var(--text-2); max-width: 100%; }
