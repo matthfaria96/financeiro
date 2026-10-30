@@ -6,11 +6,12 @@
   import CategoryIcon from './CategoryIcon.svelte';
   import Icon from './Icon.svelte';
   import { hint } from './hint';
+  import { CARD_PAYMENT, CASH_WITHDRAWAL, INTERNAL_TRANSFER, INVESTMENT } from '$lib/core/catalog';
 
   /**
    * Escolha de categoria (lançamento manual e edição).
    * Simples: grade das principais com ícone e nome, um toque.
-   * Detalhado: só os ícones (compacto, nome no balão), mais as movimentações; embaixo abre o detalhe da escolhida,
+   * Detalhado: só os ícones (compacto, nome no balão) e, à parte, as movimentações entre contas com nome; embaixo abre o detalhe da escolhida,
    * já em "Geral" (a primeira opção), e a pessoa só toca numa sub se quiser.
    * O modo fica lembrado neste aparelho; abre detalhado sozinho quando o valor já é uma sub ou movimentação.
    */
@@ -42,6 +43,14 @@
     if (current?.parent_id || current?.kind === 'transfer') untrack(() => (detailed = true));
   });
 
+  // O que cada movimentação significa, em palavras simples (chaves fixas do catálogo).
+  const moveInfo: Record<string, string> = {
+    [INVESTMENT]: 'Dinheiro guardado ou aplicado (caixinha, CDB, ações). Sai da conta, mas continua seu.',
+    [INTERNAL_TRANSFER]: 'Passou de uma conta sua para outra conta sua.',
+    [CARD_PAYMENT]: 'Pagamento da fatura do cartão. As compras do cartão já contam como gasto, então aqui não conta de novo.',
+    [CASH_WITHDRAWAL]: 'Tirou dinheiro no caixa: vira saldo em Dinheiro. O gasto conta quando você usar o dinheiro.'
+  };
+
   function pick(category: Category) {
     onchange(root?.id === category.id && allowNone ? null : category.id);
   }
@@ -56,24 +65,33 @@
     </button>
   </div>
 
+  {#if detailed}<span class="group caption">{kind === 'expense' ? 'Gastos' : 'Entradas'}</span>{/if}
   <div class="grid" role="radiogroup" aria-label="Categoria">
     {#each mains as category (category.id)}
       {@render tile(category)}
     {/each}
-    {#if detailed && moves.length}
-      <span class="sep" aria-hidden="true"></span>
-      {#each moves as category (category.id)}
-        {@render tile(category)}
-      {/each}
-    {/if}
   </div>
+  {#if detailed && moves.length}
+    <div class="moves-head">
+      <span class="group caption">Entre suas contas</span>
+      <span class="caption faint">não conta como gasto nem como ganho</span>
+    </div>
+    <div class="moves" role="radiogroup" aria-label="Movimentação entre contas">
+      {#each moves as move (move.id)}
+        <button type="button" class="move" class:on={root?.id === move.id} style:--c={move.color} role="radio" aria-checked={root?.id === move.id} onclick={() => pick(move)}>
+          <CategoryIcon symbol={move.symbol} color={move.color} size={26} /><span class="move-name">{move.name}</span>
+        </button>
+      {/each}
+    </div>
+  {/if}
 
   {#if detailed && root}
     <div class="detail" transition:slide={{ duration: 260 }}>
       <b class="detail-name" style:--c={root.color}>{root.name}</b>
       {#if root.kind === 'transfer'}
-        <span class="caption">Movimentação entre contas: não conta como gasto.</span>
+        <span class="caption info">{moveInfo[root.key] ?? 'Movimentação entre suas contas: não conta como gasto nem como ganho.'}</span>
       {:else if subs.length}
+        <span class="caption info">Quer detalhar? Opcional: "Geral" já serve.</span>
         <div class="chips">
           <button type="button" class="chip" class:on={current?.id === root.id} style:--c={root.color} onclick={() => onchange(root.id)}>Geral</button>
           {#each subs as sub (sub.id)}
@@ -116,7 +134,15 @@
   .ico:hover { opacity: 1; background: rgba(255, 255, 255, 0.05); }
   .tile:active, .ico:active { transform: scale(0.92); transition-duration: 0.08s; }
   .tile.on, .ico.on { opacity: 1; color: var(--text); border-color: color-mix(in srgb, var(--c) 60%, transparent); background: color-mix(in srgb, var(--c) 12%, transparent); box-shadow: 0 0 16px color-mix(in srgb, var(--c) 22%, transparent); }
-  .sep { grid-column: 1 / -1; height: 1px; margin: 4px 6px; background: var(--stroke); }
+  .group { padding: 0 4px; margin-bottom: -4px; font-weight: 600; color: var(--text-2); }
+  .moves-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 8px; padding: 10px 4px 0; margin-bottom: -4px; border-top: 1px solid var(--stroke); }
+  .moves-head .group { padding: 0; margin: 0; }
+  .moves { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .move { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 6px 10px 6px 6px; border-radius: 12px; border: 1px solid var(--stroke); background: rgba(255, 255, 255, 0.025); color: var(--text-2); font-size: 13px; text-align: left; transition: background 0.2s, border-color 0.2s, color 0.2s; }
+  .move:hover { background: rgba(255, 255, 255, 0.06); color: var(--text); }
+  .move.on { color: var(--text); border-color: color-mix(in srgb, var(--c) 60%, transparent); background: color-mix(in srgb, var(--c) 12%, transparent); }
+  .move-name { min-width: 0; line-height: 1.25; }
+  .info { line-height: 1.45; color: var(--text-2); }
   .name { font-size: 11.5px; line-height: 1.2; text-align: center; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .detail { display: flex; flex-direction: column; gap: 8px; padding: 12px 4px 0; border-top: 1px solid var(--stroke); }
   .detail-name { font-size: 14px; font-weight: 600; color: var(--c); }
