@@ -37,6 +37,15 @@
   const history = $derived(months.map((m) => monthEndTotal(m, store.accounts)));
   const growth = $derived(history.at(-1)! - history[0]);
   const fix = $derived(lastBalanceFix());
+  // Computador: o gráfico ocupa a metade direita do cartão, então pode ser mais alto.
+  let wide = $state(false);
+  $effect(() => {
+    const mq = matchMedia('(min-width: 1100px)');
+    wide = mq.matches;
+    const on = () => (wide = mq.matches);
+    mq.addEventListener('change', on);
+    return () => mq.removeEventListener('change', on);
+  });
 </script>
 
 <section class="card">
@@ -62,7 +71,7 @@
     </button>
   {/if}
 
-  {#if current}<div class="trend"><LineChart labels={months.map((m) => shortMonth(m).slice(0, 3))} height={120} title="Seu dinheiro no fim de cada mês" series={[{ id: 'bal', name: 'Saldo', color: '#2bd4a4', values: history }]} /></div>{/if}
+  {#if current}<div class="trend"><LineChart labels={months.map((m) => shortMonth(m).slice(0, 3))} height={wide ? 230 : 120} title="Seu dinheiro no fim de cada mês" series={[{ id: 'bal', name: 'Saldo', color: '#2bd4a4', values: history }]} /></div>{/if}
   <div class="rows" class:solo={groups.length < 2}>
     {#each groups as group (group.key)}
       {@const guess = isEstimated(group)}
@@ -99,4 +108,11 @@
   .value { white-space: nowrap; }
   .trend { margin: 10px 0 2px; }
   .solo .item { font-size: 14px; color: var(--text-2); }
+  @container home (min-width: 860px) {
+    .card { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); column-gap: 40px; padding: 24px 26px; }
+    .card-head { grid-column: 1 / -1; }
+    .lead, .split, .warn, .rows { grid-column: 1; }
+    .trend { grid-column: 2; grid-row: 2 / span 4; align-self: center; margin: 0; }
+    .big { font-size: 42px; }
+  }
 </style>

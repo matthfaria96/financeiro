@@ -161,5 +161,6 @@
     .line b { align-self: flex-start; text-align: left; }
     .balance b { font-size: 21px; }
   }
-  .duo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: stretch; }
+  .duo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: stretch; }
+  .duo .panel { padding: 24px 26px; }
 </style>

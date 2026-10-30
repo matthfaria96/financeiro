@@ -75,11 +75,7 @@
   .import:active { transform: scale(0.94); }
   @media (max-width: 600px) { .import { padding: 0; width: 40px; } }
   .cards { display: flex; flex-direction: column; gap: 16px; }
-  /* Computador largo: Seu dinheiro e Previsão lado a lado; o Panorama (dois cartões) embaixo na largura toda. */
-  @media (min-width: 1180px) {
-    .cards { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; }
-    .cards > :global(:nth-child(1)) { grid-column: 1; grid-row: 1; }
-    .cards > :global(:nth-child(3)) { grid-column: 2; grid-row: 1; }
-    .cards > :global(:nth-child(2)) { grid-column: 1 / -1; grid-row: 2; }
-  }
+  /* Computador: um cartão por linha, largo e com respiro; cada cartão divide números e gráfico por dentro. */
+  .cards { container: home / inline-size; }
+  @media (min-width: 960px) { .cards { gap: 24px; } }
 </style>
