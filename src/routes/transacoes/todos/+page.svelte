@@ -1,4 +1,6 @@
 <script lang="ts">
+  import FlowHistory from '$lib/screens/transactions/FlowHistory.svelte';
+  import { visibleEntries } from '$lib/features/model';
   import { onMount } from 'svelte';
   import { spendCents } from '$lib/features/analytics';
   import { page } from '$app/state';
@@ -44,6 +46,8 @@
   let moving = $state(false);
   let confirmDelete = $state(false);
   let menu = $state(false);
+  // Celular: os filtros ficam escondidos atrás do botão de filtro, para não poluir.
+  let showFilters = $state(false);
   let moreFilters = $state(false);
 
   $effect(() => {
@@ -93,9 +97,13 @@
       {/if}
     </div>
   </header>
-  <label class="search"><Icon name="search" size={17} class="faint" /><input placeholder="Pesquisar" bind:value={filter.search} /></label>
+  <FlowHistory entries={visibleEntries()} accounts={accounts} selected={filter.month ?? (filter.period === 'thisMonth' ? null : null)} onpick={(m) => filter.set({ month: m })} />
+  <div class="row searchrow">
+    <label class="search grow"><Icon name="search" size={17} class="faint" /><input placeholder="Pesquisar" bind:value={filter.search} /></label>
+    <button class="icon-btn filt" class:on={showFilters || filter.active} aria-label="Filtros" aria-expanded={showFilters} onclick={() => (showFilters = !showFilters)}><Icon name="filter" size={17} /></button>
+  </div>
 
-  <div class="filters">
+  <div class="filters" class:open={showFilters}>
     <Select variant="chip" active={filter.period !== 'thisMonth' || !!filter.month} label="Período" display={filter.month ? shortMonth(filter.month) : periodName[filter.period]}
       value={filter.month ? 'month' : filter.period} options={Object.entries(periodName).map(([value, label]) => ({ value, label }))}
       onchange={(v) => { filter.period = v as Period; filter.month = null; if (v === 'range' && !filter.from) { filter.from = `${today().slice(0, 8)}01`; filter.to = today(); } }} />
@@ -126,13 +134,6 @@
 
   <div class="layout" class:wide={prefs.full}>
   <div class="list">
-  {#if list.length}
-    <div class="card tight row between totals" class:mobile-only={prefs.full} use:hint={['Resumo', 'Somas do que está filtrado. Transferências entre suas contas e pagamento de fatura ficam de fora.']}>
-      <div><span class="caption">Entradas</span><b class="num pos">{money(totals.income)}</b></div>
-      <div><span class="caption">Saídas</span><b class="num">{money(totals.out)}</b></div>
-      <div style="text-align: right"><span class="caption">Balanço</span><b class="num" class:pos={totals.net >= 0} class:neg={totals.net < 0}>{money(totals.net)}</b></div>
-    </div>
-  {/if}
 
   {#each days as [day, entries] (day)}
     {@const spent = entries.filter((e) => !e.is_mirror && kindOf(e) === 'expense').reduce((sum, e) => sum - e.amount_cents, 0)}
@@ -181,10 +182,7 @@
   @media (min-width: 1100px) {
     .layout.wide { grid-template-columns: minmax(0, 1fr) 360px; }
     .side { display: block; position: sticky; top: 22px; }
-    .mobile-only { display: none; }
   }
-  .totals > div { display: flex; flex-direction: column; gap: 2px; }
-  .totals b { font-size: 15.5px; }
   .day { font-weight: 600; font-size: 14px; color: var(--text-2); margin: 10px 6px -4px; }
   .empty { align-items: center; text-align: center; padding: 60px 0; }
   .menu-wrap { position: relative; }
@@ -195,4 +193,11 @@
   .selbar .count { white-space: nowrap; }
   @media (max-width: 600px) { .selbar { gap: 6px; padding: 8px 10px; } .selbar .btn { padding: 0 12px; } }
   @media (min-width: 960px) { .selbar { left: calc(var(--sidebar) + 24px); right: 24px; bottom: 24px; } }
+  .searchrow { gap: 8px; }
+  .filt { flex: none; width: 44px; height: 44px; border-radius: 12px; display: none; }
+  .filt.on { color: var(--accent); border-color: rgba(43, 212, 164, 0.4); background: var(--accent-soft); }
+  @media (max-width: 720px) {
+    .filt { display: grid; }
+    .filters:not(.open) { display: none; }
+  }
 </style>

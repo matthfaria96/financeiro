@@ -64,7 +64,7 @@
     </div>
     <div class="row" style="gap: 8px">
       <ChartButton icon="calendar" label="Contas fixas" detail="Calendário do mês e do ano: aluguel, luz, escola, IPVA…" onclick={() => goto('#/contas-fixas')} />
-      <ChartButton icon="search" label="Buscar" detail="Todos os lançamentos deste mês, com busca e filtros." onclick={search} />
+      <ChartButton icon="reports" label="Histórico e busca" detail="Entradas × saídas mês a mês e todos os lançamentos, com busca e filtros." onclick={search} />
     </div>
   </header>
 

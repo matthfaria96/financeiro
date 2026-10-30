@@ -8,9 +8,6 @@
   import Tally from '$lib/ui/Tally.svelte';
   import CornerButton from '$lib/ui/CornerButton.svelte';
   import CategoryIcon from '$lib/ui/CategoryIcon.svelte';
-  import Carousel from '$lib/ui/Carousel.svelte';
-  import BarChart from '$lib/ui/charts/BarChart.svelte';
-  import LineChart from '$lib/ui/charts/LineChart.svelte';
   import { seriesColor } from '$lib/ui/charts/scale';
   import { ui } from '$lib/ui/ui.svelte';
   import { adjustmentReason, analyzeMonth, expectedIncome, monthEndTotal, type MonthAnalysis } from '$lib/features/analytics';
@@ -42,24 +39,8 @@
     return balance >= 0 ? `sobrou ${percent(share)} do que entrou` : `faltou ${percent(share)} do que entrou`;
   });
 
-  // Últimos 6 meses (até o mês escolhido, ou até hoje se for futuro).
-  const months = $derived(Array.from({ length: 6 }, (_, i) => addMonths(future ? monthOf(today()) : month, i - 5)));
-  const labels = $derived(months.map((m) => shortMonth(m).slice(0, 3)));
-  const per = $derived(months.map((m) => analyzeMonth(m, entries, accounts)));
-  const pastOut = $derived(per.slice(0, -1).map((p) => p.expenseTotal).filter((v) => v > 0));
-  const average = $derived(pastOut.length ? Math.round(pastOut.reduce((a, b) => a + b, 0) / pastOut.length) : null);
-  const lastOut = $derived(per.at(-1)?.expenseTotal ?? 0);
-  const vsAverage = $derived(average ? (lastOut - average) / average : null);
 
   const titles = $derived([future ? `Previsão de ${name}` : `Panorama de ${name}`, 'Entradas × saídas']);
-  let desktop = $state(false);
-  $effect(() => {
-    const mq = matchMedia('(min-width: 1180px)');
-    desktop = mq.matches;
-    const on = () => (desktop = mq.matches);
-    mq.addEventListener('change', on);
-    return () => mq.removeEventListener('change', on);
-  });
 </script>
 
 {#snippet panel(i: number)}
@@ -100,24 +81,12 @@
           {#if future}<a class="more" href="#/previsao" onclick={() => (ui.forecastMonth = month)}>Ver a previsão <Icon name="chevron-right" size={13} /></a>
           {:else}<a class="more" href="#/transacoes">Ver lançamentos <Icon name="chevron-right" size={13} /></a>{/if}
         </div>
-      {:else}
-        <div class="card-head"><h3>{titles[1]}</h3><span class="caption">últimos 6 meses</span></div>
-        <div class="lead">
-          <span class="caption">Saídas em {shortMonth(months.at(-1)!).slice(0, 3).toLowerCase()}</span>
-          <b class="big"><Tally cents={lastOut} showCents={false} /></b>
-          <span class="caption">{vsAverage === null ? 'Ainda sem meses anteriores para comparar.' : Math.abs(vsAverage) < 0.03 ? 'na média dos meses anteriores' : `${percent(Math.abs(vsAverage))} ${vsAverage > 0 ? 'acima' : 'abaixo'} da média (${money(average!, { cents: false })})`}</span>
-        </div>
-        <div class="chart"><BarChart {labels} current={5} height={200} title="Entradas e saídas por mês"
-          series={[{ id: 'in', name: 'Entradas', color: seriesColor.income, values: per.map((p) => p.incomeTotal) }, { id: 'out', name: 'Saídas', color: seriesColor.expense, values: per.map((p) => p.expenseTotal) }]}
-          reference={average ? { value: average, label: '' } : null} /></div>
-        {#if average}<p class="caption faint note"><span class="dash"></span>média das saídas</p>{/if}
       {/if}
     </section>
 {/snippet}
 
 <!-- Computador largo: os dois cartões lado a lado. Celular: carrossel. -->
-{#if desktop}<div class="duo">{@render panel(0)}{@render panel(1)}</div>
-{:else}<Carousel count={2} bind:index={shown} labels={titles} slide={panel} />{/if}
+{@render panel(0)}
 <AdjustSheet bind:open={adjustOpen} {month} {analysis} />
 
 <style>
@@ -125,8 +94,6 @@
   .panel { display: flex; flex-direction: column; min-height: 360px; }
   .card-head { margin-bottom: 10px; }
   .soon { color: #8fc0ff; background: rgba(57, 135, 229, 0.14); }
-  .lead { display: flex; flex-direction: column; gap: 2px; margin-bottom: 14px; }
-  .big { font: 600 32px/1.1 var(--font-display); letter-spacing: -0.02em; margin: 2px 0; }
   .panel { container-type: inline-size; }
   .month { display: flex; align-items: center; gap: 22px; }
   .legend { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 9px; }
@@ -152,8 +119,6 @@
   .foot { margin-top: auto; padding-top: 14px; }
   .more { display: inline-flex; align-items: center; gap: 3px; color: var(--accent); font-weight: 600; font-size: 13.5px; transition: gap 0.25s var(--ease); }
   .more:hover { gap: 7px; }
-  .chart { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; }
-  .dash { display: inline-block; width: 16px; border-top: 1.5px dashed rgba(255, 255, 255, 0.5); vertical-align: middle; margin-right: 6px; }
   /* Cartão estreito (celular): nome em cima, valor embaixo, para nada passar da borda. */
   @container (max-width: 440px) {
     .month { gap: 16px; }
@@ -161,6 +126,4 @@
     .line b { align-self: flex-start; text-align: left; }
     .balance b { font-size: 21px; }
   }
-  .duo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: stretch; }
-  .duo .panel { padding: 24px 26px; }
 </style>
