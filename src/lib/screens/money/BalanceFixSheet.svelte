@@ -27,8 +27,8 @@
   const expectedById = $derived(open ? new Map(accounts.map((a) => [a.id, balanceOf(a, day) + (a.kind === 'cash' && a.anchor_date ? withdrawals(a.anchor_date, day) : 0)])) : new Map<string, number>());
   const expected = (a: Account) => expectedById.get(a.id) ?? 0;
   const lastMonth = addMonths(monthOf(today()), -1);
-  let when = $state<'month' | 'today'>('month');
-  const day = $derived<Day>(when === 'month' ? lastDay(lastMonth) : today());
+  // Sempre hoje: você digita quanto tem agora em cada lugar (o mais fácil de conferir no app do banco).
+  const day = today();
   let values = $state<Record<string, string>>({});
   let reason = $state<BalanceFix['reason']>('rendimento');
   let note = $state('');
@@ -104,8 +104,7 @@
 
 <Sheet bind:open title="Corrigir saldos">
   {#snippet actions()}<button class="btn primary" disabled={!typedAny} onclick={save}>Salvar</button>{/snippet}
-  <p class="muted small intro">Digite quanto tinha em cada lugar: na conta <b>somando a caixinha</b>, no investimento o valor de hoje, na carteira o dinheiro vivo. Mover dinheiro entre eles nunca é gasto nem entrada. A diferença vira <b>rendimento</b> (ou perda) no banco e no investimento, e <b>gastos em dinheiro</b> na carteira.</p>
-  <Segmented label="Quando" bind:value={when} options={[{ value: 'month', label: `Fim de ${monthTitle(lastMonth).split(' ')[0].toLowerCase()}` }, { value: 'today', label: 'Hoje' }]} />
+  <p class="muted small intro">Abra o app do banco e digite <b>quanto você tem hoje</b> em cada lugar (na conta, <b>somando a caixinha</b>). Se não bater com o que o app calculou, a diferença entra como lançamento de ajuste — rendimento, perda ou gasto em dinheiro — e o saldo passa a ficar certo daqui para frente. Deixe em branco o que já está certo.</p>
   <div class="form-group" style="margin-top: 12px">
     {#each accounts as account (account.id)}
       {@const diff = preview(account.id)}

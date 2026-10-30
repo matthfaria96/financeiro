@@ -3,7 +3,7 @@
   import { goto } from '$app/navigation';
   import { store } from '$lib/data/store.svelte';
   import { addMonths, monthOf, monthTitle, today, type Month } from '$lib/core/dates';
-  import { money } from '$lib/core/money';
+  import { money, percent } from '$lib/core/money';
   import Icon from '$lib/ui/Icon.svelte';
   import ChartButton from '$lib/ui/ChartButton.svelte';
   import { hint } from '$lib/ui/hint';
@@ -66,10 +66,10 @@
     </section>
     <ForecastBreakdown {forecast} />
   {:else}
-    <section class="card totals">
-      <div><span class="caption">Entradas</span><b class="pos"><Tally cents={analysis.incomeTotal} /></b></div>
-      <div><span class="caption">Saídas</span><b><Tally cents={analysis.expenseTotal} /></b></div>
-      <div><span class="caption">Balanço</span><b class:pos={analysis.balance >= 0} class:neg={analysis.balance < 0}><Tally cents={analysis.balance} /></b></div>
+    <section class="totals">
+      <div class="tot in"><span class="lbl"><Icon name="trending-up" size={15} />Entradas</span><b><Tally cents={analysis.incomeTotal} showCents={false} /></b><span class="sub">{analysis.incomeTotal ? '100% do período' : 'Nada entrou ainda'}</span></div>
+      <div class="tot out"><span class="lbl"><Icon name="trending-down" size={15} />Saídas</span><b><Tally cents={analysis.expenseTotal} showCents={false} /></b><span class="sub">{analysis.incomeTotal ? `${percent(analysis.expenseTotal / analysis.incomeTotal)} das entradas` : 'sem entradas para comparar'}</span></div>
+      <div class="tot bal"><span class="lbl"><Icon name="wallet" size={15} />Balanço</span><b class:pos={analysis.balance >= 0} class:neg={analysis.balance < 0}><Tally cents={analysis.balance} showCents={false} /></b><span class="sub">Resultado mensal</span></div>
     </section>
     <!-- Qual visão está ativa (muda em Configurar Lançamentos). -->
     <p class="view-note caption">
@@ -127,8 +127,16 @@
   @media (min-width: 960px) { .fab { right: 32px; bottom: 32px; width: 60px; height: 60px; } }
   .view-note { margin: -2px 4px 2px; line-height: 1.45; }
   .view-note b { color: var(--text); font-weight: 600; }
-  .totals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .totals > div { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-  .totals b { font: 600 clamp(15px, 4vw, 22px) var(--font-display); white-space: nowrap; }
+  .totals { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .tot { display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 14px 16px; border-radius: 16px; border: 1px solid var(--stroke); }
+  .tot.in { background: linear-gradient(160deg, rgba(34, 197, 139, 0.16), rgba(34, 197, 139, 0.05)); }
+  .tot.out { background: linear-gradient(160deg, rgba(255, 107, 91, 0.15), rgba(255, 107, 91, 0.04)); }
+  .tot.bal { background: rgba(255, 255, 255, 0.04); }
+  .lbl { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-2); }
+  .in .lbl :global(svg), .in b { color: var(--positive); }
+  .out .lbl :global(svg), .out b { color: var(--negative); }
+  .tot b { font: 600 clamp(16px, 4.6vw, 22px) var(--font-display); white-space: nowrap; letter-spacing: -0.01em; }
+  .sub { font-size: 12px; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  @media (max-width: 420px) { .totals { gap: 6px; } .tot { padding: 10px 10px; gap: 4px; } .lbl { font-size: 12px; } .sub { font-size: 10.5px; } }
   .big { font: 600 24px var(--font-display); }
 </style>
