@@ -24,11 +24,9 @@
   const total = $derived(informed ?? shown.reduce((s, b) => s + b.cents, 0));
   const estimated = $derived(shown.filter((b) => b.estimated).length);
   // Uma linha por banco: saldo da conta (e caixinha) com o cartão do mesmo banco junto.
-  const groups = $derived(bankGroups(store.accounts.filter((a) => !a.archived && !hidden.includes(a.id))).filter((g) => g.accounts.some((a) => a.kind !== 'creditCard') || g.cardOpen > 0));
+  const groups = $derived(bankGroups(store.accounts.filter((a) => !a.archived && !hidden.includes(a.id))).filter((g) => g.accounts.some((a) => a.kind !== 'creditCard')));
   const groupBalance = (g: BankGroup) => g.accounts.reduce((s, a) => s + (shown.find((b) => b.account.id === a.id)?.cents ?? 0), 0);
   const isEstimated = (g: BankGroup) => g.accounts.some((a) => shown.find((b) => b.account.id === a.id)?.estimated);
-  const cardsOpen = $derived(current ? groups.reduce((s, g) => s + g.cardOpen, 0) : 0);
-  const free = $derived(total - cardsOpen);
   // Divisão do dinheiro por banco (só o que é positivo), na cor de cada banco.
   const slices = $derived(groups.map((g) => ({ key: g.key, name: g.name, cents: Math.max(0, groupBalance(g)), color: bankColor(g.main) })).filter((s) => s.cents > 0));
   let fixOpen = $state(false);
@@ -41,17 +39,9 @@
   </div>
 
   <div class="lead">
-    <span class="caption">{cardsOpen > 0 ? 'Livre, já descontando as faturas' : current ? 'Nas contas, caixinhas e dinheiro' : 'Nas contas no fim do mês'}{estimated && informed === null ? ' · estimado' : ''}</span>
-    <b class="big" class:neg={free < 0}><Tally cents={free} /></b>
-    {#if cardsOpen > 0}
-      <div class="math">
-        <span>Nas contas <b class="num">{money(total, { cents: false })}</b></span>
-        <span class="minus">−</span>
-        <span use:hint={['Faturas em aberto', 'Compras no cartão que ainda vão sair nas próximas faturas (com as parcelas já lançadas).']}>Faturas em aberto <b class="num">{money(cardsOpen, { cents: false })}</b></span>
-      </div>
-    {:else if informed !== null}
-      <span class="caption">informado no ajuste do mês</span>
-    {/if}
+    <span class="caption">{current ? 'Somando contas, caixinhas e dinheiro' : 'Somando contas, caixinhas e dinheiro no fim do mês'}{estimated && informed === null ? ' · estimado' : ''}</span>
+    <b class="big" class:neg={total < 0}><Tally cents={total} /></b>
+    {#if informed !== null}<span class="caption">informado no ajuste do mês</span>{/if}
     {#if fix && current}<button class="fixed" onclick={() => (fixOpen = true)}><Icon name="pencil" size={11} />Corrigido à mão em {dayMonth(fix.day)} · {balanceFixReason[fix.reason].toLowerCase()}{fix.note ? `: ${fix.note}` : ''}</button>{/if}
   </div>
 
@@ -71,9 +61,8 @@
       {@const hasMoney = group.accounts.some((a) => a.kind !== 'creditCard')}
       <a class="row item" href="#/contas/{group.main.id}"><BankCard account={group.main} width={38} />
         <span class="grow" style="min-width: 0"><span class="ellipsis block">{group.name}</span>
-          {#if current && group.cardOpen > 0}<span class="caption card-line"><Icon name="card" size={11} />fatura {money(group.cardOpen, { cents: false })}</span>{/if}</span>
-        {#if hasMoney}<span class="num value" class:neg={groupBalance(group) < 0} class:faint={guess} title={guess ? 'Estimado: o extrato não trouxe o saldo' : undefined}>{guess ? '≈ ' : ''}<Tally cents={groupBalance(group)} /></span>
-        {:else}<span class="caption only-card">só cartão</span>{/if}</a>
+</span>
+        <span class="num value" class:neg={groupBalance(group) < 0} class:faint={guess} title={guess ? 'Estimado: o extrato não trouxe o saldo' : undefined}>{guess ? '≈ ' : ''}<Tally cents={groupBalance(group)} /></span></a>
     {:else}
       <a class="muted small" href="#/configurar">{analysis.balances.length ? 'Todas as contas estão escondidas.' : 'Cadastre suas contas para ver o saldo.'}</a>
     {/each}
@@ -86,9 +75,6 @@
   .big { font: 600 36px/1.08 var(--font-display); letter-spacing: -0.025em; margin: 2px 0;
     background: linear-gradient(120deg, #ffffff 20%, #c8fff0 70%, #9fe0ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
   .big.neg { background: none; color: var(--negative); }
-  .math { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: 13px; color: var(--text-2); }
-  .math b { color: var(--text); font-weight: 600; }
-  .minus { color: var(--text-3); }
   .fixed { align-self: flex-start; display: inline-flex; align-items: center; gap: 5px; margin-top: 4px; padding: 0; border: 0; background: none; font-size: 12px; color: var(--text-3); text-align: left; }
   .fixed:hover { color: var(--text-2); }
   .split { display: flex; gap: 3px; height: 8px; margin: 14px 0 4px; border-radius: 4px; overflow: hidden; }
@@ -102,7 +88,5 @@
   .item:hover { background: rgba(255, 255, 255, 0.04); }
   .item + .item { border-top: 1px solid var(--stroke); border-radius: 0 0 12px 12px; }
   .block { display: block; }
-  .card-line { display: inline-flex; align-items: center; gap: 4px; }
   .value { white-space: nowrap; }
-  .only-card { white-space: nowrap; }
 </style>
