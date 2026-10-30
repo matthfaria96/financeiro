@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SwipeRow from '$lib/ui/SwipeRow.svelte';
   import { organizer } from '$lib/data/organizer.svelte';
   import type { ProjectItem } from '$lib/data/organizerTypes';
   import { money } from '$lib/core/money';
@@ -18,6 +19,7 @@
   const detail = $derived([project, item.area, item.kind === 'service' ? 'Serviço' : 'Produto', item.done && item.date ? dayMonth(item.date) : '', item.vendor].filter(Boolean).join(' · '));
 </script>
 
+<SwipeRow label="Apagar" ondelete={() => organizer.remove('project_items', [item.id])}>
 <div class="list-row">
   <button class="check" class:on={item.done} onclick={toggle} aria-label={item.done ? 'Desmarcar' : 'Marcar como feito'} use:hint={[item.done ? 'Feito' : 'Marcar como feito', item.done ? 'Toque para voltar para Planejado.' : 'Comprado ou concluído: vai para Feito com a data de hoje.']}>
     <Icon name={item.done ? 'check' : 'circle'} size={item.done ? 15 : 20} stroke={item.done ? 3 : 1.6} />
@@ -33,6 +35,7 @@
   {#if item.link}<a class="icon-btn small" href={item.link} target="_blank" rel="noopener noreferrer" aria-label="Abrir link" use:hint={['Link', 'Abre a página do produto.']}><Icon name="external-link" size={15} /></a>{/if}
   <span class="num" class:faint={item.amount_cents === null}>{item.amount_cents === null ? '—' : money(item.amount_cents, { cents: item.amount_cents % 100 !== 0 })}</span>
 </div>
+</SwipeRow>
 
 <style>
   .check { width: 28px; height: 28px; border-radius: 50%; border: 0; display: grid; place-items: center; flex: none; background: none; color: var(--text-3); }

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SwipeRow from '$lib/ui/SwipeRow.svelte';
   import { organizer } from '$lib/data/organizer.svelte';
   import type { ShoppingItem, ShoppingList } from '$lib/data/organizerTypes';
   import { itemEmoji, parseItem } from '$lib/core/shopping';
@@ -47,6 +48,7 @@
 </script>
 
 {#snippet row(item: ShoppingItem)}
+  <SwipeRow disabled={readonly} label="Apagar" ondelete={() => organizer.remove('shopping_items', [item.id])}>
   <div class="item" class:checked={item.checked}>
     <button class="box" onclick={() => toggle(item)} disabled={readonly} aria-label={item.checked ? `Tirar ${item.name} do carrinho` : `Pegar ${item.name}`} aria-pressed={item.checked}>
       <Icon name={item.checked ? 'check' : 'circle'} size={item.checked ? 16 : 24} stroke={item.checked ? 3 : 1.6} />
@@ -55,7 +57,7 @@
       <input class="input grow" bind:value={editText} use:focus onblur={() => saveEdit(item)} onkeydown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') editingId = ''; }} aria-label="Editar item (apague o texto para tirar)" />
     {:else}
       <span class="emoji" aria-hidden="true">{itemEmoji(item.name)}</span>
-      <button class="name grow" onclick={() => startEdit(item)} use:hint={[item.name, 'Toque para corrigir o nome ou a quantidade. Apague o texto para tirar da lista.']}>
+      <button class="name grow" onclick={() => startEdit(item)} use:hint={[item.name, 'Toque para corrigir. Para apagar: arraste para a esquerda (celular) ou use a lixeira ao passar o mouse.']}>
         <span>{item.name}</span>{#if item.quantity}<span class="qty">{item.quantity}</span>{/if}
       </button>
       {#if !readonly}
@@ -66,6 +68,7 @@
       {/if}
     {/if}
   </div>
+  </SwipeRow>
 {/snippet}
 
 {#if !readonly}
@@ -99,7 +102,7 @@
   .col-title { margin: 2px 6px 0; min-height: 28px; display: flex; align-items: center; }
   .cart { opacity: 0.85; }
   .item { display: flex; align-items: center; gap: 6px; padding: 4px 10px 4px 6px; min-height: 54px; }
-  .item + .item { border-top: 1px solid var(--stroke); }
+  :global(.swipe + .swipe) { border-top: 1px solid var(--stroke); }
   .box { width: 44px; height: 44px; border: 0; background: none; display: grid; place-items: center; color: var(--text-3); flex: none; }
   .checked .box { color: #04140e; }
   .checked .box :global(svg) { background: var(--accent); border-radius: 50%; padding: 4px; width: 26px; height: 26px; }
