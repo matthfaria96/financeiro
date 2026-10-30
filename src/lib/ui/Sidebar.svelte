@@ -46,7 +46,11 @@
   .link.on { background: rgba(255, 255, 255, 0.11); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06); }
   .ico { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; flex: none; color: #fff; background: linear-gradient(160deg, var(--c), color-mix(in srgb, var(--c) 62%, black)); box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.2); }
   .bottom { display: flex; flex-direction: column; gap: 10px; padding-top: 10px; border-top: 1px solid var(--stroke); }
-  .import { box-shadow: 0 6px 20px rgba(43, 212, 164, 0.25); background: linear-gradient(180deg, #3fe3b4, #20b98d); }
+  /* O degradê fica fixo (degradê não anima); no hover só acende um brilho por cima, suave. */
+  .import { position: relative; isolation: isolate; overflow: hidden; box-shadow: 0 6px 20px rgba(43, 212, 164, 0.25); background: linear-gradient(180deg, #3fe3b4, #20b98d); }
+  .import::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.04)); opacity: 0; transition: opacity 0.25s var(--ease); }
+  .import:hover { background: linear-gradient(180deg, #3fe3b4, #20b98d); box-shadow: 0 8px 24px rgba(43, 212, 164, 0.32); }
+  .import:hover::after { opacity: 1; }
   .who { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 12px; color: inherit; font-size: 14px; transition: background 0.2s; }
   .who:hover, .who.on { background: rgba(255, 255, 255, 0.07); }
   .line { display: block; }

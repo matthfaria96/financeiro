@@ -51,6 +51,14 @@
     [CASH_WITHDRAWAL]: 'Tirou dinheiro no caixa: vira saldo em Dinheiro. O gasto conta quando você usar o dinheiro.'
   };
 
+  // Em que linha da grade está o ícone escolhido: a faixa de detalhes entra logo depois dela, com a setinha apontando para ele.
+  let gridWidth = $state(0);
+  const columns = $derived(Math.max(1, Math.floor((gridWidth + 4) / 48)));
+  const rootIndex = $derived(root ? mains.findIndex((c) => c.id === root.id) : -1);
+  const rowEnd = $derived(Math.min(mains.length - 1, (Math.floor(Math.max(0, rootIndex) / columns) + 1) * columns - 1));
+  const stripOrder = $derived(rowEnd * 2 + 1);
+  const caretX = $derived(((Math.max(0, rootIndex) % columns) + 0.5) / columns * 100);
+
   function pick(category: Category) {
     onchange(root?.id === category.id && allowNone ? null : category.id);
   }
@@ -59,17 +67,28 @@
 <div class="picker" class:detailed>
   <div class="head">
     <span class="title">Categoria</span>
-    {#if current && !detailed}<span class="chosen ellipsis" style:--c={current.color}>{root && root.id !== current.id ? `${root.name} › ` : ''}{current.name}</span>{/if}
-    <button type="button" class="mode" aria-pressed={detailed} onclick={toggleMode} use:hint={['Detalhar', 'Simples: categorias principais com nome. Detalhado: só os ícones, com subcategorias (ex.: Casa › Luz) e movimentações entre contas.']}>
+    {#if current}<span class="chosen ellipsis" style:--c={current.color}>{root && root.id !== current.id ? `${root.name} › ` : ''}{current.name}</span>{/if}
+    <button type="button" class="mode" aria-pressed={detailed} onclick={toggleMode} use:hint={['Detalhar', 'Simples: categorias principais com nome. Detalhado: só os ícones; a subcategoria (ex.: Casa › Luz) abre logo abaixo do ícone tocado.']}>
       {detailed ? 'Simples' : 'Detalhar'}<Icon name="chevron-down" size={13} />
     </button>
   </div>
 
   {#if detailed}<span class="group caption">{kind === 'expense' ? 'Gastos' : 'Entradas'}</span>{/if}
-  <div class="grid" role="radiogroup" aria-label="Categoria">
-    {#each mains as category (category.id)}
-      {@render tile(category)}
+  <!-- Detalhado: as subcategorias abrem numa faixa logo abaixo da linha do ícone tocado (como a grade de Fotos), numa linha só que arrasta para o lado. -->
+  <div class="grid" role="radiogroup" aria-label="Categoria" bind:clientWidth={gridWidth}>
+    {#each mains as category, i (category.id)}
+      {@render tile(category, i)}
     {/each}
+    {#if detailed && root && root.kind !== 'transfer' && subs.length}
+      <div class="strip" style:order={stripOrder} style:--c={root.color} style:--x="{caretX}%" transition:slide={{ duration: 220 }}>
+        <div class="chips" role="radiogroup" aria-label="Detalhe de {root.name}">
+          <button type="button" class="chip" class:on={current?.id === root.id} role="radio" aria-checked={current?.id === root.id} style:--c={root.color} onclick={() => onchange(root.id)}>Geral</button>
+          {#each subs as sub (sub.id)}
+            <button type="button" class="chip" class:on={current?.id === sub.id} role="radio" aria-checked={current?.id === sub.id} style:--c={sub.color} onclick={() => onchange(sub.id)}>{sub.name}</button>
+          {/each}
+        </div>
+      </div>
+    {/if}
   </div>
   {#if detailed && moves.length}
     <div class="moves-head">
@@ -83,30 +102,14 @@
         </button>
       {/each}
     </div>
-  {/if}
-
-  {#if detailed && root}
-    <div class="detail" transition:slide={{ duration: 260 }}>
-      <b class="detail-name" style:--c={root.color}>{root.name}</b>
-      {#if root.kind === 'transfer'}
-        <span class="caption info">{moveInfo[root.key] ?? 'Movimentação entre suas contas: não conta como gasto nem como ganho.'}</span>
-      {:else if subs.length}
-        <span class="caption info">Quer detalhar? Opcional: "Geral" já serve.</span>
-        <div class="chips">
-          <button type="button" class="chip" class:on={current?.id === root.id} style:--c={root.color} onclick={() => onchange(root.id)}>Geral</button>
-          {#each subs as sub (sub.id)}
-            <button type="button" class="chip" class:on={current?.id === sub.id} style:--c={sub.color} onclick={() => onchange(sub.id)}>{sub.name}</button>
-          {/each}
-        </div>
-      {/if}
-    </div>
+    {#if root?.kind === 'transfer'}<p class="caption info" transition:slide={{ duration: 200 }}>{moveInfo[root.key] ?? 'Movimentação entre suas contas.'}</p>{/if}
   {/if}
 </div>
 
-{#snippet tile(category: Category)}
+{#snippet tile(category: Category, i: number)}
   {@const on = root?.id === category.id}
   {#if detailed}
-    <button type="button" class="ico" class:on style:--c={category.color} role="radio" aria-checked={on} aria-label={category.name} onclick={() => pick(category)} use:hint={[category.name, '']}>
+    <button type="button" class="ico" class:on style:--c={category.color} role="radio" aria-checked={on} aria-label={category.name} style:order={i * 2} onclick={() => pick(category)} use:hint={[category.name, '']}>
       <CategoryIcon symbol={category.symbol} color={category.color} size={34} />
     </button>
   {:else}
@@ -142,11 +145,15 @@
   .move:hover { background: rgba(255, 255, 255, 0.06); color: var(--text); }
   .move.on { color: var(--text); border-color: color-mix(in srgb, var(--c) 60%, transparent); background: color-mix(in srgb, var(--c) 12%, transparent); }
   .move-name { min-width: 0; line-height: 1.25; }
-  .info { line-height: 1.45; color: var(--text-2); }
+  .info { margin: 0; padding: 0 4px; line-height: 1.45; color: var(--text-2); }
   .name { font-size: 11.5px; line-height: 1.2; text-align: center; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-  .detail { display: flex; flex-direction: column; gap: 8px; padding: 12px 4px 0; border-top: 1px solid var(--stroke); }
-  .detail-name { font-size: 14px; font-weight: 600; color: var(--c); }
-  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .strip { grid-column: 1 / -1; position: relative; margin: 6px 0 4px; padding: 8px 0; border-radius: 14px; background: color-mix(in srgb, var(--c) 9%, rgba(255, 255, 255, 0.03)); border: 1px solid color-mix(in srgb, var(--c) 28%, transparent); }
+  /* Setinha apontando para o ícone escolhido. */
+  .strip::before { content: ''; position: absolute; top: -6px; left: calc(var(--x) - 5px); width: 10px; height: 10px; transform: rotate(45deg); background: inherit; border-left: inherit; border-top: inherit; border-radius: 2px 0 0 0; transition: left 0.3s var(--ease); }
+  .strip .chips { flex-wrap: nowrap; overflow-x: auto; padding: 0 8px; scrollbar-width: none; -webkit-mask-image: linear-gradient(90deg, transparent, #000 8px, #000 calc(100% - 20px), transparent); mask-image: linear-gradient(90deg, transparent, #000 8px, #000 calc(100% - 20px), transparent); }
+  .strip .chips::-webkit-scrollbar { display: none; }
+  .strip .chip { flex: none; padding: 5px 11px; font-size: 12.5px; }
+  .chips { display: flex; gap: 6px; }
   .chip { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--stroke); background: rgba(255, 255, 255, 0.04); color: var(--text-2); font-size: 13px; transition: background 0.2s, border-color 0.2s, color 0.2s; }
   .chip:hover { color: var(--text); background: rgba(255, 255, 255, 0.08); }
   .chip.on { color: var(--c); border-color: color-mix(in srgb, var(--c) 55%, transparent); background: color-mix(in srgb, var(--c) 14%, transparent); font-weight: 600; }
