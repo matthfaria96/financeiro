@@ -51,13 +51,18 @@
   const lastOut = $derived(per.at(-1)?.expenseTotal ?? 0);
   const vsAverage = $derived(average ? (lastOut - average) / average : null);
 
-  const balances = $derived(months.map((m) => monthEndTotal(m, accounts)));
-  const growth = $derived(balances.at(-1)! - balances[0]);
-  const titles = $derived([future ? `Previsão de ${name}` : `Panorama de ${name}`, 'Entradas × saídas', 'Saldo nas contas']);
+  const titles = $derived([future ? `Previsão de ${name}` : `Panorama de ${name}`, 'Entradas × saídas']);
+  let desktop = $state(false);
+  $effect(() => {
+    const mq = matchMedia('(min-width: 1180px)');
+    desktop = mq.matches;
+    const on = () => (desktop = mq.matches);
+    mq.addEventListener('change', on);
+    return () => mq.removeEventListener('change', on);
+  });
 </script>
 
-<Carousel count={3} bind:index={shown} labels={titles}>
-  {#snippet slide(i)}
+{#snippet panel(i: number)}
     <section class="card panel">
       {#if i === 0}
         <div class="card-head"><h3>{titles[0]}</h3>{#if !future}<CornerButton label="Ajustar o mês" detail="Se não bate com o banco: quanto ganhou, quanto gastou e quanto sobrou, com o motivo (juros, antecipação…)." onclick={() => (adjustOpen = true)} />{:else}<span class="pill soon">previsão</span>{/if}</div>
@@ -95,7 +100,7 @@
           {#if future}<a class="more" href="#/previsao" onclick={() => (ui.forecastMonth = month)}>Ver a previsão <Icon name="chevron-right" size={13} /></a>
           {:else}<a class="more" href="#/transacoes">Ver lançamentos <Icon name="chevron-right" size={13} /></a>{/if}
         </div>
-      {:else if i === 1}
+      {:else}
         <div class="card-head"><h3>{titles[1]}</h3><span class="caption">últimos 6 meses</span></div>
         <div class="lead">
           <span class="caption">Saídas em {shortMonth(months.at(-1)!).slice(0, 3).toLowerCase()}</span>
@@ -106,19 +111,13 @@
           series={[{ id: 'in', name: 'Entradas', color: seriesColor.income, values: per.map((p) => p.incomeTotal) }, { id: 'out', name: 'Saídas', color: seriesColor.credit, values: per.map((p) => p.expenseTotal) }]}
           reference={average ? { value: average, label: '' } : null} /></div>
         {#if average}<p class="caption faint note"><span class="dash"></span>média das saídas</p>{/if}
-      {:else}
-        <div class="card-head"><h3>{titles[2]}</h3><span class="caption">fim de cada mês</span></div>
-        <div class="lead">
-          <span class="caption">{future || month === monthOf(today()) ? "Hoje nas contas" : `No fim de ${name}`}</span>
-          <b class="big"><Tally cents={balances.at(-1) ?? 0} showCents={false} /></b>
-          <span class="caption">{growth === 0 ? 'igual a 6 meses atrás' : `${growth > 0 ? '+' : '−'}${money(Math.abs(growth), { cents: false })} em 6 meses`}</span>
-        </div>
-        <div class="chart"><LineChart {labels} height={200} title="Saldo nas contas no fim de cada mês" series={[{ id: 'bal', name: 'Saldo', color: '#2bd4a4', values: balances }]} /></div>
-        <p class="caption faint note">Contas, caixinhas e dinheiro somados.</p>
       {/if}
     </section>
-  {/snippet}
-</Carousel>
+{/snippet}
+
+<!-- Computador largo: os dois cartões lado a lado. Celular: carrossel. -->
+{#if desktop}<div class="duo">{@render panel(0)}{@render panel(1)}</div>
+{:else}<Carousel count={2} bind:index={shown} labels={titles} slide={panel} />{/if}
 <AdjustSheet bind:open={adjustOpen} {month} {analysis} />
 
 <style>
@@ -162,4 +161,5 @@
     .line b { align-self: flex-start; text-align: left; }
     .balance b { font-size: 21px; }
   }
+  .duo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: stretch; }
 </style>

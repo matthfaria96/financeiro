@@ -11,7 +11,9 @@
   import { store } from '$lib/data/store.svelte';
   import { bankGroups, type BankGroup } from '$lib/features/bankGroups';
   import { balanceFixReason, lastBalanceFix } from '$lib/features/balanceFix';
-  import { dayMonth } from '$lib/core/dates';
+  import { addMonths, dayMonth, monthOf, shortMonth, today } from '$lib/core/dates';
+  import { monthEndTotal } from '$lib/features/analytics';
+  import LineChart from '$lib/ui/charts/LineChart.svelte';
 
   /**
    * Seu dinheiro: em destaque o que está LIVRE (contas + caixinhas + dinheiro, menos as faturas do cartão que ainda vão sair),
@@ -30,6 +32,10 @@
   // Divisão do dinheiro por banco (só o que é positivo), na cor de cada banco.
   const slices = $derived(groups.map((g) => ({ key: g.key, name: g.name, cents: Math.max(0, groupBalance(g)), color: bankColor(g.main) })).filter((s) => s.cents > 0));
   let fixOpen = $state(false);
+  // Como o dinheiro andou nos últimos 6 meses (fim de cada mês).
+  const months = Array.from({ length: 6 }, (_, i) => addMonths(monthOf(today()), i - 5));
+  const history = $derived(months.map((m) => monthEndTotal(m, store.accounts)));
+  const growth = $derived(history.at(-1)! - history[0]);
   const fix = $derived(lastBalanceFix());
 </script>
 
@@ -41,6 +47,7 @@
   <div class="lead">
     <span class="caption">{current ? 'Somando contas, caixinhas e dinheiro' : 'Somando contas, caixinhas e dinheiro no fim do mês'}{estimated && informed === null ? ' · estimado' : ''}</span>
     <b class="big" class:neg={total < 0}><Tally cents={total} /></b>
+    {#if current && history.some((v) => v !== history[0])}<span class="caption" class:pos={growth > 0} class:neg={growth < 0}>{growth >= 0 ? '+' : '−'}{money(Math.abs(growth), { cents: false })} em 6 meses</span>{/if}
     {#if informed !== null}<span class="caption">informado no ajuste do mês</span>{/if}
     {#if fix && current}<button class="fixed" onclick={() => (fixOpen = true)}><Icon name="pencil" size={11} />Corrigido à mão em {dayMonth(fix.day)} · {balanceFixReason[fix.reason].toLowerCase()}{fix.note ? `: ${fix.note}` : ''}</button>{/if}
   </div>
@@ -55,7 +62,8 @@
     </button>
   {/if}
 
-  <div class="rows">
+  {#if current}<div class="trend"><LineChart labels={months.map((m) => shortMonth(m).slice(0, 3))} height={120} title="Seu dinheiro no fim de cada mês" series={[{ id: 'bal', name: 'Saldo', color: '#2bd4a4', values: history }]} /></div>{/if}
+  <div class="rows" class:solo={groups.length < 2}>
     {#each groups as group (group.key)}
       {@const guess = isEstimated(group)}
       {@const hasMoney = group.accounts.some((a) => a.kind !== 'creditCard')}
@@ -89,4 +97,6 @@
   .item + .item { border-top: 1px solid var(--stroke); border-radius: 0 0 12px 12px; }
   .block { display: block; }
   .value { white-space: nowrap; }
+  .trend { margin: 10px 0 2px; }
+  .solo .item { font-size: 14px; color: var(--text-2); }
 </style>
