@@ -10,7 +10,7 @@
   import type { MonthAnalysis } from '$lib/features/analytics';
   import { store } from '$lib/data/store.svelte';
   import { bankGroups, type BankGroup } from '$lib/features/bankGroups';
-  import { balanceFixReason, lastBalanceFix } from '$lib/features/balanceFix';
+  import { lastBalanceFix } from '$lib/features/balanceFix';
   import { addMonths, dayMonth, monthOf, shortMonth, today } from '$lib/core/dates';
   import { monthEndTotal } from '$lib/features/analytics';
   import LineChart from '$lib/ui/charts/LineChart.svelte';
@@ -58,7 +58,7 @@
     <b class="big" class:neg={total < 0}><Tally cents={total} /></b>
     {#if current && history.some((v) => v !== history[0])}<span class="caption" class:pos={growth > 0} class:neg={growth < 0}>{growth >= 0 ? '+' : '−'}{money(Math.abs(growth), { cents: false })} em 6 meses</span>{/if}
     {#if informed !== null}<span class="caption">informado no ajuste do mês</span>{/if}
-    {#if fix && current}<button class="fixed" onclick={() => (fixOpen = true)}><Icon name="pencil" size={11} />Corrigido à mão em {dayMonth(fix.day)} · {balanceFixReason[fix.reason].toLowerCase()}{fix.note ? `: ${fix.note}` : ''}</button>{/if}
+    {#if fix && current}<button class="fixed" onclick={() => (fixOpen = true)}><Icon name="pencil" size={11} />Corrigido à mão em {dayMonth(fix.day)}{fix.note ? `: ${fix.note}` : ''}</button>{/if}
   </div>
 
   {#if slices.length > 1}
@@ -80,10 +80,7 @@
     {/each}
   </div>
   {#if estimated && informed === null}
-    <!-- Rodapé discreto: só avisa e oferece acertar. -->
-    <button class="foot-warn" onclick={() => (fixOpen = true)} use:hint={['Saldo estimado', 'O extrato não trouxe o saldo: o app somou só os lançamentos importados. Informe o saldo real para acertar.']}>
-      <Icon name="alert" size={13} /><span class="grow">≈ {groups.filter((g) => isEstimated(g)).map((g) => g.name).join(', ')}: saldo estimado (o extrato não traz o saldo)</span><b>Informar ›</b>
-    </button>
+    <p class="foot-note"><Icon name="alert" size={12} />Saldo de {groups.filter((g) => isEstimated(g)).map((g) => g.name).join(', ')} estimado. Se não bater com o banco, toque no lápis para corrigir.</p>
   {/if}
 </section>
 <BalanceFixSheet bind:open={fixOpen} />
@@ -98,10 +95,8 @@
   .split { display: flex; gap: 3px; height: 8px; margin: 14px 0 4px; border-radius: 4px; overflow: hidden; }
   .split span { display: block; min-width: 4px; transform-origin: left; animation: grow 0.9s var(--spring) both; transition: flex-grow 0.6s var(--spring); }
   @keyframes grow { from { transform: scaleX(0); } }
-  .foot-warn { display: flex; align-items: center; gap: 8px; width: 100%; margin-top: 12px; padding: 10px 0 0; border: 0; border-top: 1px solid var(--stroke); background: none; color: var(--text-3); font-size: 12.5px; text-align: left; transition: color 0.2s; }
-  .foot-warn :global(svg) { color: var(--warning); flex: none; }
-  .foot-warn b { color: var(--warning); font-weight: 600; white-space: nowrap; }
-  .foot-warn:hover { color: var(--text-2); }
+  .foot-note { display: flex; align-items: center; gap: 6px; margin: 12px 0 0; padding-top: 10px; border-top: 1px solid var(--stroke); font-size: 12px; color: var(--text-3); }
+  .foot-note :global(svg) { color: var(--warning); flex: none; }
   .rows { display: flex; flex-direction: column; margin-top: 8px; }
   .item { gap: 12px; padding: 9px 8px; margin: 0 -8px; border-radius: 12px; color: inherit; font-size: 15px; transition: background 0.2s; }
   .item:hover { background: rgba(255, 255, 255, 0.04); }
@@ -114,7 +109,7 @@
     .card { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); column-gap: 40px; padding: 24px 26px; }
     .card-head { grid-column: 1 / -1; }
     .lead, .split, .rows { grid-column: 1; }
-    .foot-warn { grid-column: 1 / -1; }
+    .foot-note { grid-column: 1 / -1; }
     .trend { grid-column: 2; grid-row: 2 / span 3; align-self: center; margin: 0; }
     .big { font-size: 42px; }
   }

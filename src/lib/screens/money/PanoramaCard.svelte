@@ -10,7 +10,7 @@
   import CategoryIcon from '$lib/ui/CategoryIcon.svelte';
   import { seriesColor } from '$lib/ui/charts/scale';
   import { ui } from '$lib/ui/ui.svelte';
-  import { adjustmentReason, analyzeMonth, expectedIncome, monthEndTotal, type MonthAnalysis } from '$lib/features/analytics';
+  import { analyzeMonth, expectedIncome, monthEndTotal, type MonthAnalysis } from '$lib/features/analytics';
   import { forecastSpending, spendKindColor, spendKindName } from '$lib/features/spending';
 
   /**
@@ -76,7 +76,7 @@
           </div>
         {/if}
         {#if stale.length}<button class="stale" onclick={() => ui.startImport()}><Icon name="import" size={15} /><span class="grow">Extrato só {stale.join(', ')}. Importe o de {name} para ver as entradas.</span><b>Importar</b></button>{/if}
-        {#if analysis.adjustment && !future}<p class="caption note">Inclui ajuste ({adjustmentReason[analysis.adjustment.reason].toLowerCase()}){analysis.adjustment.note ? `: ${analysis.adjustment.note}` : ''}{analysis.adjustment.closing != null ? ` · sobrou nas contas ${money(analysis.adjustment.closing)}` : ''}</p>{/if}
+        {#if analysis.adjustment && !future}<p class="caption note">Inclui ajuste manual{analysis.adjustment.note ? `: ${analysis.adjustment.note}` : ''}</p>{/if}
         <div class="foot">
           {#if future}<a class="more" href="#/previsao" onclick={() => (ui.forecastMonth = month)}>Ver a previsão <Icon name="chevron-right" size={13} /></a>
           {:else}<a class="more" href="#/transacoes">Ver lançamentos <Icon name="chevron-right" size={13} /></a>{/if}

@@ -37,7 +37,7 @@ const closeSheet = () => ev(`document.dispatchEvent(new KeyboardEvent('keydown',
 await step('Início', go('#/'), 'Panorama de');
 await step('Início › mês anterior muda o Panorama', () => ev(`(async () => { const t = () => document.querySelector('.carousel')?.innerText; const a = t(); document.querySelector('main [aria-label="Mês anterior"]').click(); await new Promise((r) => setTimeout(r, 1200)); const b = t(); document.querySelector('main .today')?.click(); return a !== b ? 'ok' : 'NÃO MUDOU'; })()`), 'Panorama de');
 await step('Seu dinheiro › bolinha 2', () => ev(`document.querySelectorAll('main .dots button')[1].click(); 'ok'`), 'Você deve ter no fim de');
-await step('Ajustar o mês (janela)', () => { ev(`document.querySelectorAll('main .dots button')[0].click()`); return new Promise((r) => setTimeout(() => r(ev(`document.querySelector('main [aria-label="Ajustar o mês"]').click(); 'ok'`)), 800)); }, 'Antecipação de fatura');
+await step('Ajustar o mês (janela)', () => { ev(`document.querySelectorAll('main .dots button')[0].click()`); return new Promise((r) => setTimeout(() => r(ev(`document.querySelector('main [aria-label="Ajustar o mês"]').click(); 'ok'`)), 800)); }, 'Gastei ao todo');
 await closeSheet();
 await step('Mês anterior no topo', () => ev(`document.querySelector('main [aria-label="Mês anterior"]').click(); 'ok'`), 'Seu dinheiro no fim de');
 await step('Voltar para o mês atual', () => click('Voltar para'), 'Seu dinheiro');

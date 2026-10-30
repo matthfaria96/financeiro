@@ -4,13 +4,12 @@
   import { centsToInput, money, parseCents } from '$lib/core/money';
   import { addMonths, lastDay, monthOf, monthTitle, today, type Day } from '$lib/core/dates';
   import Sheet from '$lib/ui/Sheet.svelte';
-  import Segmented from '$lib/ui/Segmented.svelte';
   import BankCard from '$lib/ui/BankCard.svelte';
   import { balanceOf, savingsInside } from '$lib/features/model';
   import { blankEntry, reconcileMirrors } from '$lib/features/mirrors';
   import type { Account, BalanceFix } from '$lib/data/types';
   import { dayMonth } from '$lib/core/dates';
-  import { balanceFixReason, balanceFixes, undoLastBalanceFix } from '$lib/features/balanceFix';
+  import { balanceFixes, undoLastBalanceFix } from '$lib/features/balanceFix';
 
   /**
    * Corrigir saldos (lápis do Seu dinheiro), no mesmo padrão do Ajustar o mês: valores, motivo, observação e desfazer.
@@ -30,7 +29,7 @@
   // Sempre hoje: você digita quanto tem agora em cada lugar (o mais fácil de conferir no app do banco).
   const day = today();
   let values = $state<Record<string, string>>({});
-  let reason = $state<BalanceFix['reason']>('rendimento');
+  let reason = $state<BalanceFix['reason']>('banco');
   let note = $state('');
   let confirmUndo = $state(false);
   // Só ao abrir: sem untrack, salvar (que muda as contas) zerava os campos no meio do caminho.
@@ -38,7 +37,7 @@
     if (!open) return;
     untrack(() => {
       values = Object.fromEntries(accounts.map((a) => [a.id, '']));
-      reason = 'rendimento'; note = ''; confirmUndo = false;
+      reason = 'banco'; note = ''; confirmUndo = false;
     });
   });
   const history = $derived(balanceFixes().toReversed());
@@ -77,7 +76,7 @@
       const key = `${cash ? 'carteira' : 'juros'}:${account.id}:${monthOf(day)}`;
       const existing = (store.entriesByAccount.get(account.id) ?? []).find((e) => e.import_key === key);
       let entryId = existing?.id;
-      const notes = why.note ? `${balanceFixReason[why.reason]}: ${why.note}` : balanceFixReason[why.reason];
+      const notes = why.note || 'Saldo corrigido à mão';
       if (existing) await store.update('entries', existing.id, { amount_cents: existing.amount_cents + diff, title, notes });
       else [{ id: entryId }] = await store.insert('entries', [{ ...blankEntry(), account_id: account.id, date: day, amount_cents: diff, title, original_title: title,
         import_key: key, category_id: category, person_id: account.default_person_id, user_edited: true, notes }]);
@@ -117,18 +116,16 @@
     {/each}
   </div>
 
-  <div class="form-title">Motivo</div>
-  <Segmented label="Motivo" bind:value={reason} options={[{ value: 'rendimento', label: 'Rendimento' }, { value: 'banco', label: 'Banco' }, { value: 'dinheiro', label: 'Dinheiro' }, { value: 'outro', label: 'Outro' }]} />
-  <div class="form-title">Observação</div>
-  <div class="form-group"><textarea class="field" rows="2" placeholder="ex.: o extrato de setembro veio sem o saldo" bind:value={note}></textarea></div>
+  <div class="form-title">O que está acertando (opcional)</div>
+  <div class="form-group"><textarea class="field" rows="2" placeholder="ex.: o extrato veio sem o saldo; conferi no app do banco" bind:value={note}></textarea></div>
 
   {#if history.length}
     <div class="form-title">Correções feitas</div>
     <div class="form-group">
       {#each history.slice(0, 5) as fix, i (fix.id)}
         <div class="form-row fix">
-          <span class="grow"><span class="block">{balanceFixReason[fix.reason]} · {dayMonth(fix.day)}</span>
-            <span class="caption block">{namesOf(fix)}{fix.note ? ` — ${fix.note}` : ''}</span></span>
+          <span class="grow"><span class="block">{fix.note || 'Saldo corrigido'} · {dayMonth(fix.day)}</span>
+            <span class="caption block">{namesOf(fix)}</span></span>
           {#if i === 0}
             {#if confirmUndo}<button class="btn danger" onclick={undo}>Desfazer</button><button class="btn ghost" onclick={() => (confirmUndo = false)}>Não</button>
             {:else}<button class="btn ghost danger" onclick={() => (confirmUndo = true)}>Desfazer</button>{/if}

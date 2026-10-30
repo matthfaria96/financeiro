@@ -4,7 +4,6 @@
   import { monthTitle, type Month } from '$lib/core/dates';
   import type { MonthAdjustment } from '$lib/data/types';
   import Sheet from '$lib/ui/Sheet.svelte';
-  import Segmented from '$lib/ui/Segmented.svelte';
   import type { MonthAnalysis } from '$lib/features/analytics';
 
   /**
@@ -53,20 +52,14 @@
 
 <Sheet bind:open title="Ajustar {monthTitle(month).split(' ')[0].toLowerCase()}">
   {#snippet actions()}<button class="btn primary" onclick={save}>Salvar</button>{/snippet}
-  <p class="muted small intro">Se o mês não bate com o banco, digite os valores certos. A diferença fica registrada como ajuste, com o motivo.</p>
+  <p class="muted small intro">Se o total do mês não bate com o banco, digite o valor certo. A diferença entra como ajuste do mês.</p>
   <div class="form-group">
-    <label class="form-row"><span class="field-label grow">Ganhei ao todo<span class="caption block">Calculado: {money(base.income)}{diffIn ? ` · ajuste ${money(diffIn)}` : ''}</span></span><input class="field num amount" inputmode="decimal" bind:value={income} /></label>
     <label class="form-row"><span class="field-label grow">Gastei ao todo<span class="caption block">Calculado: {money(base.expense)}{diffOut ? ` · ajuste ${money(diffOut)}` : ''}</span></span><input class="field num amount" inputmode="decimal" bind:value={expense} /></label>
-    <div class="form-row"><span class="field-label grow">Balanço do mês<span class="caption block">Ganhei − gastei</span></span><b class="num" class:pos={balance >= 0} class:neg={balance < 0}>{money(balance)}</b></div>
+    <label class="form-row"><span class="field-label grow">Ganhei ao todo<span class="caption block">Calculado: {money(base.income)}{diffIn ? ` · ajuste ${money(diffIn)}` : ''}</span></span><input class="field num amount" inputmode="decimal" bind:value={income} /></label>
   </div>
-  <div class="form-group" style="margin-top: 12px">
-    <label class="form-row"><span class="field-label grow">Sobrou nas contas<span class="caption block">No último dia do mês · calculado: {money(base.closing)}</span></span><input class="field num amount" inputmode="decimal" placeholder={centsToInput(base.closing)} bind:value={closing} /></label>
-  </div>
-  <p class="form-footer">Opcional. Some o que tinha em todas as contas, caixinhas e dinheiro no fim do mês: esse valor passa a valer como saldo do mês.</p>
-  <div class="form-title">Motivo</div>
-  <Segmented label="Motivo" bind:value={reason} options={[{ value: 'juros', label: 'Juros' }, { value: 'antecipacao', label: 'Antecipação de fatura' }, { value: 'outro', label: 'Outro' }]} />
-  <div class="form-title">Observação</div>
-  <div class="form-group"><textarea class="field" rows="3" placeholder="ex.: paguei a fatura de novembro adiantada" bind:value={note}></textarea></div>
+  <p class="form-footer">Mexa só no que estiver errado; o balanço do mês se recalcula sozinho.</p>
+  <div class="form-title">O que está acertando (opcional)</div>
+  <div class="form-group"><textarea class="field" rows="2" placeholder="ex.: paguei a fatura de novembro adiantada" bind:value={note}></textarea></div>
   {#if analysis.adjustment}<button class="btn ghost danger" style="margin-top: 12px" onclick={clear}>Tirar o ajuste</button>{/if}
 </Sheet>
 

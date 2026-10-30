@@ -190,7 +190,7 @@ function computeMonth(month: Month, entries: Entry[], accounts: Account[]): Mont
   const adjustment = store.household?.settings.adjustments?.[month] ?? null;
   const adjust = (groups: Group[], cents: number, kind: 'in' | 'out') => {
     if (!cents) return groups;
-    const label = `Ajuste · ${adjustmentReason[adjustment!.reason]}`;
+    const label = adjustment!.note ? `Ajuste · ${adjustment!.note}` : 'Ajuste manual';
     return [...groups, { key: `ajuste-${kind}`, label, color: '#9e9e9e', icon: 'pencil', cents, share: 0, entries: [] }];
   };
   const incomeGroups = adjust(income.groups, adjustment?.income ?? 0, 'in');
