@@ -56,7 +56,7 @@
   </div>
 
   <div class="lead">
-    <span class="caption">{current ? 'Somando contas, caixinhas e dinheiro' : 'Somando contas, caixinhas e dinheiro no fim do mês'}{estimated && informed === null ? ' · estimado' : ''}</span>
+    <span class="caption">{current ? 'Somando contas, caixinhas e dinheiro' : 'Somando contas, caixinhas e dinheiro no fim do mês'}</span>
     <b class="big" class:neg={total < 0}><Tally cents={total} /></b>
     {#if current && history.some((v) => v !== history[0])}<span class="caption" class:pos={growth > 0} class:neg={growth < 0}>{growth >= 0 ? '+' : '−'}{money(Math.abs(growth), { cents: false })} em 6 meses</span>{/if}
     {#if informed !== null}<span class="caption">informado no ajuste do mês</span>{/if}
@@ -73,21 +73,17 @@
   <div class="rows" class:solo={groups.length < 2} class:clamp={groups.length > 3 && !showAll} style:max-height={groups.length > 3 ? (showAll ? `${rowsHeight}px` : '168px') : undefined}>
     <div class="rows-in" bind:clientHeight={rowsHeight}>
     {#each groups as group (group.key)}
-      {@const guess = isEstimated(group)}
       {@const hasMoney = group.accounts.some((a) => a.kind !== 'creditCard')}
       <a class="row item" href="#/contas/{group.main.id}"><BankCard account={group.main} width={38} />
         <span class="grow" style="min-width: 0"><span class="ellipsis block">{group.name}</span>
 </span>
-        <span class="num value" class:neg={groupBalance(group) < 0} class:faint={guess} title={guess ? 'Estimado: o extrato não trouxe o saldo' : undefined}>{guess ? '≈ ' : ''}<Tally cents={groupBalance(group)} /></span></a>
+        <span class="num value" class:neg={groupBalance(group) < 0}><Tally cents={groupBalance(group)} /></span></a>
     {:else}
       <a class="muted small" href="#/configurar">{analysis.balances.length ? 'Todas as contas estão escondidas.' : 'Cadastre suas contas para ver o saldo.'}</a>
     {/each}
     </div>
   </div>
   {#if groups.length > 3}<button class="more-rows" onclick={() => (showAll = !showAll)} aria-expanded={showAll}>{showAll ? 'Ver menos' : `Ver mais (${groups.length - 3})`}<Icon name="chevron-down" size={14} /></button>{/if}
-  {#if estimated && informed === null}
-    <p class="foot-note"><Icon name="alert" size={12} />Saldo de {groups.filter((g) => isEstimated(g)).map((g) => g.name).join(', ')} estimado. Se não bater com o banco, toque no lápis para corrigir.</p>
-  {/if}
 </section>
 <BalanceFixSheet bind:open={fixOpen} />
 
@@ -101,8 +97,6 @@
   .split { display: flex; gap: 3px; height: 8px; margin: 14px 0 4px; border-radius: 4px; overflow: hidden; }
   .split span { display: block; min-width: 4px; transform-origin: left; animation: grow 0.9s var(--spring) both; transition: flex-grow 0.6s var(--spring); }
   @keyframes grow { from { transform: scaleX(0); } }
-  .foot-note { display: flex; align-items: center; gap: 6px; margin: 12px 0 0; padding-top: 10px; border-top: 1px solid var(--stroke); font-size: 12px; color: var(--text-3); }
-  .foot-note :global(svg) { color: var(--warning); flex: none; }
   .rows { display: flex; flex-direction: column; margin-top: 8px; }
   .item { gap: 12px; padding: 9px 8px; margin: 0 -8px; border-radius: 12px; color: inherit; font-size: 15px; transition: background 0.2s; }
   .item:hover { background: rgba(255, 255, 255, 0.04); }
@@ -115,7 +109,6 @@
     .card { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); column-gap: 40px; padding: 24px 26px; }
     .card-head { grid-column: 1 / -1; }
     .lead, .split, .rows, .more-rows { grid-column: 1; }
-    .foot-note { grid-column: 1 / -1; }
     .trend { grid-column: 2; grid-row: 2 / span 3; align-self: center; margin: 0; }
     .big { font-size: 42px; }
   }
