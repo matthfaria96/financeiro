@@ -17,7 +17,7 @@
   import { accountOf, inScopeAccount, visibleEntries, inScopeBill } from '$lib/features/model';
 
   /** Contas fixas (tela; abre pelo Configurar de Lançamentos e pelo calendário da Previsão):
-   *  o que vence no mês (calendário + lista) ou no ano (o que é mensal e o que vem 1x por ano). */
+   *  o que vence no mês (calendário + lista) ou no ano (só o que vem 1x por ano; as mensais ficam na aba Mês). */
   let view = $state<'month' | 'year'>('month');
   let month = $state<Month>(monthOf(today()));
   let editorOpen = $state(false);
@@ -42,10 +42,8 @@
     + monthBills.filter((x) => x.status.type === 'paid' && !isCard(x.bill)).reduce((s, x) => s + x.bill.amount_cents, 0));
 
   // Ano
-  const monthly = $derived(bills.filter((b) => b.frequency !== 'yearly'));
   const yearly = $derived(bills.filter((b) => b.frequency === 'yearly').toSorted((a, b) => (a.month_of_year ?? 1) - (b.month_of_year ?? 1) || a.day_of_month - b.day_of_month));
   const yearlyByMonth = $derived(monthNames.map((name, index) => ({ name, items: yearly.filter((b) => (b.month_of_year ?? 1) === index + 1) })).filter((m) => m.items.length));
-  const monthlyTotal = $derived(monthly.reduce((s, b) => s + b.amount_cents, 0));
   const yearlyTotal = $derived(yearly.reduce((s, b) => s + b.amount_cents, 0));
 
   function edit(bill: Bill | null, asYearly = false) {
@@ -98,8 +96,8 @@
       </div>
     {:else}
       <section class="card sums">
-        <div><span class="caption">Por ano</span><b class="big">{money(monthlyTotal * 12 + yearlyTotal, { cents: false })}</b></div>
-        <div class="right"><span class="caption">Mensais × 12 + anuais</span><b class="num">{money(monthlyTotal, { cents: false })}/mês</b></div>
+        <div><span class="caption">Contas anuais</span><b class="big">{money(yearlyTotal, { cents: false })}</b></div>
+        <div class="right"><span class="caption">No ano</span><b class="num">{yearly.length} {yearly.length === 1 ? 'conta' : 'contas'}</b></div>
       </section>
       <div class="row between head"><h4>Uma vez por ano</h4><button class="btn ghost" onclick={() => edit(null, true)}><Icon name="plus" size={14} />Anual</button></div>
       {#each yearlyByMonth as m (m.name)}
@@ -110,11 +108,6 @@
       {:else}
         <p class="muted small">Nenhuma conta anual. Ex.: IPVA, IPTU, licenciamento, seguro.</p>
       {/each}
-      <div class="row between head"><h4>Todo mês</h4><span class="caption">{money(monthlyTotal * 12, { cents: false })} no ano</span></div>
-      <div class="card flush list">
-        {#each monthly as bill (bill.id)}<button class="list-row plain" onclick={() => edit(bill)}><BillRow {bill} /></button>
-        {:else}<p class="muted small pad">Nenhuma conta mensal.</p>{/each}
-      </div>
     {/if}
   </div>
 </div>

@@ -46,6 +46,11 @@
   let moving = $state(false);
   let confirmDelete = $state(false);
   let menu = $state(false);
+  let menuWrap = $state<HTMLElement>();
+  // Toque fora do menu (ou Esc) fecha.
+  function closeOutside(event: PointerEvent) {
+    if (menu && menuWrap && !menuWrap.contains(event.target as Node)) menu = false;
+  }
   // Celular: os filtros ficam escondidos atrás do botão de filtro, para não poluir.
   let showFilters = $state(false);
   let moreFilters = $state(false);
@@ -77,14 +82,16 @@
   const roots = $derived(store.categories.filter((c) => !c.parent_id).toSorted((a, b) => a.sort_order - b.sort_order));
 </script>
 
+<svelte:window onpointerdown={closeOutside} onkeydown={(e) => { if (e.key === 'Escape') menu = false; }} />
+
 <div class="page" class:narrow={!prefs.full}>
   <header class="row between top">
-    <span class="row" style="gap: 10px"><a class="icon-btn" href="#/transacoes" aria-label="Voltar"><Icon name="chevron-left" /></a><h1>Todos<span class="hide-m"> os lançamentos</span></h1></span>
+    <span class="row" style="gap: 10px; min-width: 0"><a class="icon-btn" href="#/transacoes" aria-label="Voltar"><Icon name="chevron-left" /></a><h1 class="ellipsis">Todos os lançamentos</h1></span>
     <div class="row" style="gap: 8px">
       {#if selecting}
         <button class="btn" onclick={() => { selecting = false; selected = new Set(); }}>Concluir</button>
       {:else}
-        <div class="menu-wrap">
+        <div class="menu-wrap" bind:this={menuWrap}>
           <button class="icon-btn" aria-label="Mais ações" onclick={() => (menu = !menu)} use:hint={['Mais ações', 'Novo lançamento, selecionar vários para mover ou apagar, importar.']}><Icon name="more" /></button>
           {#if menu}
             <div class="menu card" role="menu">
