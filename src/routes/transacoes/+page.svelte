@@ -33,6 +33,15 @@
   const analysis = $derived(analyzeMonth(month, entries, accounts));
   const previous = $derived(analyzeMonth(addMonths(month, -1), entries, accounts));
   // Saídas: por categoria (padrão) ou lista; fica lembrado no aparelho.
+  // Computador largo: as categorias ficam ao lado do Fluxo e a lista de saídas embaixo (o alternador some).
+  let desktop = $state(false);
+  $effect(() => {
+    const mq = matchMedia('(min-width: 1180px)');
+    desktop = mq.matches;
+    const on = () => (desktop = mq.matches);
+    mq.addEventListener('change', on);
+    return () => mq.removeEventListener('change', on);
+  });
   let outView = $state<'categories' | 'list'>((() => { try { return localStorage.getItem('financeiro.saidas') === 'list' ? 'list' : 'categories'; } catch { return 'categories'; } })());
   function setOutView(v: 'categories' | 'list') {
     outView = v;
@@ -78,9 +87,11 @@
       <a class="link" href="#/transacoes/configurar">Mudar</a>
     </p>
     <!-- Sempre os dois cartões, entradas antes de saídas. Vazio, o cartão fica apagado dizendo que ainda não há nada. -->
-    <MonthFlowCard {analysis} />
-    <EntryListCard title="Entradas" entries={analysis.income.flatMap((g) => g.entries)} total={analysis.incomeTotal} tone="pos" empty="Ainda não há entradas neste mês. Importe o extrato da conta ou anote no botão +." />
-    <section class="card flush out">
+    <!-- Computador: Fluxo do mês e Saídas por categoria lado a lado; embaixo, as listas de entradas e saídas. Celular: um embaixo do outro. -->
+    <div class="desk">
+    <div class="o1"><MonthFlowCard {analysis} /></div>
+    <div class="o2"><EntryListCard title="Entradas" entries={analysis.income.flatMap((g) => g.entries)} total={analysis.incomeTotal} tone="pos" empty="Ainda não há entradas neste mês. Importe o extrato da conta ou anote no botão +." /></div>
+    <section class="card flush out o3">
       <div class="card-head pad"><h3>Saídas <span class="caption">· {analysis.expenses.reduce((n, g) => n + g.entries.length, 0)}</span></h3>
         <div class="row" style="gap: 12px"><b class="num"><Tally cents={-analysis.expenseTotal} /></b>
           <div class="mode" role="radiogroup" aria-label="Visualização">
@@ -90,9 +101,11 @@
           </div>
         </div>
       </div>
-      {#if outView === 'categories'}<CategoryRows flat groups={analysis.expenses} previous={previous.expenses} />
+      {#if outView === 'categories' || desktop}<CategoryRows flat groups={analysis.expenses} previous={previous.expenses} />
       {:else}<EntryListCard bare entries={analysis.expenses.flatMap((g) => g.entries)} empty="Ainda não há saídas neste mês." />{/if}
     </section>
+    {#if desktop}<div class="o4"><EntryListCard title="Saídas" entries={analysis.expenses.flatMap((g) => g.entries)} total={-analysis.expenseTotal} empty="Ainda não há saídas neste mês." /></div>{/if}
+    </div>
   {/if}
   <ConfigureLink href="#/transacoes/configurar" />
 </div>
@@ -125,6 +138,19 @@
     :global(html.bar-gone) .fab { bottom: calc(18px + env(safe-area-inset-bottom)); }
   }
   @media (min-width: 960px) { .fab { right: 32px; bottom: 32px; width: 60px; height: 60px; } }
+  .desk { display: contents; }
+  @media (min-width: 1180px) {
+    .desk { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+    .o1 { grid-column: 1; grid-row: 1; align-self: stretch; display: flex; }
+    .o1 > :global(*) { flex: 1; }
+    .o3 { grid-column: 2; grid-row: 1; align-self: stretch; }
+    .o3 { display: flex; flex-direction: column; max-height: 640px; }
+    .o3 :global(.rows) { flex: 1; min-height: 0; overflow-y: auto; }
+    .o3 :global(.rows > *) { flex-shrink: 0; }
+    .o2 { grid-column: 1 / -1; grid-row: 2; }
+    .o4 { grid-column: 1 / -1; }
+    .o3 .mode { display: none; }
+  }
   .view-note { margin: -2px 4px 2px; line-height: 1.45; }
   .view-note b { color: var(--text); font-weight: 600; }
   .totals { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
