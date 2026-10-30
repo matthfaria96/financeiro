@@ -55,34 +55,46 @@
   }
 </script>
 
-<div class="page narrow">
+<div class="page" class:wide={view === 'month'}>
   <SubHeader title="Contas fixas" back="#/transacoes">
     <button class="btn primary" onclick={() => edit(null, view === 'year')} use:hint={['Nova conta fixa', 'Algo que se paga sempre: todo mês ou uma vez por ano.']}><Icon name="plus" size={15} /><span class="hide-m">Nova conta</span></button>
   </SubHeader>
   <div class="stack">
-    <Segmented label="Visão" bind:value={view} options={[{ value: 'month', label: 'Mês' }, { value: 'year', label: 'Ano' }]} />
+    <!-- Visão e mês na mesma barra; o mês é um seletor único (‹ Outubro 2026 ›), longe da seta de voltar. -->
+    <div class="bar">
+      <div class="seg-wrap"><Segmented label="Visão" bind:value={view} options={[{ value: 'month', label: 'Mês' }, { value: 'year', label: 'Ano' }]} /></div>
+      {#if view === 'month'}
+        <div class="stepper" role="group" aria-label="Mês">
+          <button aria-label="Mês anterior" onclick={() => (month = addMonths(month, -1))}><Icon name="chevron-left" size={16} /></button>
+          <b>{monthTitle(month)}</b>
+          <button aria-label="Próximo mês" onclick={() => (month = addMonths(month, 1))}><Icon name="chevron-right" size={16} /></button>
+        </div>
+        {#if month !== monthOf(today())}<button class="today-btn" onclick={() => (month = monthOf(today()))}>Hoje</button>{/if}
+      {/if}
+    </div>
 
     {#if view === 'month'}
-      <div class="row between monthbar">
-        <button class="icon-btn" aria-label="Mês anterior" onclick={() => (month = addMonths(month, -1))}><Icon name="chevron-left" /></button>
-        <b class="title">{monthTitle(month)}</b>
-        <button class="icon-btn" aria-label="Próximo mês" onclick={() => (month = addMonths(month, 1))}><Icon name="chevron-right" /></button>
-      </div>
-      <section class="card sums">
-        <div><span class="caption">Total do mês</span><b class="big">{money(monthTotal, { cents: false })}</b></div>
-        <div class="right"><span class="caption">Já pago</span><b class="num pos">{money(monthPaid, { cents: false })}</b></div>
-      </section>
-      <BillCalendar {month} bills={monthBills.map((x) => x.bill)} faturas={faturas} paid={paidKeys} />
-      {#if faturas.length}
-        <div class="card flush list">
-          {#each faturas as g (g.account.id + g.due)}
-            <div class="list-row"><BankCard account={g.account} width={46} /><span class="grow">Fatura {g.account.name}<span class="caption block">vence {dayMonth(g.due)}{paidKeys.has(`f:${g.account.id}:${g.due}`) ? ' · paga' : ''}</span></span><span class="num">{money(g.imported + g.projected)}</span></div>
-          {/each}
+      <div class="desk">
+        <div class="col">
+          <section class="card sums">
+            <div><span class="caption">Total do mês</span><b class="big">{money(monthTotal, { cents: false })}</b></div>
+            <div class="right"><span class="caption">Já pago</span><b class="num pos">{money(monthPaid, { cents: false })}</b></div>
+          </section>
+          <section class="card cal-card"><BillCalendar {month} bills={monthBills.map((x) => x.bill)} faturas={faturas} paid={paidKeys} /></section>
         </div>
-      {/if}
-      <div class="card flush list">
-        {#each monthBills as { bill, status } (bill.id)}<button class="list-row plain" class:paid={status.type === 'paid'} onclick={() => edit(bill)}><BillRow {bill} {status} /></button>
-        {:else}<p class="muted small pad">Nenhuma conta fixa neste mês. Toque em + para cadastrar aluguel, luz, escola…</p>{/each}
+        <div class="col">
+          {#if faturas.length}
+            <div class="card flush list">
+              {#each faturas as g (g.account.id + g.due)}
+                <div class="list-row"><BankCard account={g.account} width={46} /><span class="grow">Fatura {g.account.name}<span class="caption block">vence {dayMonth(g.due)}{paidKeys.has(`f:${g.account.id}:${g.due}`) ? ' · paga' : ''}</span></span><span class="num">{money(g.imported + g.projected)}</span></div>
+              {/each}
+            </div>
+          {/if}
+          <div class="card flush list">
+            {#each monthBills as { bill, status } (bill.id)}<button class="list-row plain" class:paid={status.type === 'paid'} onclick={() => edit(bill)}><BillRow {bill} {status} /></button>
+            {:else}<p class="muted small pad">Nenhuma conta fixa neste mês. Toque em + para cadastrar aluguel, luz, escola…</p>{/each}
+          </div>
+        </div>
       </div>
     {:else}
       <section class="card sums">
@@ -109,7 +121,25 @@
 <BillEditor bind:open={editorOpen} bill={editing} yearly={newYearly} />
 
 <style>
-  .monthbar .title { font: 600 18px var(--font-display); }
+  .bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .seg-wrap { flex: 1 1 220px; max-width: 320px; }
+  .stepper { display: flex; align-items: center; gap: 2px; margin-left: auto; padding: 3px; border-radius: 12px; border: 1px solid var(--stroke); background: rgba(255, 255, 255, 0.05); }
+  .stepper b { min-width: 128px; text-align: center; font: 600 15px var(--font-display); }
+  .stepper button { display: grid; place-items: center; width: 32px; height: 30px; border: 0; border-radius: 9px; background: none; color: var(--text-2); transition: background 0.2s, color 0.2s; }
+  .stepper button:hover { background: rgba(255, 255, 255, 0.08); color: var(--text); }
+  .today-btn { padding: 7px 12px; border-radius: 10px; border: 1px solid var(--stroke); background: none; color: var(--accent); font-size: 13px; font-weight: 600; }
+  /* Celular: Mês/Ano em cima, o mês embaixo ocupando a largura. */
+  @media (max-width: 600px) {
+    .seg-wrap { flex-basis: 100%; max-width: none; }
+    .stepper { flex: 1; margin-left: 0; justify-content: space-between; }
+  }
+  .desk, .col { display: flex; flex-direction: column; gap: 12px; }
+  .cal-card { padding: 12px; }
+  /* Computador: calendário à esquerda, listas à direita (nada esticado). */
+  @media (min-width: 1100px) {
+    .desk { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+    .desk > .col:first-child { position: sticky; top: 16px; }
+  }
   .sums { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
   .sums > div { display: flex; flex-direction: column; gap: 3px; }
   .right { text-align: right; }
