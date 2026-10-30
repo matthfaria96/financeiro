@@ -9,6 +9,7 @@
   import Sheet from '$lib/ui/Sheet.svelte';
   import Segmented from '$lib/ui/Segmented.svelte';
   import CategoryPicker from '$lib/ui/CategoryPicker.svelte';
+  import { seriesColor } from '$lib/ui/charts/scale';
   import { inScopeAccount } from '$lib/features/model';
   import { blankEntry, reconcileMirrors } from '$lib/features/mirrors';
 
@@ -54,7 +55,7 @@
 
 <Sheet bind:open={ui.newEntryOpen} title="Novo lançamento">
   {#snippet actions()}<button class="btn primary" disabled={!valid} onclick={save}>Adicionar</button>{/snippet}
-  <div style="padding-top: 10px"><Segmented label="Tipo" bind:value={type} options={[{ value: 'out', label: 'Saída' }, { value: 'in', label: 'Entrada' }]} /></div>
+  <div style="padding-top: 10px"><Segmented label="Tipo" bind:value={type} options={[{ value: 'out', label: 'Saída', icon: 'trending-down', color: seriesColor.expense }, { value: 'in', label: 'Entrada', icon: 'trending-up', color: seriesColor.income }]} /></div>
   <div class="form-group" style="margin-top: 12px">
     <label class="form-row"><span class="field-label">Descrição</span><input class="field" bind:value={title} placeholder="ex.: Feira" /></label>
     <label class="form-row"><span class="field-label">Valor</span><input class="field num" inputmode="decimal" placeholder="49,90" bind:value={amount} /></label>
