@@ -65,11 +65,6 @@
     <div class="split" aria-hidden="true">{#each slices as s (s.key)}<span style:flex-grow={s.cents} style:background={s.color} title={s.name}></span>{/each}</div>
   {/if}
 
-  {#if estimated && informed === null}
-    <button class="warn" onclick={() => (fixOpen = true)} use:hint={['Saldo estimado', 'O extrato não trouxe o saldo: o app somou só os lançamentos importados. Informe o saldo real para acertar.']}>
-      <Icon name="alert" size={14} /><span class="grow">{estimated === 1 ? 'Um saldo é estimado' : `${estimated} saldos são estimados`}: o extrato não traz o saldo.</span><b>Informar</b>
-    </button>
-  {/if}
 
   {#if current}<div class="trend"><LineChart labels={months.map((m) => shortMonth(m).slice(0, 3))} height={wide ? 230 : 120} title="Seu dinheiro no fim de cada mês" series={[{ id: 'bal', name: 'Saldo', color: '#2bd4a4', values: history }]} /></div>{/if}
   <div class="rows" class:solo={groups.length < 2}>
@@ -84,6 +79,12 @@
       <a class="muted small" href="#/configurar">{analysis.balances.length ? 'Todas as contas estão escondidas.' : 'Cadastre suas contas para ver o saldo.'}</a>
     {/each}
   </div>
+  {#if estimated && informed === null}
+    <!-- Rodapé discreto: só avisa e oferece acertar. -->
+    <button class="foot-warn" onclick={() => (fixOpen = true)} use:hint={['Saldo estimado', 'O extrato não trouxe o saldo: o app somou só os lançamentos importados. Informe o saldo real para acertar.']}>
+      <Icon name="alert" size={13} /><span class="grow">≈ {groups.filter((g) => isEstimated(g)).map((g) => g.name).join(', ')}: saldo estimado (o extrato não traz o saldo)</span><b>Informar ›</b>
+    </button>
+  {/if}
 </section>
 <BalanceFixSheet bind:open={fixOpen} />
 
@@ -97,9 +98,10 @@
   .split { display: flex; gap: 3px; height: 8px; margin: 14px 0 4px; border-radius: 4px; overflow: hidden; }
   .split span { display: block; min-width: 4px; transform-origin: left; animation: grow 0.9s var(--spring) both; transition: flex-grow 0.6s var(--spring); }
   @keyframes grow { from { transform: scaleX(0); } }
-  .warn { display: flex; align-items: center; gap: 8px; width: 100%; margin-top: 12px; padding: 8px 12px; border-radius: 11px; border: 1px solid rgba(255, 166, 61, 0.3); background: rgba(255, 166, 61, 0.08); color: var(--warning); font-size: 13px; text-align: left; transition: background 0.2s; }
-  .warn:hover { background: rgba(255, 166, 61, 0.14); }
-  .warn b { color: var(--text); white-space: nowrap; }
+  .foot-warn { display: flex; align-items: center; gap: 8px; width: 100%; margin-top: 12px; padding: 10px 0 0; border: 0; border-top: 1px solid var(--stroke); background: none; color: var(--text-3); font-size: 12.5px; text-align: left; transition: color 0.2s; }
+  .foot-warn :global(svg) { color: var(--warning); flex: none; }
+  .foot-warn b { color: var(--warning); font-weight: 600; white-space: nowrap; }
+  .foot-warn:hover { color: var(--text-2); }
   .rows { display: flex; flex-direction: column; margin-top: 8px; }
   .item { gap: 12px; padding: 9px 8px; margin: 0 -8px; border-radius: 12px; color: inherit; font-size: 15px; transition: background 0.2s; }
   .item:hover { background: rgba(255, 255, 255, 0.04); }
@@ -111,8 +113,9 @@
   @container home (min-width: 860px) {
     .card { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); column-gap: 40px; padding: 24px 26px; }
     .card-head { grid-column: 1 / -1; }
-    .lead, .split, .warn, .rows { grid-column: 1; }
-    .trend { grid-column: 2; grid-row: 2 / span 4; align-self: center; margin: 0; }
+    .lead, .split, .rows { grid-column: 1; }
+    .foot-warn { grid-column: 1 / -1; }
+    .trend { grid-column: 2; grid-row: 2 / span 3; align-self: center; margin: 0; }
     .big { font-size: 42px; }
   }
 </style>

@@ -37,7 +37,7 @@
   }
 </script>
 
-<Sheet bind:open title={notebook ? 'Editar lista' : 'Nova lista'}>
+<Sheet bind:open title={notebook ? 'Editar nota' : 'Nova nota'}>
   {#snippet actions()}<button class="btn primary" disabled={!name.trim()} onclick={save}>Salvar</button>{/snippet}
   <div class="preview" style:--c={color}><span>{emoji}</span></div>
   <div class="form-group">
@@ -47,7 +47,7 @@
   <div class="picks">{#each emojis as e (e)}<button class="emo" class:on={emoji === e} onclick={() => (emoji = e)} aria-label={e}>{e}</button>{/each}</div>
   <div class="picks" style="margin-top: 10px">{#each palette.slice(0, 12) as c (c)}<button class="swatch" class:on={color === c} style:background={c} aria-label="Cor" onclick={() => (color = c)}></button>{/each}</div>
   <div class="form-group" style="margin-top: 14px"><SpacePicker bind:value={space} /></div>
-  {#if notebook && !systemNotebookIds().includes(notebook.id)}<DeleteRow label="Apagar esta lista e o histórico" question="Apagar a lista e todas as listas antigas dela?" ondelete={async () => { await organizer.remove('notebooks', [notebook!.id]); open = false; goto('#/notas'); }} />{/if}
+  {#if notebook && !systemNotebookIds().includes(notebook.id)}<DeleteRow label="Apagar esta nota e o histórico" question="Apagar a nota e todas as listas antigas dela?" ondelete={async () => { await organizer.remove('notebooks', [notebook!.id]); open = false; goto('#/notas'); }} />{/if}
 </Sheet>
 
 <style>

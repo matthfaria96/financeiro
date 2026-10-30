@@ -27,7 +27,7 @@
 
 <div class="page narrow">
   <SubHeader title="Configurar Notas" back="#/notas" />
-  <p class="muted small intro">Desligue o que não usa e mude a ordem com as setas. Desligar não apaga nada. As listas que você criou podem ser apagadas na lixeira.</p>
+  <p class="muted small intro">Desligue o que não usa e mude a ordem com as setas. Desligar não apaga nada. As notas que você criou podem ser apagadas na lixeira.</p>
   <div class="form-group">
     {#each cards as card, index (card.key)}
       <div class="item">

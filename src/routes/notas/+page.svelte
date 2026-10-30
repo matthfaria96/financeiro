@@ -33,7 +33,7 @@
 
 <div class="page">
   <header class="row between top">
-    <h1>Notas</h1>
+    <h1>Lista de notas</h1>
   </header>
 
   <div class="grid">
@@ -62,7 +62,7 @@
   </div>
   <ConfigureLink href="#/notas/configurar" />
 </div>
-<Fab label="Nova lista" detail="Uma lista nova: limpeza, bebê, festa…" onclick={() => (creating = true)} />
+<Fab label="Nova nota" detail="Uma nota nova: lista de limpeza, bebê, festa…" onclick={() => (creating = true)} />
 <NotebookEditor bind:open={creating} onsaved={(n) => goto(`#/notas/lista/${n.id}`)} />
 
 <style>
