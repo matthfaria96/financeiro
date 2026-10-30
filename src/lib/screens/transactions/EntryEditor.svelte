@@ -23,6 +23,7 @@
   /** Editar um lançamento: quem é (avatar), categoria, de quem é, fixo/sazonal, fatura e comentário. */
   let open = $state(false);
   let draft = $state<Entry | null>(null);
+  const transferCategories = $derived(store.categories.filter((c) => !c.parent_id && c.kind === 'transfer').toSorted((a, b) => a.sort_order - b.sort_order));
   let original = $state<Entry | null>(null);
   let remember = $state(true);
   let pattern = $state('');
@@ -105,8 +106,12 @@
       </div>
     {:else}
       <div class="form-title">Classificação</div>
-      <CategoryPicker value={draft.category_id} kind={draft.amount_cents < 0 ? 'expense' : 'income'} onchange={(v) => (draft!.category_id = v)} />
+      <!-- Movimentação entre contas (veio no extrato: saque, caixinha, fatura) fica numa linha própria; senão, a grade de categorias. -->
+      {@const move = store.categoryById.get(draft.category_id ?? '')?.kind === 'transfer'}
+      {#if !move}<CategoryPicker value={draft.category_id} kind={draft.amount_cents < 0 ? 'expense' : 'income'} onchange={(v) => (draft!.category_id = v)} />{/if}
       <div class="form-group" style="margin-top: 12px">
+        <label class="form-row" use:hint={['Entre contas', 'Saque, dinheiro guardado na caixinha, pagamento da fatura ou transferência para outra conta sua: não conta como gasto nem como ganho.']}><span class="field-label">Entre contas</span>
+          <span class="field"><Select value={move ? draft.category_id : ''} label="Entre contas" options={[{ value: '', label: draft.amount_cents < 0 ? 'Não, é um gasto' : 'Não, é uma entrada' }, ...transferCategories.map((c) => ({ value: c.id, label: c.name, color: c.color }))]} onchange={(v) => (draft!.category_id = v || null)} /></span></label>
         <label class="form-row" use:hint={['De quem', 'Separa o que é seu, da esposa, da casa ou do filho nos relatórios.']}><span class="field-label">De quem</span>
           <span class="field"><Select bind:value={draft.person_id} label="De quem" options={[{ value: null, label: 'Ninguém' }, ...store.people.map((p) => ({ value: p.id, label: p.name, color: p.color }))]} /></span></label>
         {#if kindOf(draft) === 'expense'}
