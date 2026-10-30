@@ -39,7 +39,8 @@
     {#each months as m (m)}<button role="tab" aria-selected={m === month} class="chip" class:active={m === month} onclick={() => (month = m)}>{label(m)}{m.endsWith('-01') ? ` ${m.slice(2, 4)}` : ''}</button>{/each}
   </div>
 
-  <section class="card summary">
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <section class="card summary" onpointerleave={(e) => { if (e.pointerType === 'mouse') info = false; }}>
     <div class="row between"><span class="caption">Deve sair em {monthTitle(month).split(' ')[0].toLowerCase()}</span>
       <button class="icon-btn info" class:on={info} aria-label="Como a previsão é calculada" aria-expanded={info} onclick={() => (info = !info)}><Icon name="info" size={15} /></button></div>
     <b class="big"><Tally cents={current.total} showCents={false} /></b>

@@ -17,7 +17,8 @@
   <SubHeader title="Configurar Lançamentos" back="#/transacoes" />
 
   <SectionTitle title="Como o mês é mostrado" />
-  <div class="form-group">
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div class="form-group" onpointerleave={(e) => { if (e.pointerType === 'mouse') info = false; }}>
     <div class="form-row">
       <span class="field-label grow">Mostrar compras pelo dia em que foram feitas<span class="caption block">{prefs.creditByPurchase ? 'Ligado: o mês mostra o que você gastou nele.' : 'Desligado: o mês mostra o que você paga nele.'}</span></span>
       <button class="icon-btn info" class:on={info} aria-label="Como funciona" aria-expanded={info} onclick={() => (info = !info)}><Icon name="info" size={16} /></button>

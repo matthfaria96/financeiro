@@ -9,6 +9,8 @@
   import MonthStrip from '$lib/screens/money/MonthStrip.svelte';
   import PanoramaCard from '$lib/screens/money/PanoramaCard.svelte';
   import ForecastCard from '$lib/screens/money/ForecastCard.svelte';
+  import SavingsForecastCard from '$lib/screens/money/SavingsForecastCard.svelte';
+  import Carousel from '$lib/ui/Carousel.svelte';
   import { lastEntryDate } from '$lib/features/model';
   import { dayMonth } from '$lib/core/dates';
   import ProfileAvatar from '$lib/ui/ProfileAvatar.svelte';
@@ -23,6 +25,7 @@
   const accounts = $derived(store.accounts.filter((a) => !a.archived && inScopeAccount(a)).toSorted((a, b) => a.sort_order - b.sort_order));
   let month = $state(monthOf(today()));
   const first = $derived(entries.map((e) => monthOf(e.date)).sort()[0] ?? null);
+  let moneySlide = $state(0);
   const analysis = $derived(analyzeMonth(month, entries, accounts));
   const empty = $derived(!store.accounts.length || !store.entries.length);
 
@@ -50,7 +53,9 @@
   {:else}
     <MonthStrip bind:value={month} {first} />
     <div class="cards">
-      <BalanceCard {analysis} current={month === monthOf(today())} title={month === monthOf(today()) ? 'Seu dinheiro' : month > monthOf(today()) ? 'Seu dinheiro hoje' : `Seu dinheiro no fim de ${monthTitle(month).split(' ')[0].toLowerCase()}`} hidden={store.household?.settings.home_hidden ?? []} />
+      <Carousel count={2} bind:index={moneySlide} labels={['Seu dinheiro', 'Saldo previsto']}>
+        {#snippet slide(i)}{#if i === 0}<BalanceCard {analysis} current={month === monthOf(today())} title={month === monthOf(today()) ? 'Seu dinheiro' : month > monthOf(today()) ? 'Seu dinheiro hoje' : `Seu dinheiro no fim de ${monthTitle(month).split(' ')[0].toLowerCase()}`} hidden={store.household?.settings.home_hidden ?? []} />{:else}<SavingsForecastCard {accounts} {entries} />{/if}{/snippet}
+      </Carousel>
       <PanoramaCard {month} {analysis} {entries} {accounts} {stale} />
       <ForecastCard {accounts} {entries} />
     </div>
