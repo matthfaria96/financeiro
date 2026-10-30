@@ -61,7 +61,12 @@
       {/each}
     </div>
   {:else}
-    <p class="muted small none">Ainda não há saídas neste mês.</p>
+    <!-- Sem gastos: o mesmo desenho, vazio, para o layout não pular. -->
+    <div class="big-head"><h4>Maiores gastos</h4></div>
+    <div class="tiles ghost">
+      {#each [0, 1, 2, 3] as k (k)}<div class="tile"><span class="sk-av"></span><span class="grow txt"><span class="sk w1"></span><span class="sk w2"></span></span></div>{/each}
+    </div>
+    <p class="caption none">Ainda não há saídas neste mês.</p>
   {/if}
 </section>
 
@@ -94,7 +99,11 @@
   .name { font-size: 13.5px; }
   .line { display: flex; align-items: baseline; gap: 6px; white-space: nowrap; overflow: hidden; }
   .val { font-size: 14px; font-weight: 600; white-space: nowrap; }
-  .none { margin: 14px 0 0; }
+  .none { margin: 10px 0 0; text-align: center; color: var(--text-3); }
+  .ghost .tile { pointer-events: none; }
+  .sk-av { width: 32px; height: 32px; border-radius: 50%; background: rgba(255, 255, 255, 0.06); flex: none; }
+  .sk { display: block; height: 9px; border-radius: 5px; background: rgba(255, 255, 255, 0.06); margin: 3px 0; }
+  .w1 { width: 70%; } .w2 { width: 40%; }
   @media (max-width: 420px) {
     .rings { width: 140px; height: 140px; }
     .top { gap: 16px; }

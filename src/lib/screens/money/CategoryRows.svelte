@@ -9,32 +9,33 @@
   import { spendDate } from '$lib/features/analytics';
   import { prefs } from '$lib/ui/prefs.svelte';
   import type { Group } from '$lib/features/analytics';
-  import { slide } from 'svelte/transition';
+  import { fade, slide } from 'svelte/transition';
   import { cubicOut } from 'svelte/easing';
 
   /** Categorias expansíveis: barra de fundo com a fatia, % e valor, variação para o mês anterior; toque abre os lançamentos.
    *  `flat`: linhas dentro de um cartão (separadas por linha fina), em vez de cartõezinhos soltos. */
   let { groups, previous = [], flat = false }: { groups: Group[]; previous?: Group[]; flat?: boolean } = $props();
-  let open = $state<Set<string>>(new Set());
+  // Uma categoria aberta por vez: ela ocupa o cartão inteiro (as outras saem) e o X fecha e volta para a lista.
+  let openKey = $state<string | null>(null);
   const before = $derived(new Map(previous.map((g) => [g.key, g.cents])));
   const change = (g: Group) => { const old = before.get(g.key); return old ? (g.cents - old) / old : null; };
-  function toggle(key: string) {
-    const next = new Set(open);
-    next.has(key) ? next.delete(key) : next.add(key);
-    open = next;
-  }
+  const toggle = (key: string) => (openKey = openKey === key ? null : key);
+  const shown = $derived(openKey ? groups.filter((g) => g.key === openKey) : groups);
+  $effect(() => {
+    if (openKey && !groups.some((g) => g.key === openKey)) openKey = null;
+  });
 </script>
 
-<div class="rows" class:flat>
-  {#each groups as g, n (g.key)}
-    {@const expanded = open.has(g.key)}
-    <div class="group" class:expanded style:--c={g.color} style:--d="{Math.min(n, 10) * 35}ms">
+<div class="rows" class:flat class:focused={!!openKey}>
+  {#each shown as g, n (g.key)}
+    {@const expanded = openKey === g.key}
+    <div class="group" class:expanded style:--c={g.color} style:--d="{Math.min(n, 10) * 35}ms" in:fade={{ duration: 220, delay: openKey ? 0 : Math.min(n, 10) * 20 }}>
       <button class="slice" style:--w="{g.share * 100}%" onclick={() => toggle(g.key)} aria-expanded={expanded}>
         <span class="bar" aria-hidden="true"></span>
         <CategoryIcon symbol={g.icon} color={g.color} size={38} />
         <span class="grow name"><span class="ellipsis">{g.label}</span><span class="caption">{percent(g.share)} · {g.entries.length} {g.entries.length === 1 ? 'lançamento' : 'lançamentos'}</span></span>
         <span class="val"><span class="num">{money(g.cents, { cents: false })}</span><ChangeBadge change={change(g)} /></span>
-        <span class="chev"><Icon name="chevron-down" size={15} /></span>
+        {#if expanded}<span class="close" aria-label="Fechar"><Icon name="x" size={15} /></span>{:else}<span class="chev"><Icon name="chevron-down" size={15} /></span>{/if}
       </button>
       {#if expanded}
         <div class="inner entries" transition:slide={{ duration: 320, easing: cubicOut }}>
@@ -75,4 +76,8 @@
   .flat .bar { opacity: 0.85; }
   .flat .inner { background: rgba(0, 0, 0, 0.16); }
   .flat > .muted { padding: 14px 18px; margin: 0; }
+  .close { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; flex: none; color: var(--text); background: rgba(255, 255, 255, 0.1); }
+  /* Aberta: a categoria fica presa no topo e os lançamentos rolam embaixo dela. */
+  .focused .expanded .slice { position: sticky; top: 0; z-index: 2; background: var(--card-solid); }
+  .group, .inner :global(.entry) { min-width: 0; }
 </style>

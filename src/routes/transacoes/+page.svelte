@@ -144,7 +144,8 @@
     .o1 { grid-column: 1; grid-row: 1; align-self: stretch; display: flex; }
     .o1 > :global(*) { flex: 1; }
     .o3 { grid-column: 2; grid-row: 1; align-self: stretch; }
-    .o3 { display: flex; flex-direction: column; max-height: 640px; }
+    /* A altura vem do Fluxo do mês (contain: size): as categorias rolam dentro dela. */
+    .o3 { display: flex; flex-direction: column; contain: size; min-height: 420px; }
     .o3 :global(.rows) { flex: 1; min-height: 0; overflow-y: auto; }
     .o3 :global(.rows > *) { flex-shrink: 0; }
     .o2 { grid-column: 1 / -1; grid-row: 2; }
