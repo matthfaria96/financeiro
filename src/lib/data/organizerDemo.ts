@@ -2,6 +2,9 @@ import { addDays, today, type Day } from '$lib/core/dates';
 import { defaultMaintenancePlan } from '$lib/core/vehicle';
 import type { MaintenanceItem, Notebook, OrgSnapshot, Project, ProjectItem, ShoppingItem, ShoppingList, Vehicle, VehicleLog } from './organizerTypes';
 
+/** Relativo à página (o app roda com caminhos relativos). */
+const DEMO_CAR_PHOTO = 'demo/hb20.jpg';
+
 /** Carro, casa e listas fictícios para a demonstração (um espaço compartilhado "Nós dois"). */
 export function buildOrganizerDemo(personal: string): OrgSnapshot {
   const shared = 'demo-nos';
@@ -9,7 +12,8 @@ export function buildOrganizerDemo(personal: string): OrgSnapshot {
   const stamp = (day: Day) => `${day}T12:00:00.000Z`;
   const base = (id: string, household_id: string, day: Day = now) => ({ id, household_id, created_at: stamp(day) });
 
-  const car: Vehicle = { ...base('car-1', shared), name: 'Carro da família', model: 'Hatch 1.6 Flex automático', plate: 'ABC1D23', year: '2019', value_cents: 5_150_000, odometer: 94_350, notes: '', photo: '', archived: false, sort_order: 0 };
+  // Foto de exemplo: Wikimedia Commons, "Red hyundai hb20.JPG" por Samtyler654, CC BY-SA 3.0 (ver static/demo/credits.json).
+  const car: Vehicle = { ...base('car-1', shared), name: 'HB20', model: 'Hyundai HB20 1.6 Comfort Plus Flex', plate: 'ABC1D23', year: '2015', value_cents: 5_150_000, odometer: 94_350, notes: '', photo: DEMO_CAR_PHOTO, archived: false, sort_order: 0 };
   const logs: VehicleLog[] = [];
   let km = 96_100;
   for (let i = 0; i < 16; i++) {
