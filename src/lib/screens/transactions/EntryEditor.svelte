@@ -10,7 +10,7 @@
   import Money from '$lib/ui/Money.svelte';
   import Icon from '$lib/ui/Icon.svelte';
   import Toggle from '$lib/ui/Toggle.svelte';
-  import CategorySelect from '$lib/ui/CategorySelect.svelte';
+  import CategoryPicker from '$lib/ui/CategoryPicker.svelte';
   import { hint } from '$lib/ui/hint';
   import { accountOf, billDueOf, categoryCost, categoryOf, kindOf } from '$lib/features/model';
   import { learn, suggestedPattern } from '$lib/features/rules';
@@ -105,9 +105,8 @@
       </div>
     {:else}
       <div class="form-title">Classificação</div>
-      <div class="form-group">
-        <label class="form-row" use:hint={['Categoria', 'Categoria e subcategoria (ex.: Carro › Combustível). Transferências entre contas não entram nos gastos.']}><span class="field-label">Categoria</span>
-          <span class="field"><CategorySelect value={draft.category_id} pill={false} onchange={(v) => (draft!.category_id = v || null)} /></span></label>
+      <CategoryPicker value={draft.category_id} kind={draft.amount_cents < 0 ? 'expense' : 'income'} onchange={(v) => (draft!.category_id = v)} />
+      <div class="form-group" style="margin-top: 12px">
         <label class="form-row" use:hint={['De quem', 'Separa o que é seu, da esposa, da casa ou do filho nos relatórios.']}><span class="field-label">De quem</span>
           <span class="field"><Select bind:value={draft.person_id} label="De quem" options={[{ value: null, label: 'Ninguém' }, ...store.people.map((p) => ({ value: p.id, label: p.name, color: p.color }))]} /></span></label>
         {#if kindOf(draft) === 'expense'}

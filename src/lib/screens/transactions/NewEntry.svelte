@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import Select from '$lib/ui/Select.svelte';
   import { store } from '$lib/data/store.svelte';
   import { ui } from '$lib/ui/ui.svelte';
@@ -7,7 +8,7 @@
   import { UNCATEGORIZED } from '$lib/core/catalog';
   import Sheet from '$lib/ui/Sheet.svelte';
   import Segmented from '$lib/ui/Segmented.svelte';
-  import CategorySelect from '$lib/ui/CategorySelect.svelte';
+  import CategoryPicker from '$lib/ui/CategoryPicker.svelte';
   import { inScopeAccount } from '$lib/features/model';
   import { blankEntry, reconcileMirrors } from '$lib/features/mirrors';
 
@@ -26,6 +27,12 @@
       title = ''; amount = ''; date = today(); categoryId = null; personId = null;
       accountId = accounts.find((a) => a.kind === 'cash')?.id ?? accounts[0]?.id ?? '';
     }
+  });
+  // Trocou entre saída e entrada: a categoria do outro lado não serve mais.
+  $effect(() => {
+    const kind = type === 'out' ? 'expense' : 'income';
+    const chosen = untrack(() => (categoryId ? store.categoryById.get(categoryId) : null));
+    if (chosen && chosen.kind !== 'transfer' && chosen.kind !== kind) categoryId = null;
   });
   const cents = $derived(Math.abs(parseCents(amount) ?? 0) * (type === 'out' ? -1 : 1));
   // Sem data válida o lançamento ficava invisível (contava nos totais, mas não dava para abrir nem apagar).
@@ -53,8 +60,8 @@
     <label class="form-row"><span class="field-label">Valor</span><input class="field num" inputmode="decimal" placeholder="49,90" bind:value={amount} /></label>
     <label class="form-row"><span class="field-label">Data</span><input class="field" type="date" bind:value={date} /></label>
     <label class="form-row"><span class="field-label">Conta</span><span class="field"><Select bind:value={accountId} label="Conta" options={accounts.map((a) => ({ value: a.id, label: a.name }))} /></span></label>
-    <label class="form-row"><span class="field-label">Categoria</span><span class="field"><CategorySelect value={categoryId} pill={false} allowNone kinds={type === 'out' ? ['expense', 'transfer'] : ['income', 'transfer']} onchange={(v) => (categoryId = v || null)} /></span></label>
     <label class="form-row"><span class="field-label">De quem</span><span class="field"><Select bind:value={personId} label="De quem" options={[{ value: null, label: 'Padrão da conta' }, ...store.people.map((p) => ({ value: p.id, label: p.name, color: p.color }))]} /></span></label>
   </div>
+  <div style="margin-top: 12px"><CategoryPicker value={categoryId} allowNone kind={type === 'out' ? 'expense' : 'income'} onchange={(v) => (categoryId = v)} /></div>
   {#if !accounts.length}<p class="form-footer">Cadastre uma conta primeiro (Início › Cadastrar).</p>{/if}
 </Sheet>
