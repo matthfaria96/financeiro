@@ -12,12 +12,14 @@
   import { seriesColor } from '$lib/ui/charts/scale';
   import { inScopeAccount } from '$lib/features/model';
   import { blankEntry, reconcileMirrors } from '$lib/features/mirrors';
-  import { transferPlan } from '$lib/features/transfer';
+  import { THIRD_CATEGORY, transferPlan } from '$lib/features/transfer';
 
   /** Lançamento manual (dinheiro, algo que não veio no extrato). Terceira aba: transferir entre contas suas
    *  (saque, guardar na caixinha, pagar a fatura): a categoria sai sozinha do tipo das contas. */
   let type = $state<'out' | 'in' | 'move'>('out');
-  let toId = $state('');
+  // "Para" começa em Terceiros (Pix para outra pessoa: é gasto); abaixo, as suas contas (só move o dinheiro).
+  const THIRD = 'terceiros';
+  let toId = $state(THIRD);
   let title = $state('');
   let amount = $state('');
   let date = $state(today());
@@ -30,7 +32,7 @@
     if (ui.newEntryOpen) {
       title = ''; amount = ''; date = today(); categoryId = null; personId = null;
       accountId = accounts.find((a) => a.kind === 'cash')?.id ?? accounts[0]?.id ?? '';
-      toId = '';
+      toId = THIRD;
     }
   });
   // Trocou entre saída e entrada: a categoria do outro lado não serve mais.
@@ -45,21 +47,33 @@
     if (type !== 'move') return;
     untrack(() => {
       if (store.accountById.get(accountId)?.kind === 'cash' || store.accountById.get(accountId)?.kind === 'creditCard') accountId = accounts.find((a) => a.kind === 'checking')?.id ?? accountId;
-      if (!toId || toId === accountId) toId = accounts.find((a) => a.id !== accountId && a.kind === 'cash')?.id ?? accounts.find((a) => a.id !== accountId)?.id ?? '';
+      if (!toId || toId === accountId) toId = THIRD;
     });
   });
   const fromAccount = $derived(store.accountById.get(accountId));
   const toAccount = $derived(store.accountById.get(toId));
-  const plan = $derived(fromAccount && toAccount && fromAccount.id !== toAccount.id ? transferPlan(fromAccount, toAccount) : null);
+  const third = $derived(toId === THIRD);
+  const plan = $derived(third ? null : fromAccount && toAccount && fromAccount.id !== toAccount.id ? transferPlan(fromAccount, toAccount) : null);
   const planLabel = $derived(plan ? store.categoryByKey.get(plan.category)?.name ?? '' : '');
-  const moveValid = $derived(!!plan && (parseCents(amount) ?? 0) !== 0 && /^\d{4}-\d{2}-\d{2}$/.test(date));
+  const moveValid = $derived(!!fromAccount && (third || !!plan) && (parseCents(amount) ?? 0) !== 0 && /^\d{4}-\d{2}-\d{2}$/.test(date));
   const cents = $derived(Math.abs(parseCents(amount) ?? 0) * (type === 'in' ? 1 : -1));
   // Sem data válida o lançamento ficava invisível (contava nos totais, mas não dava para abrir nem apagar).
   const valid = $derived(title.trim() && cents !== 0 && accountId && /^\d{4}-\d{2}-\d{2}$/.test(date));
 
   async function saveMove() {
-    if (!moveValid || !plan || !fromAccount || !toAccount) return;
+    if (!moveValid || !fromAccount) return;
     const value = Math.abs(parseCents(amount) ?? 0);
+    if (third) {
+      const label = title.trim() || 'Transferência para terceiros';
+      await store.insert('entries', [{
+        ...blankEntry(), account_id: fromAccount.id, date, amount_cents: -value, title: label, original_title: label, import_key: `manual:${crypto.randomUUID()}`,
+        category_id: store.categoryByKey.get(THIRD_CATEGORY)?.id ?? null, person_id: fromAccount.default_person_id, user_edited: true
+      }]);
+      ui.newEntryOpen = false;
+      store.toast('Transferência registrada.');
+      return;
+    }
+    if (!plan || !toAccount) return;
     const label = title.trim() || (planLabel === 'Transferência interna' ? `Transferência para ${toAccount.name}` : planLabel);
     const category = store.categoryByKey.get(plan.category)?.id ?? null;
     const base = { ...blankEntry(), date, title: label, original_title: label, category_id: category, user_edited: true };
@@ -94,11 +108,11 @@
     <div class="form-group" style="margin-top: 12px">
       <label class="form-row"><span class="field-label">Valor</span><input class="field num" inputmode="decimal" placeholder="200,00" bind:value={amount} /></label>
       <label class="form-row"><span class="field-label">De</span><span class="field"><Select bind:value={accountId} label="De" options={accounts.filter((a) => a.kind !== 'creditCard').map((a) => ({ value: a.id, label: a.name }))} /></span></label>
-      <label class="form-row"><span class="field-label">Para</span><span class="field"><Select bind:value={toId} label="Para" options={accounts.filter((a) => a.id !== accountId).map((a) => ({ value: a.id, label: a.name }))} /></span></label>
+      <label class="form-row"><span class="field-label">Para</span><span class="field"><Select bind:value={toId} label="Para" options={[{ value: THIRD, label: 'Terceiros', hint: 'outra pessoa ou empresa' }, ...accounts.filter((a) => a.id !== accountId).map((a) => ({ value: a.id, label: a.name, group: 'Suas contas' }))]} /></span></label>
       <label class="form-row"><span class="field-label">Data</span><input class="field" type="date" bind:value={date} /></label>
       <label class="form-row"><span class="field-label">Descrição</span><input class="field" bind:value={title} placeholder="opcional" /></label>
     </div>
-    <p class="form-footer">{plan ? `Fica como ${planLabel.toLowerCase()}: sai de ${fromAccount?.name} e entra em ${toAccount?.name}. Não conta como gasto nem como ganho.` : 'Escolha duas contas diferentes.'}</p>
+    <p class="form-footer">{third ? 'Para outra pessoa: conta como gasto.' : plan ? `${fromAccount?.name} → ${toAccount?.name}, mesmo valor. Não é gasto.` : 'Escolha duas contas diferentes.'}</p>
   {:else}
     <div class="form-group" style="margin-top: 12px">
       <label class="form-row"><span class="field-label">Descrição</span><input class="field" bind:value={title} placeholder="ex.: Feira" /></label>

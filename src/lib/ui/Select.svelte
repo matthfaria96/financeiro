@@ -140,6 +140,7 @@
   /* Celular: 16 px no campo de busca evita o zoom automático do iPhone. */
   @media (pointer: coarse) { .search { font-size: 16px; } }
   .items { overflow-y: auto; overscroll-behavior: contain; }
+  .group:not(:first-child) { margin-top: 4px; padding-top: 10px; border-top: 1px solid var(--stroke); }
   .group { padding: 8px 10px 4px; font-size: 11.5px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; }
   .item { display: flex; align-items: center; gap: 9px; width: 100%; min-height: 38px; padding: 6px 10px; border: 0; border-radius: 9px; background: none; color: var(--text); text-align: left; font: inherit; font-size: 14.5px; cursor: pointer; }
   .item { transition: background 0.12s; }

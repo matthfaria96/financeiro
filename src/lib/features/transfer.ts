@@ -1,6 +1,9 @@
 import { CARD_PAYMENT, CASH_WITHDRAWAL, INTERNAL_TRANSFER, INVESTMENT } from '$lib/core/catalog';
 import type { Account } from '$lib/data/types';
 
+/** "Para: Terceiros" (Pix para outra pessoa ou empresa): é gasto, nesta categoria. */
+export const THIRD_CATEGORY = 'pix-pessoas';
+
 type Side = Pick<Account, 'id' | 'kind' | 'investment_source_id'>;
 
 /** Transferir entre contas (aba do "+"): a categoria sai do tipo das contas, sem a pessoa escolher.
