@@ -32,6 +32,8 @@
   // Divisão do dinheiro por banco (só o que é positivo), na cor de cada banco.
   const slices = $derived(groups.map((g) => ({ key: g.key, name: g.name, cents: Math.max(0, groupBalance(g)), color: bankColor(g.main) })).filter((s) => s.cents > 0));
   let fixOpen = $state(false);
+  let showAll = $state(false);
+  let rowsHeight = $state(0);
   // Como o dinheiro andou nos últimos 6 meses (fim de cada mês).
   const months = Array.from({ length: 6 }, (_, i) => addMonths(monthOf(today()), i - 5));
   const history = $derived(months.map((m) => monthEndTotal(m, store.accounts)));
@@ -67,7 +69,9 @@
 
 
   {#if current}<div class="trend"><LineChart labels={months.map((m) => shortMonth(m).slice(0, 3))} height={wide ? 230 : 120} title="Seu dinheiro no fim de cada mês" series={[{ id: 'bal', name: 'Saldo', color: '#2bd4a4', values: history }]} /></div>{/if}
-  <div class="rows" class:solo={groups.length < 2}>
+  <!-- Mais de 3 lugares: mostra 3 e um pedaço do 4º esmaecendo; "Ver mais" abre e fecha com animação. -->
+  <div class="rows" class:solo={groups.length < 2} class:clamp={groups.length > 3 && !showAll} style:max-height={groups.length > 3 ? (showAll ? `${rowsHeight}px` : '168px') : undefined}>
+    <div class="rows-in" bind:clientHeight={rowsHeight}>
     {#each groups as group (group.key)}
       {@const guess = isEstimated(group)}
       {@const hasMoney = group.accounts.some((a) => a.kind !== 'creditCard')}
@@ -78,7 +82,9 @@
     {:else}
       <a class="muted small" href="#/configurar">{analysis.balances.length ? 'Todas as contas estão escondidas.' : 'Cadastre suas contas para ver o saldo.'}</a>
     {/each}
+    </div>
   </div>
+  {#if groups.length > 3}<button class="more-rows" onclick={() => (showAll = !showAll)} aria-expanded={showAll}>{showAll ? 'Ver menos' : `Ver mais (${groups.length - 3})`}<Icon name="chevron-down" size={14} /></button>{/if}
   {#if estimated && informed === null}
     <p class="foot-note"><Icon name="alert" size={12} />Saldo de {groups.filter((g) => isEstimated(g)).map((g) => g.name).join(', ')} estimado. Se não bater com o banco, toque no lápis para corrigir.</p>
   {/if}
@@ -108,9 +114,15 @@
   @container home (min-width: 860px) {
     .card { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); column-gap: 40px; padding: 24px 26px; }
     .card-head { grid-column: 1 / -1; }
-    .lead, .split, .rows { grid-column: 1; }
+    .lead, .split, .rows, .more-rows { grid-column: 1; }
     .foot-note { grid-column: 1 / -1; }
     .trend { grid-column: 2; grid-row: 2 / span 3; align-self: center; margin: 0; }
     .big { font-size: 42px; }
   }
+  .rows { overflow: hidden; transition: max-height 0.45s cubic-bezier(0.22, 1, 0.36, 1); }
+  .rows-in { display: flex; flex-direction: column; }
+  .rows.clamp { -webkit-mask-image: linear-gradient(180deg, #000 62%, transparent); mask-image: linear-gradient(180deg, #000 62%, transparent); }
+  .more-rows { display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; margin-top: 4px; padding: 6px; border: 0; background: none; color: var(--accent); font-size: 13px; font-weight: 600; }
+  .more-rows :global(svg) { transition: transform 0.35s var(--ease); }
+  .more-rows[aria-expanded='true'] :global(svg) { transform: rotate(180deg); }
 </style>
